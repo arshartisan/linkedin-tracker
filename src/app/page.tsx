@@ -1,65 +1,149 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useMemo, useState } from "react";
+import { useData } from "@/components/DataProvider";
+import { AddConnect } from "@/components/AddConnect";
+import { ConnectRow } from "@/components/ConnectRow";
+import { Tally } from "@/components/Tally";
+import { dayKey, formatLong } from "@/lib/date";
+import { countsByDay, currentStreak } from "@/lib/stats";
+
+export default function TodayPage() {
+  const { connects, goal, setGoal, loading, error, mode } = useData();
+  const [editingGoal, setEditingGoal] = useState(false);
+  const today = dayKey();
+
+  const todays = useMemo(
+    () => connects.filter((c) => c.sent_on === today),
+    [connects, today]
+  );
+  const counts = useMemo(() => countsByDay(connects), [connects]);
+  const streak = currentStreak(counts, goal);
+
+  const sent = todays.length;
+  const left = Math.max(0, goal - sent);
+  const hit = sent >= goal;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+      <header className="mb-8">
+        <div className="flex items-center justify-between gap-4">
+          {/* Prerendered at build time, so the date only settles on the client. */}
+          <p
+            suppressHydrationWarning
+            className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted"
+          >
+            {formatLong(today)}
+          </p>
+          {streak > 0 && (
+            <p className="tabular font-mono text-[11px] uppercase tracking-[0.14em] text-teal">
+              {streak} day{streak === 1 ? "" : "s"} on target
+            </p>
+          )}
+        </div>
+
+        <div className="mt-5 flex items-end justify-between gap-6">
+          <div className="tabular flex items-baseline gap-2">
+            <span
+              className={`font-display text-[64px] font-extrabold leading-none tracking-tight sm:text-[76px] ${
+                hit ? "text-teal" : "text-text"
+              }`}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              {loading ? "—" : sent}
+            </span>
+            {editingGoal ? (
+              <input
+                type="number"
+                min={1}
+                max={200}
+                defaultValue={goal}
+                autoFocus
+                onBlur={(e) => {
+                  const n = Number(e.target.value);
+                  if (Number.isFinite(n) && n > 0) setGoal(Math.round(n));
+                  setEditingGoal(false);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                className="w-16 rounded-lg border border-amber bg-ink px-2 py-1 font-mono text-lg focus:outline-none"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingGoal(true)}
+                title="Change the daily target"
+                className="font-mono text-xl text-muted transition-colors hover:text-amber"
+              >
+                / {goal}
+              </button>
+            )}
+          </div>
+
+          <p className="max-w-[42%] pb-2 text-right text-sm text-muted">
+            {loading
+              ? "Loading your log"
+              : hit
+                ? sent === goal
+                  ? "Target met. Anything now is surplus."
+                  : `${sent - goal} past target.`
+                : `${left} more to hit today's target.`}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="mt-6">
+          <Tally count={sent} goal={goal} />
         </div>
-      </main>
+      </header>
+
+      {error && (
+        <p className="mb-5 rounded-xl border border-rose/30 bg-rose-soft/40 px-4 py-3 text-sm text-rose">
+          {error}
+        </p>
+      )}
+
+      {mode === "local" && (
+        <p className="mb-5 rounded-xl border border-line bg-surface px-4 py-3 text-xs text-muted">
+          Saving to this browser only. Add your Supabase keys to sync across
+          devices — see the README.
+        </p>
+      )}
+
+      <AddConnect />
+
+      <section className="mt-8">
+        <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+          Sent today
+          {todays.length > 0 && (
+            <span className="tabular ml-2 text-muted/60">{todays.length}</span>
+          )}
+        </h2>
+
+        {loading ? (
+          <ul className="flex flex-col gap-2">
+            {[0, 1, 2].map((i) => (
+              <li
+                key={i}
+                className="h-[70px] animate-pulse rounded-xl border border-line-soft bg-surface"
+              />
+            ))}
+          </ul>
+        ) : todays.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
+            <p className="font-display text-lg font-semibold">
+              Nothing logged yet today.
+            </p>
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
+              Paste a profile link above the moment you send the invite — the
+              tally only works if it&apos;s honest.
+            </p>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {todays.map((connect, i) => (
+              <ConnectRow key={connect.id} connect={connect} index={i} />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
