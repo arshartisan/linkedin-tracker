@@ -4,7 +4,12 @@ import { dayKey } from "./date";
 import { normaliseUrl } from "./linkedin";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Supabase renamed the client-side credential: `anon` keys are now "publishable"
+// keys (sb_publishable_…). Both are read directly rather than through a variable
+// so Next.js can inline them into the browser bundle at build time.
+const KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const hasSupabase = Boolean(URL && KEY);
 

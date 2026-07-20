@@ -34,14 +34,20 @@ localStorage. Add Supabase to sync across devices.
 ## Adding Supabase
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. In the SQL editor, run [`supabase/schema.sql`](supabase/schema.sql).
-3. From **Project Settings → Data API**, copy the project URL and the `anon`
-   public key into `.env.local`:
+2. In the SQL editor, run [`supabase/schema.sql`](supabase/schema.sql). **Do this
+   before setting the keys below** — once the keys are present the app talks to
+   Supabase instead of localStorage, so a missing table surfaces as an error
+   rather than a silent fallback.
+3. From **Project Settings → API keys**, copy the project URL and the
+   publishable key into `.env.local`:
 
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
    ```
+
+   Older projects issue an `anon` key (`eyJ...`) instead; set it as
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` and it is picked up as a fallback.
 
 4. Restart `npm run dev`. The "saving to this browser only" notice disappears
    once the keys are picked up.
@@ -59,7 +65,7 @@ link, add Supabase Auth and scope the policies to `auth.uid()`.
 npx vercel
 ```
 
-Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` under
+Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` under
 **Project Settings → Environment Variables**, then redeploy. Without them the
 deployment still runs, but each browser keeps its own separate log.
 
