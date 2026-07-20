@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Connect, ConnectStatus, NewConnect } from "./types";
+import { hydrate, type Connect, type NewConnect, type Stage } from "./types";
 import { dayKey } from "./date";
 import { normaliseUrl } from "./linkedin";
 
@@ -29,7 +29,7 @@ function readLocal(): Connect[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(LOCAL_KEY);
-    return raw ? (JSON.parse(raw) as Connect[]) : [];
+    return raw ? (JSON.parse(raw) as unknown[]).map((r) => hydrate(r as never)) : [];
   } catch {
     return [];
   }
@@ -60,13 +60,33 @@ function buildRow(input: NewConnect): Connect {
     created_at: now.toISOString(),
     profile_url: normaliseUrl(input.profile_url),
     name: input.name.trim(),
-    status: "pending",
+    stage: "pending",
     note: input.note?.trim() ?? "",
     tags: input.tags ?? [],
+    accepted_on: null,
+    messaged_on: null,
+    replied_on: null,
+    lead_on: null,
+    last_touch_on: null,
+    followups: 0,
   };
 }
 
-export type ConnectPatch = Partial<Pick<Connect, "name" | "status" | "note" | "tags">>;
+export type ConnectPatch = Partial<
+  Pick<
+    Connect,
+    | "name"
+    | "stage"
+    | "note"
+    | "tags"
+    | "accepted_on"
+    | "messaged_on"
+    | "replied_on"
+    | "lead_on"
+    | "last_touch_on"
+    | "followups"
+  >
+>;
 
 export const store = {
   async list(): Promise<Connect[]> {
@@ -78,7 +98,7 @@ export const store = {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as Connect[];
+    return (data ?? []).map((r) => hydrate(r as never));
   },
 
   async add(input: NewConnect): Promise<Connect> {
@@ -89,7 +109,7 @@ export const store = {
     }
     const { data, error } = await supabase().from(TABLE).insert(row).select().single();
     if (error) throw new Error(error.message);
-    return data as Connect;
+    return hydrate(data as never);
   },
 
   async update(id: string, patch: ConnectPatch): Promise<void> {
@@ -111,4 +131,4 @@ export const store = {
   },
 };
 
-export type { Connect, ConnectStatus, NewConnect };
+export type { Connect, NewConnect, Stage };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useData } from "@/components/DataProvider";
 import { AddConnect } from "@/components/AddConnect";
 import { ConnectRow } from "@/components/ConnectRow";
@@ -9,7 +10,7 @@ import { dayKey, formatLong } from "@/lib/date";
 import { countsByDay, currentStreak } from "@/lib/stats";
 
 export default function TodayPage() {
-  const { connects, goal, setGoal, loading, error, mode } = useData();
+  const { connects, queue, goal, setGoal, loading, error, mode } = useData();
   const [editingGoal, setEditingGoal] = useState(false);
   const today = dayKey();
 
@@ -105,6 +106,23 @@ export default function TodayPage() {
           Saving to this browser only. Add your Supabase keys to sync across
           devices — see the README.
         </p>
+      )}
+
+      {/* Sending invites is only half the job — the queue is where deals start. */}
+      {queue.due.length > 0 && (
+        <Link
+          href="/queue"
+          className="mb-5 flex items-center gap-3 rounded-xl border border-amber/30 bg-amber-soft/40 px-4 py-3 text-sm transition-colors hover:border-amber/60"
+        >
+          <span className="tabular font-display text-lg font-bold text-amber">
+            {queue.due.length}
+          </span>
+          <span className="text-amber/90">
+            {queue.due.length === 1 ? "person needs" : "people need"} a message
+            from you
+          </span>
+          <span className="ml-auto text-amber">→</span>
+        </Link>
       )}
 
       <AddConnect />

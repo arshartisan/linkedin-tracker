@@ -5,9 +5,9 @@ import { useData } from "@/components/DataProvider";
 import { ConnectRow } from "@/components/ConnectRow";
 import { Tally } from "@/components/Tally";
 import { formatLong, relativeDay } from "@/lib/date";
-import { STATUSES, STATUS_LABEL, type ConnectStatus } from "@/lib/types";
+import { STAGES, STAGE_SHORT, type Stage } from "@/lib/types";
 
-type Filter = "all" | ConnectStatus;
+type Filter = "all" | Stage;
 
 export default function HistoryPage() {
   const { connects, goal, loading } = useData();
@@ -17,7 +17,7 @@ export default function HistoryPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return connects.filter((c) => {
-      if (filter !== "all" && c.status !== filter) return false;
+      if (filter !== "all" && c.stage !== filter) return false;
       if (!q) return true;
       return (
         c.name.toLowerCase().includes(q) ||
@@ -59,20 +59,21 @@ export default function HistoryPage() {
             aria-label="Search connects"
             className="flex-1 rounded-xl border border-line-soft bg-surface px-4 py-2.5 text-sm placeholder:text-muted/70 focus:border-amber focus:outline-none"
           />
-          <div className="flex rounded-xl border border-line-soft bg-surface p-0.5">
-            {(["all", ...STATUSES] as Filter[]).map((f) => (
+          {/* Seven filters won't fit a phone, so the row scrolls instead of wrapping. */}
+          <div className="-mx-1 flex gap-0.5 overflow-x-auto rounded-xl border border-line-soft bg-surface p-0.5 sm:mx-0">
+            {(["all", ...STAGES] as Filter[]).map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
                 aria-pressed={filter === f}
-                className={`flex-1 rounded-[10px] px-3 py-2 text-[11px] font-medium transition-colors ${
+                className={`shrink-0 rounded-[10px] px-2.5 py-2 text-[11px] font-medium transition-colors ${
                   filter === f
                     ? "bg-surface-2 text-text"
                     : "text-muted hover:text-text"
                 }`}
               >
-                {f === "all" ? "All" : STATUS_LABEL[f]}
+                {f === "all" ? "All" : STAGE_SHORT[f]}
               </button>
             ))}
           </div>

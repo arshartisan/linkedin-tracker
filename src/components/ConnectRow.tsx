@@ -2,19 +2,44 @@
 
 import { useState } from "react";
 import { useData } from "./DataProvider";
-import { StatusPicker } from "./StatusPicker";
-import { formatTime } from "@/lib/date";
+import { StagePicker } from "./StagePicker";
+import { formatShort, formatTime } from "@/lib/date";
 import { parseTags, profileSlug } from "@/lib/linkedin";
+import { isStale, MAX_FOLLOWUPS, nextAction, type Action } from "@/lib/pipeline";
 import type { Connect } from "@/lib/types";
 
-export function ConnectRow({ connect, index = 0 }: { connect: Connect; index?: number }) {
-  const { update, remove } = useData();
+/** "2 days late" reads as pressure; "in 2 days" reads as a plan. */
+function timing(action: Action): { text: string; late: boolean } {
+  if (action.overdue > 1) return { text: `${action.overdue}d late`, late: true };
+  if (action.overdue === 1) return { text: "1d late", late: true };
+  if (action.overdue === 0) return { text: "due today", late: false };
+  if (action.overdue === -1) return { text: "tomorrow", late: false };
+  return { text: formatShort(action.dueOn), late: false };
+}
+
+export function ConnectRow({
+  connect,
+  index = 0,
+  /** The queue already knows the action; rows elsewhere work it out themselves. */
+  action = nextAction(connect),
+  showAction = true,
+}: {
+  connect: Connect;
+  index?: number;
+  action?: Action | null;
+  showAction?: boolean;
+}) {
+  const { update, remove, setStage, complete } = useData();
   const [editing, setEditing] = useState(false);
   const [note, setNote] = useState(connect.note);
   const [tags, setTags] = useState(connect.tags.join(", "));
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const slug = profileSlug(connect.profile_url);
+  const due = action && action.overdue >= 0;
+  const showCta = showAction && due;
+  // Both follow-ups spent and still nothing — the only move left is to close it.
+  const exhausted = showAction && !action && isStale(connect);
 
   async function saveDetails() {
     setEditing(false);
@@ -39,6 +64,15 @@ export function ConnectRow({ connect, index = 0 }: { connect: Connect; index?: n
             <span className="tabular shrink-0 font-mono text-[11px] text-muted">
               {formatTime(connect.created_at)}
             </span>
+            {connect.stage === "messaged" && connect.followups > 0 && (
+              <span
+                className="tabular shrink-0 font-mono text-[10px] text-muted"
+                title={`${connect.followups} of ${MAX_FOLLOWUPS} follow-ups sent`}
+              >
+                {"•".repeat(connect.followups)}
+                {"◦".repeat(MAX_FOLLOWUPS - connect.followups)}
+              </span>
+            )}
           </div>
 
           <a
@@ -78,9 +112,9 @@ export function ConnectRow({ connect, index = 0 }: { connect: Connect; index?: n
         </div>
 
         <div className="flex items-center gap-2">
-          <StatusPicker
-            value={connect.status}
-            onChange={(status) => update(connect.id, { status })}
+          <StagePicker
+            value={connect.stage}
+            onChange={(stage) => setStage(connect, stage)}
           />
 
           <button
@@ -131,6 +165,55 @@ export function ConnectRow({ connect, index = 0 }: { connect: Connect; index?: n
           </button>
         </div>
       </div>
+
+      {showCta && action && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
+          <span className="text-xs text-muted">{action.label}</span>
+          <span
+            className={`tabular font-mono text-[10px] uppercase tracking-wide ${
+              timing(action).late ? "text-rose" : "text-muted/70"
+            }`}
+          >
+            {timing(action).text}
+          </span>
+
+          <div className="ml-auto flex items-center gap-2">
+            {action.kind === "qualify" && (
+              <button
+                type="button"
+                onClick={() => setStage(connect, "closed")}
+                className="rounded-lg px-2.5 py-1.5 text-[11px] text-muted transition-colors hover:bg-surface-2 hover:text-rose"
+              >
+                Not a fit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => complete(connect, action)}
+              className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold text-ink transition-opacity hover:opacity-90 ${
+                action.kind === "qualify" ? "bg-teal" : "bg-amber"
+              }`}
+            >
+              {action.cta}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {exhausted && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
+          <span className="text-xs text-muted">
+            No reply after {MAX_FOLLOWUPS} follow-ups.
+          </span>
+          <button
+            type="button"
+            onClick={() => setStage(connect, "closed")}
+            className="ml-auto rounded-lg bg-surface-2 px-3 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-rose"
+          >
+            Close it out
+          </button>
+        </div>
+      )}
 
       {editing && (
         <div className="mt-3 grid gap-2 border-t border-line-soft pt-3 sm:grid-cols-[1fr_minmax(0,220px)]">

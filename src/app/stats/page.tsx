@@ -11,6 +11,7 @@ import {
   bestStreak,
   countsByDay,
   currentStreak,
+  replyRate,
   sumSince,
   totalsThisMonth,
   totalsThisWeek,
@@ -55,6 +56,7 @@ export default function StatsPage() {
   const average = averagePerActiveDay(counts);
   const peak = bestDay(counts);
   const { rate, decided } = acceptanceRate(connects);
+  const { rate: replies, pitched } = replyRate(connects);
 
   const daysThisWeek = Math.round(
     (new Date(today).getTime() - new Date(weekStart(today)).getTime()) / 86_400_000
@@ -104,7 +106,7 @@ export default function StatsPage() {
         <Stat label="Last 30 days" value={String(last30)} />
       </div>
 
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Stat
           label="Avg / active day"
           value={average.toFixed(1)}
@@ -117,13 +119,17 @@ export default function StatsPage() {
           detail={peak ? formatShort(peak.day) : undefined}
         />
         <Stat
-          label="Accepted"
+          label="Accept rate"
           value={decided === 0 ? "—" : `${Math.round(rate * 100)}%`}
           detail={
-            decided === 0
-              ? "mark replies to track this"
-              : `of ${decided} decided`
+            decided === 0 ? "no invites decided yet" : `of ${decided} decided`
           }
+          tone="teal"
+        />
+        <Stat
+          label="Reply rate"
+          value={pitched === 0 ? "—" : `${Math.round(replies * 100)}%`}
+          detail={pitched === 0 ? "send an opener first" : `of ${pitched} pitched`}
           tone="teal"
         />
       </div>

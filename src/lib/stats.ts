@@ -72,11 +72,39 @@ export function averagePerActiveDay(counts: Map<string, number>): number {
   return total / counts.size;
 }
 
+/**
+ * Of the invites that got an answer either way, how many were accepted.
+ * Invites still sitting at `pending` aren't counted — they haven't been
+ * decided yet, and including them would drag the rate down as you send more.
+ */
 export function acceptanceRate(connects: Connect[]): { rate: number; decided: number } {
-  const decided = connects.filter((c) => c.status !== "pending");
-  if (decided.length === 0) return { rate: 0, decided: 0 };
-  const accepted = decided.filter((c) => c.status === "accepted").length;
-  return { rate: accepted / decided.length, decided: decided.length };
+  let decided = 0;
+  let accepted = 0;
+  for (const c of connects) {
+    if (c.stage === "pending") continue;
+    decided += 1;
+    if (c.accepted_on || c.stage !== "closed") accepted += 1;
+  }
+  if (decided === 0) return { rate: 0, decided: 0 };
+  return { rate: accepted / decided, decided };
+}
+
+/** Of the people you actually pitched, how many wrote back. */
+export function replyRate(connects: Connect[]): { rate: number; pitched: number } {
+  let pitched = 0;
+  let replied = 0;
+  for (const c of connects) {
+    const wasPitched =
+      Boolean(c.messaged_on) ||
+      c.stage === "messaged" ||
+      c.stage === "replied" ||
+      c.stage === "lead";
+    if (!wasPitched) continue;
+    pitched += 1;
+    if (c.replied_on || c.stage === "replied" || c.stage === "lead") replied += 1;
+  }
+  if (pitched === 0) return { rate: 0, pitched: 0 };
+  return { rate: replied / pitched, pitched };
 }
 
 /** Day keys for a trailing window, oldest first — the heatmap's spine. */
