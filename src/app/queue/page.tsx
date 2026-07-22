@@ -62,12 +62,12 @@ export default function QueuePage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
-        <ul className="flex flex-col gap-2">
+      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+        <ul className="grid gap-2 lg:grid-cols-2">
           {[0, 1, 2, 3].map((i) => (
             <li
               key={i}
-              className="h-[70px] animate-pulse rounded-xl border border-line-soft bg-surface"
+              className="h-17.5 animate-pulse rounded-xl border border-line-soft bg-surface"
             />
           ))}
         </ul>
@@ -76,7 +76,7 @@ export default function QueuePage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-8">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">Queue</h1>
         <div className="mt-4 flex items-end justify-between gap-6">
@@ -116,7 +116,7 @@ export default function QueuePage() {
             return (
               <section key={kind}>
                 <Heading title={title} count={items.length} blurb={blurb} />
-                <ul className="flex flex-col gap-2">
+                <ul className="grid gap-2 lg:grid-cols-2">
                   {items.map(({ connect, action }, i) => (
                     <ConnectRow
                       key={connect.id}
@@ -139,7 +139,7 @@ export default function QueuePage() {
             count={stale.length}
             blurb="Both follow-ups sent, no reply. Close them so the queue stays honest."
           />
-          <ul className="flex flex-col gap-2">
+          <ul className="grid gap-2 lg:grid-cols-2">
             {stale.map((connect, i) => (
               <ConnectRow key={connect.id} connect={connect} index={i} />
             ))}
@@ -150,7 +150,7 @@ export default function QueuePage() {
       {upcoming.length > 0 && (
         <section className="mt-10">
           <Heading title="Coming up" count={upcoming.length} />
-          <ul className="flex flex-col gap-1.5">
+          <ul className="grid gap-1.5 lg:grid-cols-2">
             {upcoming.slice(0, 8).map(({ connect, action }) => (
               <li
                 key={connect.id}
@@ -192,7 +192,7 @@ export default function QueuePage() {
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <ul className="flex flex-col gap-2">
+              <ul className="grid gap-2 lg:grid-cols-2">
                 {waiting.map((connect, i) => (
                   <ConnectRow key={connect.id} connect={connect} index={i} />
                 ))}
