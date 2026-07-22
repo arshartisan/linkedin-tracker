@@ -1,8 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ChevronRightIcon } from "lucide-react";
 import { useData } from "@/components/DataProvider";
 import { ConnectRow } from "@/components/ConnectRow";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { formatShort } from "@/lib/date";
 import type { ActionKind, Queue } from "@/lib/pipeline";
 
@@ -169,25 +175,31 @@ export default function QueuePage() {
       )}
 
       {waiting.length > 0 && (
-        <section className="mt-10">
-          <button
-            type="button"
-            onClick={() => setShowWaiting((v) => !v)}
-            className="w-full text-left"
-          >
-            <Heading
-              title={showWaiting ? "Waiting on accept —" : "Waiting on accept +"}
-              count={waiting.length}
-            />
-          </button>
-          {showWaiting && (
-            <ul className="flex flex-col gap-2">
-              {waiting.map((connect, i) => (
-                <ConnectRow key={connect.id} connect={connect} index={i} />
-              ))}
-            </ul>
-          )}
-        </section>
+        <Collapsible
+          open={showWaiting}
+          onOpenChange={setShowWaiting}
+          className="group/waiting mt-10"
+          asChild
+        >
+          <section>
+            <CollapsibleTrigger className="w-full text-left outline-none">
+              <div className="flex items-start gap-2">
+                <ChevronRightIcon
+                  className="mt-px size-3.5 shrink-0 text-muted transition-transform group-data-[state=open]/waiting:rotate-90"
+                  aria-hidden
+                />
+                <Heading title="Waiting on accept" count={waiting.length} />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ul className="flex flex-col gap-2">
+                {waiting.map((connect, i) => (
+                  <ConnectRow key={connect.id} connect={connect} index={i} />
+                ))}
+              </ul>
+            </CollapsibleContent>
+          </section>
+        </Collapsible>
       )}
     </div>
   );

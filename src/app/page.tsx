@@ -2,12 +2,25 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useData } from "@/components/DataProvider";
 import { AddConnect } from "@/components/AddConnect";
 import { ConnectRow } from "@/components/ConnectRow";
 import { Tally } from "@/components/Tally";
 import { dayKey, formatLong } from "@/lib/date";
 import { countsByDay, currentStreak } from "@/lib/stats";
+
+/** The targets people actually pick. Anything else goes through "Custom". */
+const GOAL_PRESETS = [10, 15, 20, 25, 30, 50];
 
 export default function TodayPage() {
   const { connects, queue, goal, setGoal, loading, error, mode } = useData();
@@ -68,14 +81,48 @@ export default function TodayPage() {
                 className="w-16 rounded-lg border border-amber bg-ink px-2 py-1 font-mono text-lg focus:outline-none"
               />
             ) : (
-              <button
-                type="button"
-                onClick={() => setEditingGoal(true)}
-                title="Change the daily target"
-                className="font-mono text-xl text-muted transition-colors hover:text-amber"
-              >
-                / {goal}
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  title="Change the daily target"
+                  aria-label={`Daily target: ${goal}`}
+                  className="font-mono text-xl text-muted outline-none transition-colors hover:text-amber data-[state=open]:text-amber"
+                >
+                  / {goal}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-40"
+                  // "Custom…" swaps the trigger for an autofocused input, so
+                  // Radix must not claw focus back to a node that just left.
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                >
+                  <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                    Daily target
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup
+                    value={String(goal)}
+                    onValueChange={(next) => setGoal(Number(next))}
+                  >
+                    {GOAL_PRESETS.map((n) => (
+                      <DropdownMenuRadioItem
+                        key={n}
+                        value={String(n)}
+                        className="tabular font-mono text-xs"
+                      >
+                        {n} a day
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-xs"
+                    onSelect={() => setEditingGoal(true)}
+                  >
+                    Custom…
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
 

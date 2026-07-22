@@ -12,7 +12,6 @@ export function AddConnect() {
   const [note, setNote] = useState("");
   const [tags, setTags] = useState("");
   const [showDetails, setShowDetails] = useState(false);
-  const [overrideDupe, setOverrideDupe] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const urlRef = useRef<HTMLInputElement>(null);
@@ -24,14 +23,15 @@ export function AddConnect() {
     [valid, trimmed, findDuplicate]
   );
   const derivedName = valid ? nameFromUrl(trimmed) : "";
-  const blocked = Boolean(duplicate) && !overrideDupe;
+  // One profile, one row. Logging the same person twice inflates the tally and
+  // quietly breaks the funnel rates, so a duplicate link is a hard stop.
+  const blocked = Boolean(duplicate);
 
   function reset() {
     setUrl("");
     setName("");
     setNote("");
     setTags("");
-    setOverrideDupe(false);
     setShowDetails(false);
     urlRef.current?.focus();
   }
@@ -42,7 +42,10 @@ export function AddConnect() {
       setError("That doesn't look like a LinkedIn profile link.");
       return;
     }
-    if (blocked) return;
+    if (blocked) {
+      setError("You've already logged this profile.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -72,14 +75,19 @@ export function AddConnect() {
             value={url}
             onChange={(e) => {
               setUrl(e.target.value);
-              setOverrideDupe(false);
               setError(null);
             }}
             placeholder="Paste the LinkedIn profile link"
             aria-label="LinkedIn profile link"
+            aria-invalid={blocked || undefined}
+            aria-describedby={duplicate ? "duplicate-warning" : undefined}
             autoComplete="off"
             spellCheck={false}
-            className="w-full rounded-xl border border-line-soft bg-ink px-4 py-3.5 pr-24 font-mono text-sm placeholder:font-sans placeholder:text-muted/70 focus:border-amber focus:outline-none"
+            className={`w-full rounded-xl border bg-ink px-4 py-3.5 pr-24 font-mono text-sm placeholder:font-sans placeholder:text-muted/70 focus:outline-none ${
+              blocked
+                ? "border-rose focus:border-rose"
+                : "border-line-soft focus:border-amber"
+            }`}
           />
           {valid && derivedName && !name && (
             <span className="pointer-events-none absolute right-3 top-1/2 max-w-[100px] -translate-y-1/2 truncate rounded-md bg-surface-2 px-2 py-1 text-[11px] text-muted">
@@ -109,24 +117,25 @@ export function AddConnect() {
       </div>
 
       {duplicate && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-amber/30 bg-amber-soft/40 px-3.5 py-2.5 text-xs">
-          <span className="text-amber">
-            Already logged {duplicate.name || "this profile"} on{" "}
+        <div
+          id="duplicate-warning"
+          role="alert"
+          className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-rose/30 bg-rose-soft/40 px-3.5 py-2.5 text-xs"
+        >
+          <span className="text-rose">
+            Already logged — {duplicate.name || "this profile"},{" "}
             {relativeDay(duplicate.sent_on)?.toLowerCase() ??
               formatShort(duplicate.sent_on)}
-            .
+            . Update that one instead of logging it twice.
           </span>
-          <button
-            type="button"
-            onClick={() => setOverrideDupe(true)}
-            className={`rounded-md px-2 py-1 transition-colors ${
-              overrideDupe
-                ? "bg-amber text-ink"
-                : "bg-ink/50 text-muted hover:text-text"
-            }`}
+          <a
+            href={duplicate.profile_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto rounded-md bg-ink/50 px-2 py-1 text-muted transition-colors hover:text-text"
           >
-            {overrideDupe ? "Will log again" : "Log anyway"}
-          </button>
+            Open profile
+          </a>
         </div>
       )}
 

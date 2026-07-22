@@ -1,8 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import {
+  ExternalLinkIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useData } from "./DataProvider";
 import { StagePicker } from "./StagePicker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatShort, formatTime } from "@/lib/date";
 import { parseTags, profileSlug } from "@/lib/linkedin";
 import { isStale, MAX_FOLLOWUPS, nextAction, type Action } from "@/lib/pipeline";
@@ -117,52 +130,50 @@ export function ConnectRow({
             onChange={(stage) => setStage(connect, stage)}
           />
 
-          <button
-            type="button"
-            onClick={() => setEditing((v) => !v)}
-            aria-label={editing ? "Close details" : "Edit note and tags"}
-            className="rounded-md p-1.5 text-muted transition-colors hover:bg-surface-2 hover:text-text"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              aria-hidden
+          {/* Delete still costs two clicks — the first only arms the menu item. */}
+          <DropdownMenu onOpenChange={(open) => !open && setConfirmDelete(false)}>
+            <DropdownMenuTrigger
+              aria-label="Connect actions"
+              className="rounded-md p-1.5 text-muted transition-colors outline-none hover:bg-surface-2 hover:text-text data-[state=open]:bg-surface-2 data-[state=open]:text-text"
             >
-              <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => (confirmDelete ? remove(connect.id) : setConfirmDelete(true))}
-            onBlur={() => setConfirmDelete(false)}
-            className={`rounded-md px-1.5 py-1.5 text-[11px] transition-colors ${
-              confirmDelete
-                ? "bg-rose-soft text-rose"
-                : "text-muted hover:bg-surface-2 hover:text-rose"
-            }`}
-          >
-            {confirmDelete ? (
-              "Delete?"
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                aria-hidden
+              <MoreHorizontalIcon className="size-4" aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                className="text-xs"
+                onSelect={() => setEditing((v) => !v)}
               >
-                <path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" />
-              </svg>
-            )}
-            <span className="sr-only">Remove this connect</span>
-          </button>
+                <PencilIcon />
+                {editing ? "Close details" : "Edit note and tags"}
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-xs">
+                <a
+                  href={connect.profile_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLinkIcon />
+                  Open profile
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                className="text-xs"
+                onSelect={(e) => {
+                  if (!confirmDelete) {
+                    e.preventDefault();
+                    setConfirmDelete(true);
+                    return;
+                  }
+                  remove(connect.id);
+                }}
+              >
+                <Trash2Icon />
+                {confirmDelete ? "Really delete?" : "Delete"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

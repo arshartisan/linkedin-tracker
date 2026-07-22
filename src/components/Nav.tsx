@@ -4,6 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useData } from "./DataProvider";
 import { dayKey } from "@/lib/date";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 const LINKS = [
   { href: "/", label: "Today" },
@@ -75,61 +89,82 @@ export function Nav() {
 
   return (
     <>
-      {/* Desktop rail */}
-      <nav className="hidden w-56 shrink-0 flex-col border-r border-line bg-surface/60 px-4 py-7 md:flex">
-        <Link href="/" className="mb-9 block px-2">
-          <span className="font-display text-2xl font-extrabold tracking-tight">
-            Reach
-          </span>
-          <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-            Outreach pipeline
-          </span>
-        </Link>
-
-        <ul className="flex flex-col gap-1">
-          {LINKS.map((link) => {
-            const active = pathname === link.href;
-            const count = badge(link.label);
-            return (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                    active
-                      ? "bg-surface-2 text-text"
-                      : "text-muted hover:bg-surface-2/60 hover:text-text"
-                  }`}
-                >
-                  <Icon name={link.label} className="h-[18px] w-[18px]" />
-                  {link.label}
-                  {count !== null && (
-                    <span className="tabular ml-auto rounded-full bg-amber px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">
-                      {count}
-                    </span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="mt-auto rounded-xl border border-line-soft bg-surface-2/50 px-3.5 py-3">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-            Today
-          </div>
-          <div className="tabular mt-1.5 flex items-baseline gap-1.5">
-            <span
-              className={`font-display text-2xl font-bold ${
-                hit ? "text-teal" : "text-text"
-              }`}
+      {/* Desktop rail — fixed, so the list scrolls under it instead of with it. */}
+      <Sidebar collapsible="icon" className="border-line">
+        <SidebarHeader className="px-2 py-5 group-data-[collapsible=icon]:px-0">
+          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
+            <Link
+              href="/"
+              className="block min-w-0 px-2 group-data-[collapsible=icon]:hidden"
             >
-              {loading ? "—" : sentToday}
-            </span>
-            <span className="font-mono text-xs text-muted">/ {goal}</span>
+              <span className="font-display text-2xl font-extrabold tracking-tight">
+                Reach
+              </span>
+              <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+                Outreach pipeline
+              </span>
+            </Link>
+            <SidebarTrigger className="shrink-0 text-muted hover:text-text" />
           </div>
-        </div>
-      </nav>
+        </SidebarHeader>
+
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {LINKS.map((link) => {
+                  const active = pathname === link.href;
+                  const count = badge(link.label);
+                  return (
+                    <SidebarMenuItem key={link.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={link.label}
+                        className="h-10 gap-3 px-3 text-muted data-[active=true]:text-text hover:text-text"
+                      >
+                        <Link
+                          href={link.href}
+                          aria-current={active ? "page" : undefined}
+                        >
+                          <Icon name={link.label} />
+                          <span>{link.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                      {count !== null && (
+                        <SidebarMenuBadge className="tabular rounded-full bg-amber px-1.5 font-mono text-[10px] font-bold text-ink peer-data-[size=default]/menu-button:top-2.5 peer-data-[active=true]/menu-button:text-ink peer-hover/menu-button:text-ink">
+                          {count}
+                        </SidebarMenuBadge>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        {/* Collapsed to icons there is no room for the tally, so it steps aside. */}
+        <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
+          <div className="rounded-xl border border-line-soft bg-surface-2/50 px-3.5 py-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+              Today
+            </div>
+            <div className="tabular mt-1.5 flex items-baseline gap-1.5">
+              <span
+                className={`font-display text-2xl font-bold ${
+                  hit ? "text-teal" : "text-text"
+                }`}
+              >
+                {loading ? "—" : sentToday}
+              </span>
+              <span className="font-mono text-xs text-muted">/ {goal}</span>
+            </div>
+          </div>
+        </SidebarFooter>
+
+        <SidebarRail />
+      </Sidebar>
 
       {/* Mobile tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-ink/95 backdrop-blur md:hidden">

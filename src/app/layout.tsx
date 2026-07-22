@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Inter_Tight, JetBrains_Mono } from "next/font/goog
 import "./globals.css";
 import { DataProvider } from "@/components/DataProvider";
 import { Nav } from "@/components/Nav";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 const display = Bricolage_Grotesque({
   variable: "--font-display",
@@ -42,10 +43,11 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <DataProvider>
-          <div className="flex min-h-screen flex-col md:flex-row">
+          <SidebarProvider>
             <Nav />
-            <main className="flex-1 pb-24 md:pb-0">{children}</main>
-          </div>
+            {/* The rail is fixed, so only this pane scrolls. */}
+            <SidebarInset className="pb-24 md:pb-0">{children}</SidebarInset>
+          </SidebarProvider>
         </DataProvider>
       </body>
     </html>
