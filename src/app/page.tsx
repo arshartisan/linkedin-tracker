@@ -39,7 +39,7 @@ export default function TodayPage() {
   const hit = sent >= goal;
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-8">
         <div className="flex items-center justify-between gap-4">
           {/* Prerendered at build time, so the date only settles on the client. */}
@@ -183,8 +183,8 @@ export default function TodayPage() {
         </h2>
 
         {loading ? (
-          <ul className="flex flex-col gap-2">
-            {[0, 1, 2].map((i) => (
+          <ul className="grid gap-2 lg:grid-cols-2">
+            {[0, 1, 2, 3].map((i) => (
               <li
                 key={i}
                 className="h-[70px] animate-pulse rounded-xl border border-line-soft bg-surface"
@@ -202,7 +202,7 @@ export default function TodayPage() {
             </p>
           </div>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="grid gap-2 lg:grid-cols-2">
             {todays.map((connect, i) => (
               <ConnectRow key={connect.id} connect={connect} index={i} />
             ))}

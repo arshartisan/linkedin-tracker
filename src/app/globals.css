@@ -10,24 +10,39 @@
 
 /*
   Reach — daily LinkedIn outreach tracker.
-  Dark, instrument-panel palette: deep blue-black base, signal amber for
-  "work done", teal for "reply landed". Amber is reserved for the tally and
-  nothing else, so progress is the only thing that glows on the page.
+  Dark, instrument-panel palette: near-black base with a cool cast, signal
+  amber for "work done", teal for "reply landed". Amber is reserved for the
+  tally and nothing else, so progress is the only thing that glows on the page.
+
+  Surfaces climb in four steps — ink → surface → surface-2 → surface-3 — and
+  the step is deliberately small. Depth reads from the lift (borders and
+  shadow), not from grey getting lighter, which is what keeps a near-black UI
+  from turning muddy as panels stack.
 */
 :root {
-  --ink: #0a0d12;
-  --surface: #11161f;
-  --surface-2: #161d29;
-  --line: #222b3a;
-  --line-soft: #1a212d;
-  --text: #e8ecf4;
-  --muted: #7e8aa0;
+  --ink: #090b0f; /* page */
+  --surface: #101319; /* cards, rails */
+  --surface-2: #171b23; /* hover, chips, inset wells */
+  --surface-3: #1d222c; /* floating: menus, tooltips, sheets */
+  --line: #242a35; /* a visible edge */
+  --line-soft: #171b23; /* a hairline between siblings */
+  --text: #eef1f6;
+  --muted: #838d9e;
   --amber: #ffb020;
   --amber-soft: #4a340c;
   --teal: #2dd4a7;
   --teal-soft: #10352c;
   --rose: #ff6b6b;
   --rose-soft: #3a1d1f;
+
+  /*
+    Anything that floats above the page gets a real drop shadow plus a 1px
+    inner highlight. The highlight is what separates a menu from the card
+    behind it when both are within a few percent of black.
+  */
+  --shadow-float:
+    0 18px 44px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.6),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.04);
 
   /*
     shadcn/ui speaks in semantic tokens (background, popover, accent…). The app
@@ -38,7 +53,7 @@
   --foreground: var(--text);
   --card: var(--surface);
   --card-foreground: var(--text);
-  --popover: var(--surface-2);
+  --popover: var(--surface-3);
   --popover-foreground: var(--text);
   --primary: var(--amber);
   --primary-foreground: var(--ink);
@@ -67,6 +82,7 @@
   --color-ink: var(--ink);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
   --color-text: var(--text);
@@ -111,6 +127,18 @@
   --color-sidebar: var(--sidebar);
 }
 
+@layer base {
+  /*
+    Tailwind v4 defaults a bare `border` to `currentColor`. shadcn's primitives
+    lean on that bare class, so on near-white text they drew a white outline —
+    which is what the dropdowns were doing. Pin the default to the palette;
+    explicit utilities like `border-line` still win, being a later layer.
+  */
+  * {
+    border-color: var(--border);
+  }
+}
+
 html {
   color-scheme: dark;
 }
@@ -120,6 +148,41 @@ body {
   color: var(--text);
   font-family: var(--font-body), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+  Every floating shadcn surface, lifted off the page as one. Keyed on the
+  `data-slot` markers the primitives already emit, so re-running `shadcn add`
+  can't quietly drop the treatment. The sheet is deliberately absent — it is a
+  full-height panel, not a floating one, and keeps its own `bg-sidebar`.
+*/
+[data-slot="dropdown-menu-content"],
+[data-slot="dropdown-menu-sub-content"],
+[data-slot="tooltip-content"] {
+  background-color: var(--surface-3);
+  border-color: var(--line);
+  box-shadow: var(--shadow-float);
+  /*
+    `bg-accent` is the row hover, and surface-2 sits *below* the panel it would
+    be painted on. Rebinding the token here — rather than chasing the utility —
+    lets the highlight climb one more step, as `@theme inline` compiles
+    `bg-accent` straight down to `var(--accent)`.
+  */
+  --accent: #272d39;
+}
+
+/*
+  shadcn ships an inverted (near-white) tooltip. At this black level that reads
+  as a flashbulb, so it joins the other floating surfaces — which means taking
+  the arrow and the text colour with it.
+*/
+[data-slot="tooltip-content"] {
+  color: var(--text);
+}
+
+[data-slot="tooltip-content"] svg {
+  background-color: var(--surface-3);
+  fill: var(--surface-3);
 }
 
 /* Numerals should never jitter as counts change. */
