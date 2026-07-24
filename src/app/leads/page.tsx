@@ -24,14 +24,14 @@ export default function LeadsPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+      <div className="px-5 py-8 sm:px-8 sm:py-12">
         <p className="text-sm text-muted">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-8">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">Leads</h1>
         <div className="mt-4 flex items-end justify-between gap-6">

@@ -62,7 +62,7 @@ export default function QueuePage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+      <div className="px-5 py-8 sm:px-8 sm:py-12">
         <ul className="grid gap-2 lg:grid-cols-2">
           {[0, 1, 2, 3].map((i) => (
             <li
@@ -76,7 +76,7 @@ export default function QueuePage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-8">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">Queue</h1>
         <div className="mt-4 flex items-end justify-between gap-6">

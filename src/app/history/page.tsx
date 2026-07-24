@@ -117,7 +117,7 @@ export default function HistoryPage() {
     setPaging({ signature, page: Math.min(Math.max(next, 1), pageCount) });
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-6">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">
           History

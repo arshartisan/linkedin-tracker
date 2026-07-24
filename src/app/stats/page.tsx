@@ -109,7 +109,7 @@ function Delta({ change }: { change: number | null }) {
 
 function StatsSkeleton() {
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="px-5 py-8 sm:px-8 sm:py-12">
       <Skeleton className="h-9 w-32" />
       <Skeleton className="mt-2 h-4 w-64" />
       <Skeleton className="mt-7 h-[26rem] w-full rounded-2xl" />
@@ -158,7 +158,7 @@ export default function StatsPage() {
   if (loading) return <StatsSkeleton />;
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-7">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">
           Stats

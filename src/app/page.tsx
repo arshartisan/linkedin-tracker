@@ -40,7 +40,7 @@ export default function TodayPage() {
   const hit = sent >= goal;
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-8">
         {/*
           Below md the rail is replaced by the bottom tab bar, which has no room

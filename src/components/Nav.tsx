@@ -22,10 +22,10 @@ import {
 
 const LINKS = [
   { href: "/", label: "Today" },
+  { href: "/history", label: "History" },
   { href: "/queue", label: "Queue" },
   { href: "/leads", label: "Leads" },
-  { href: "/history", label: "History" },
-  { href: "/stats", label: "Stats" },
+  // { href: "/stats", label: "Stats" },
 ] as const;
 
 type Label = (typeof LINKS)[number]["label"];
