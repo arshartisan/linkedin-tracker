@@ -98,7 +98,7 @@ export function Nav() {
         */}
         <SidebarHeader className="px-2 py-5 group-data-[collapsible=icon]:px-0">
           <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-3">
-            <Link href="/" className="flex min-w-0 flex-col gap-1.5 px-1">
+            <Link href="/" className="flex min-w-0 flex-col gap-1.5 px-1 items-start">
               {/* The lockup carries the wordmark; collapsed, only the plate fits. */}
               <LogoLockup className="h-8 w-auto group-data-[collapsible=icon]:hidden" />
               <LogoMark className="hidden size-8 shrink-0 rounded-[7px] group-data-[collapsible=icon]:block" />
@@ -160,9 +160,8 @@ export function Nav() {
             </div>
             <div className="tabular mt-1.5 flex items-baseline gap-1.5">
               <span
-                className={`font-display text-2xl font-bold ${
-                  hit ? "text-brand" : "text-text"
-                }`}
+                className={`font-display text-2xl font-bold ${hit ? "text-brand" : "text-text"
+                  }`}
               >
                 {loading ? "—" : sentToday}
               </span>
@@ -184,9 +183,8 @@ export function Nav() {
               key={link.href}
               href={link.href}
               aria-current={active ? "page" : undefined}
-              className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-[10px] ${
-                active ? "text-brand" : "text-muted"
-              }`}
+              className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-[10px] ${active ? "text-brand" : "text-muted"
+                }`}
             >
               <Icon name={link.label} className="h-5 w-5" />
               {link.label}
