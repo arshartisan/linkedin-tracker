@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useData } from "@/components/DataProvider";
+import { LogoLockup } from "@/components/Logo";
 import { AddConnect } from "@/components/AddConnect";
 import { ConnectRow } from "@/components/ConnectRow";
 import { Tally } from "@/components/Tally";
@@ -41,6 +42,12 @@ export default function TodayPage() {
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-8">
+        {/*
+          Below md the rail is replaced by the bottom tab bar, which has no room
+          for the lockup — so on mobile the page carries the mark itself.
+        */}
+        <LogoLockup className="mb-6 h-7 w-auto md:hidden" />
+
         <div className="flex items-center justify-between gap-4">
           {/* Prerendered at build time, so the date only settles on the client. */}
           <p

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useData } from "./DataProvider";
-import { LogoMark } from "./Logo";
+import { LogoLockup, LogoMark } from "./Logo";
 import { dayKey } from "@/lib/date";
 import {
   Sidebar,
@@ -98,15 +98,12 @@ export function Nav() {
         */}
         <SidebarHeader className="px-2 py-5 group-data-[collapsible=icon]:px-0">
           <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-3">
-            <Link href="/" className="flex min-w-0 items-center gap-2.5 px-1">
-              <LogoMark className="size-8 shrink-0 rounded-[7px]" />
-              <span className="min-w-0 group-data-[collapsible=icon]:hidden">
-                <span className="block font-display text-2xl font-extrabold leading-none tracking-tight">
-                  Reach
-                </span>
-                <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-                  Outreach pipeline
-                </span>
+            <Link href="/" className="flex min-w-0 flex-col gap-1.5 px-1">
+              {/* The lockup carries the wordmark; collapsed, only the plate fits. */}
+              <LogoLockup className="h-8 w-auto group-data-[collapsible=icon]:hidden" />
+              <LogoMark className="hidden size-8 shrink-0 rounded-[7px] group-data-[collapsible=icon]:block" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted group-data-[collapsible=icon]:hidden">
+                Outreach pipeline
               </span>
             </Link>
             <SidebarTrigger className="shrink-0 text-muted hover:text-text" />
