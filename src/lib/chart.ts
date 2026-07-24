@@ -1,13 +1,13 @@
 /**
  * Chart geometry, kept apart from the component that draws it so the maths can
- * be reasoned about — and checked — without a browser.
+ * be reasoned about - and checked - without a browser.
  */
 
 /**
  * Monotone cubic interpolation (Fritsch–Carlson), as an SVG path.
  *
  * A plain Catmull-Rom spline overshoots around a spike, and on an area chart
- * that overshoot dips the fill below the baseline — you get a day that reads as
+ * that overshoot dips the fill below the baseline - you get a day that reads as
  * negative connects. This can't overshoot: between two points the curve stays
  * within their two values, so a run of zeroes is drawn flat and a peak is drawn
  * as a peak.
@@ -67,7 +67,7 @@ export function project(
   size: number
 ): { xs: number[]; ys: number[]; goalY: number; ceiling: number } {
   // Headroom above the tallest value so the peak never touches the ceiling,
-  // and never a zero domain — an empty log would otherwise divide by nothing.
+  // and never a zero domain - an empty log would otherwise divide by nothing.
   const ceiling = Math.max(goal, ...counts, 1) * 1.18;
   const last = counts.length - 1;
 

@@ -123,7 +123,7 @@ export function AddConnect() {
           className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-rose/30 bg-rose-soft/40 px-3.5 py-2.5 text-xs"
         >
           <span className="text-rose">
-            Already logged — {duplicate.name || "this profile"},{" "}
+            Already logged - {duplicate.name || "this profile"},{" "}
             {relativeDay(duplicate.sent_on)?.toLowerCase() ??
               formatShort(duplicate.sent_on)}
             . Update that one instead of logging it twice.

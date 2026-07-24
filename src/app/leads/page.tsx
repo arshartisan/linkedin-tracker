@@ -12,7 +12,7 @@ export default function LeadsPage() {
 
   const f = useMemo(() => funnel(connects), [connects]);
 
-  /** How long a connect takes to become a lead — median beats mean on a small n. */
+  /** How long a connect takes to become a lead - median beats mean on a small n. */
   const medianDays = useMemo(() => {
     const spans = leads
       .filter((l) => l.lead_on)
@@ -79,7 +79,7 @@ export default function LeadsPage() {
                   className="relative border-b border-line-soft px-4 py-3 last:border-b-0"
                 >
                   <div
-                    /* The last row is the one that pays — it gets the only fill
+                    /* The last row is the one that pays - it gets the only fill
                        with any real weight to it. */
                     className={`absolute inset-y-0 left-0 ${last ? "bg-brand/25" : "bg-brand/8"}`}
                     style={{ width: `${Math.max(width, step.value > 0 ? 2 : 0)}%` }}

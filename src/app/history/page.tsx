@@ -95,7 +95,7 @@ export default function HistoryPage() {
     [filtered, start, pageSize]
   );
 
-  /** Day totals come from the whole result set — a day split across two pages
+  /** Day totals come from the whole result set - a day split across two pages
    *  should still report how many connects it really holds. */
   const dayTotals = useMemo(() => {
     const map = new Map<string, number>();

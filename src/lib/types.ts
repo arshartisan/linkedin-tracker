@@ -6,9 +6,9 @@
  *                          closed ← ───┘
  *
  * `pending`  invite sent, waiting for them to accept
- * `accepted` they accepted — the pitch still needs sending
+ * `accepted` they accepted - the pitch still needs sending
  * `messaged` pitch sent, waiting on a reply (up to 2 follow-ups live here)
- * `replied`  they wrote back — qualify them
+ * `replied`  they wrote back - qualify them
  * `lead`     turned into real business
  * `closed`   dead: ignored the invite, or went quiet after both follow-ups
  */
@@ -30,7 +30,7 @@ export type Connect = {
   stage: Stage;
   note: string;
   tags: string[];
-  /** Day each milestone landed — null until the stage is reached. */
+  /** Day each milestone landed - null until the stage is reached. */
   accepted_on: string | null;
   messaged_on: string | null;
   replied_on: string | null;
@@ -79,7 +79,7 @@ export const STAGE_SHORT: Record<Stage, string> = {
 
 /**
  * One hue, climbing. The pipeline is a ladder, so the chip gets brighter the
- * further along it is — grey while nothing has happened, dim lime once they're
+ * further along it is - grey while nothing has happened, dim lime once they're
  * engaged, full lime on a reply, and solid lime only for a lead. `closed` is
  * the one stage that leaves the ramp, because it is the one that isn't progress.
  */

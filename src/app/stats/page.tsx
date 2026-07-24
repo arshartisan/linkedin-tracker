@@ -85,7 +85,7 @@ function Stat({
 
 /**
  * Direction against the previous window of the same length. A fall is muted
- * rather than red — a quiet week is a fact, not an error, and rose is spoken
+ * rather than red - a quiet week is a fact, not an error, and rose is spoken
  * for by things that actually need attention.
  */
 function Delta({ change }: { change: number | null }) {
@@ -144,7 +144,7 @@ export default function StatsPage() {
 
   const period = useMemo(() => periodDelta(counts, range), [counts, range]);
 
-  // Left to the React Compiler rather than a useMemo — `today` isn't provably
+  // Left to the React Compiler rather than a useMemo - `today` isn't provably
   // stable to it, so a manual dependency list here only defeats optimisation.
   const points: { day: string; count: number }[] = [];
   for (let i = range - 1; i >= 0; i--) {
@@ -280,13 +280,13 @@ export default function StatsPage() {
         />
         <Stat
           label="Accept rate"
-          value={decided === 0 ? "—" : `${Math.round(rate * 100)}%`}
+          value={decided === 0 ? "-" : `${Math.round(rate * 100)}%`}
           detail={decided === 0 ? "no invites decided yet" : `of ${decided} decided`}
           tone={decided === 0 ? "text" : "brand"}
         />
         <Stat
           label="Reply rate"
-          value={pitched === 0 ? "—" : `${Math.round(replies * 100)}%`}
+          value={pitched === 0 ? "-" : `${Math.round(replies * 100)}%`}
           detail={pitched === 0 ? "send an opener first" : `of ${pitched} pitched`}
           tone={pitched === 0 ? "text" : "brand"}
         />

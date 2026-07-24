@@ -51,7 +51,7 @@ export function ConnectRow({
   const slug = profileSlug(connect.profile_url);
   const due = action && action.overdue >= 0;
   const showCta = showAction && due;
-  // Both follow-ups spent and still nothing — the only move left is to close it.
+  // Both follow-ups spent and still nothing - the only move left is to close it.
   const exhausted = showAction && !action && isStale(connect);
 
   async function saveDetails() {
@@ -130,7 +130,7 @@ export function ConnectRow({
             onChange={(stage) => setStage(connect, stage)}
           />
 
-          {/* Delete still costs two clicks — the first only arms the menu item. */}
+          {/* Delete still costs two clicks - the first only arms the menu item. */}
           <DropdownMenu onOpenChange={(open) => !open && setConfirmDelete(false)}>
             <DropdownMenuTrigger
               aria-label="Connect actions"
@@ -230,7 +230,7 @@ export function ConnectRow({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onBlur={saveDetails}
-            placeholder="Note — what you said, or what to follow up on"
+            placeholder="Note - what you said, or what to follow up on"
             className="rounded-lg border border-line-soft bg-ink px-3 py-2 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none"
           />
           <input

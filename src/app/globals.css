@@ -9,13 +9,13 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Reach — daily LinkedIn outreach tracker.
+  Reach - daily LinkedIn outreach tracker.
   Dark, instrument-panel palette: near-black base with a cool cast and a single
   signal colour, the brand lime. One accent means intensity carries meaning on
-  its own — dim lime is work in progress, full-strength lime is a target met —
+  its own - dim lime is work in progress, full-strength lime is a target met -
   so the page has exactly one thing that glows and it is always the score.
 
-  Surfaces climb in four steps — ink → surface → surface-2 → surface-3 — and
+  Surfaces climb in four steps - ink → surface → surface-2 → surface-3 - and
   the step is deliberately small. Depth reads from the lift (borders and
   shadow), not from grey getting lighter, which is what keeps a near-black UI
   from turning muddy as panels stack.
@@ -32,7 +32,7 @@
 
   /*
     The logo lime, and the three steps below it. `dim` is the same hue burnt
-    down to ~70% over the page — it stays legible as text where a translucent
+    down to ~70% over the page - it stays legible as text where a translucent
     lime would sink into the background, and it is what "not there yet" looks
     like. `soft` and `edge` are the tinted well and hairline that let lime type
     sit on its own panel without a second hue entering the palette.
@@ -54,13 +54,13 @@
     0 18px 44px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.6),
     inset 0 1px 0 0 rgb(255 255 255 / 0.04);
 
-  /* Reserved for lit brand marks — the tally, a met target, the chart's head. */
+  /* Reserved for lit brand marks - the tally, a met target, the chart's head. */
   --shadow-brand: 0 0 14px -2px var(--brand);
 
   /*
     shadcn/ui speaks in semantic tokens (background, popover, accent…). The app
     is dark-only, so rather than shipping a second palette these just alias the
-    Reach one — a shadcn primitive dropped anywhere already looks native.
+    Reach one - a shadcn primitive dropped anywhere already looks native.
   */
   --background: var(--ink);
   --foreground: var(--text);
@@ -143,7 +143,7 @@
 @layer base {
   /*
     Tailwind v4 defaults a bare `border` to `currentColor`. shadcn's primitives
-    lean on that bare class, so on near-white text they drew a white outline —
+    lean on that bare class, so on near-white text they drew a white outline -
     which is what the dropdowns were doing. Pin the default to the palette;
     explicit utilities like `border-line` still win, being a later layer.
   */
@@ -166,7 +166,7 @@ body {
 /*
   Every floating shadcn surface, lifted off the page as one. Keyed on the
   `data-slot` markers the primitives already emit, so re-running `shadcn add`
-  can't quietly drop the treatment. The sheet is deliberately absent — it is a
+  can't quietly drop the treatment. The sheet is deliberately absent - it is a
   full-height panel, not a floating one, and keeps its own `bg-sidebar`.
 */
 [data-slot="dropdown-menu-content"],
@@ -177,7 +177,7 @@ body {
   box-shadow: var(--shadow-float);
   /*
     `bg-accent` is the row hover, and surface-2 sits *below* the panel it would
-    be painted on. Rebinding the token here — rather than chasing the utility —
+    be painted on. Rebinding the token here - rather than chasing the utility -
     lets the highlight climb one more step, as `@theme inline` compiles
     `bg-accent` straight down to `var(--accent)`.
   */
@@ -186,7 +186,7 @@ body {
 
 /*
   shadcn ships an inverted (near-white) tooltip. At this black level that reads
-  as a flashbulb, so it joins the other floating surfaces — which means taking
+  as a flashbulb, so it joins the other floating surfaces - which means taking
   the arrow and the text colour with it.
 */
 [data-slot="tooltip-content"] {

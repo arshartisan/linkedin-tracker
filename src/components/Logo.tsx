@@ -1,6 +1,6 @@
 /**
  * The Reach mark and full lockup, inlined rather than loaded from
- * /reach-logo.svg and /reach-label-logo.svg so they paint with the first frame —
+ * /reach-logo.svg and /reach-label-logo.svg so they paint with the first frame -
  * the rail is the first thing on screen and a brand mark that pops in a moment
  * later reads as a broken image.
  *
@@ -9,7 +9,7 @@
  * (white in the supplied file) so it tracks whatever text sits beside it.
  */
 
-/** The plate and the two arrow strokes — identical in both marks. */
+/** The plate and the two arrow strokes - identical in both marks. */
 function Glyph() {
   return (
     <>
@@ -26,7 +26,7 @@ function Glyph() {
   );
 }
 
-/** Plate only — for the collapsed rail and anywhere the wordmark won't fit. */
+/** Plate only - for the collapsed rail and anywhere the wordmark won't fit. */
 export function LogoMark({ className = "size-8" }: { className?: string }) {
   return (
     <svg
@@ -43,7 +43,7 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
 
 /**
  * Plate + wordmark. Roughly 2.93:1, so size it by height (`h-7 w-auto`) and let
- * the width follow — pinning the width instead squeezes the plate.
+ * the width follow - pinning the width instead squeezes the plate.
  */
 export function LogoLockup({ className = "h-8 w-auto" }: { className?: string }) {
   return (

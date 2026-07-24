@@ -11,7 +11,7 @@ function subscribe(onChange: () => void) {
 
 /**
  * The media query is an external store, so reading it through
- * `useSyncExternalStore` settles it on the first client render — the effect
+ * `useSyncExternalStore` settles it on the first client render - the effect
  * version this replaces painted once at the wrong size and then corrected.
  */
 export function useIsMobile() {

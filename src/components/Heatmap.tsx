@@ -10,7 +10,7 @@ const PITCH = CELL + GAP;
 /**
  * Six months of days, one column per week starting Monday. Colour encodes
  * effort against the goal on a single ramp, and only a day that actually hit
- * the goal reaches full strength — so a wall of solid lime means a wall of met
+ * the goal reaches full strength - so a wall of solid lime means a wall of met
  * targets, and a day that beat the goal is the only thing that glows.
  */
 export function Heatmap({
@@ -64,7 +64,7 @@ export function Heatmap({
       <div className="inline-flex flex-col gap-1.5" style={{ width }}>
         {/*
           A month name is three characters wide and a column is eleven pixels,
-          so the labels cannot live *in* the grid — laid out as flex items they
+          so the labels cannot live *in* the grid - laid out as flex items they
           overflow their cell and shove every later month out of register.
           They're absolutely positioned against the column pitch instead, which
           pins each one to the week it names and lets it overhang freely.
@@ -89,7 +89,7 @@ export function Heatmap({
               {column.map((day) => (
                 <div
                   key={day}
-                  title={`${formatShort(day)} — ${counts.get(day) ?? 0} sent`}
+                  title={`${formatShort(day)} - ${counts.get(day) ?? 0} sent`}
                   className={`rounded-[2px] ${tone(day)}`}
                   style={{ width: CELL, height: CELL }}
                 />

@@ -9,7 +9,7 @@ export function countsByDay(connects: Connect[]): Map<string, number> {
 
 /**
  * Days in a row that hit the goal, counting back from today. Today is only
- * counted once it's hit — an unfinished today doesn't break yesterday's run,
+ * counted once it's hit - an unfinished today doesn't break yesterday's run,
  * because the day isn't over yet.
  */
 export function currentStreak(counts: Map<string, number>, goal: number): number {
@@ -45,7 +45,7 @@ export function sumSince(counts: Map<string, number>, from: string): number {
   return total;
 }
 
-/** Inclusive sum across a closed range of days — the spine of every comparison. */
+/** Inclusive sum across a closed range of days - the spine of every comparison. */
 export function sumRange(
   counts: Map<string, number>,
   from: string,
@@ -58,7 +58,7 @@ export function sumRange(
 
 /**
  * This window against the one immediately before it, as a signed ratio.
- * Returns null when the previous window is empty — "up 100%" from nothing is
+ * Returns null when the previous window is empty - "up 100%" from nothing is
  * a number that looks like insight and isn't.
  */
 export function periodDelta(
@@ -99,7 +99,7 @@ export function bestDay(counts: Map<string, number>): { day: string; count: numb
   return best;
 }
 
-/** Average per active day — days with zero sent would drag this to nothing. */
+/** Average per active day - days with zero sent would drag this to nothing. */
 export function averagePerActiveDay(counts: Map<string, number>): number {
   if (counts.size === 0) return 0;
   let total = 0;
@@ -109,7 +109,7 @@ export function averagePerActiveDay(counts: Map<string, number>): number {
 
 /**
  * Of the invites that got an answer either way, how many were accepted.
- * Invites still sitting at `pending` aren't counted — they haven't been
+ * Invites still sitting at `pending` aren't counted - they haven't been
  * decided yet, and including them would drag the rate down as you send more.
  */
 export function acceptanceRate(connects: Connect[]): { rate: number; decided: number } {
@@ -142,7 +142,7 @@ export function replyRate(connects: Connect[]): { rate: number; pitched: number 
   return { rate: replied / pitched, pitched };
 }
 
-/** Day keys for a trailing window, oldest first — the heatmap's spine. */
+/** Day keys for a trailing window, oldest first - the heatmap's spine. */
 export function trailingDays(n: number, end: string = dayKey()): string[] {
   const days: string[] = [];
   for (let i = n - 1; i >= 0; i--) days.push(shiftDayKey(end, -i));

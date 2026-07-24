@@ -44,7 +44,7 @@ export default function TodayPage() {
       <header className="mb-8">
         {/*
           Below md the rail is replaced by the bottom tab bar, which has no room
-          for the lockup — so on mobile the page carries the mark itself.
+          for the lockup - so on mobile the page carries the mark itself.
         */}
         <LogoLockup className="mb-6 h-7 w-auto md:hidden" />
 
@@ -70,7 +70,7 @@ export default function TodayPage() {
                 hit ? "text-brand" : "text-text"
               }`}
             >
-              {loading ? "—" : sent}
+              {loading ? "-" : sent}
             </span>
             {editingGoal ? (
               <input
@@ -158,11 +158,11 @@ export default function TodayPage() {
       {mode === "local" && (
         <p className="mb-5 rounded-xl border border-line bg-surface px-4 py-3 text-xs text-muted">
           Saving to this browser only. Add your Supabase keys to sync across
-          devices — see the README.
+          devices - see the README.
         </p>
       )}
 
-      {/* Sending invites is only half the job — the queue is where deals start. */}
+      {/* Sending invites is only half the job - the queue is where deals start. */}
       {queue.due.length > 0 && (
         <Link
           href="/queue"
@@ -204,7 +204,7 @@ export default function TodayPage() {
               Nothing logged yet today.
             </p>
             <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
-              Paste a profile link above the moment you send the invite — the
+              Paste a profile link above the moment you send the invite - the
               tally only works if it&apos;s honest.
             </p>
           </div>

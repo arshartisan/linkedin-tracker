@@ -1,5 +1,5 @@
 /**
- * Every day boundary in this app is the user's *local* midnight — a connect
+ * Every day boundary in this app is the user's *local* midnight - a connect
  * sent at 11pm belongs to that day, not to UTC's tomorrow. So day keys are
  * built from local date parts, never from toISOString().
  */

@@ -84,13 +84,13 @@ export function Nav() {
   const sentToday = connects.filter((c) => c.sent_on === today).length;
   const hit = sentToday >= goal;
 
-  // Only the queue carries a count — a badge on everything is a badge on nothing.
+  // Only the queue carries a count - a badge on everything is a badge on nothing.
   const badge = (label: Label) =>
     label === "Queue" && queue.due.length > 0 ? queue.due.length : null;
 
   return (
     <>
-      {/* Desktop rail — fixed, so the list scrolls under it instead of with it. */}
+      {/* Desktop rail - fixed, so the list scrolls under it instead of with it. */}
       <Sidebar collapsible="icon" className="border-line">
         {/*
           Collapsed to icons the lockup has no room to sit beside the trigger,
@@ -125,7 +125,7 @@ export function Nav() {
                         tooltip={link.label}
                         /*
                           The active row is the one place lime appears in the
-                          rail, and it gets a clipped bar on the leading edge —
+                          rail, and it gets a clipped bar on the leading edge -
                           which survives the collapse to icons, where the label
                           that would otherwise carry the state is gone.
                         */
@@ -163,7 +163,7 @@ export function Nav() {
                 className={`font-display text-2xl font-bold ${hit ? "text-brand" : "text-text"
                   }`}
               >
-                {loading ? "—" : sentToday}
+                {loading ? "-" : sentToday}
               </span>
               <span className="font-mono text-xs text-muted">/ {goal}</span>
             </div>

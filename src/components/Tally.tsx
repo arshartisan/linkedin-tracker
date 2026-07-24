@@ -2,7 +2,7 @@
 
 /**
  * The signature element. The goal isn't a percentage, it's 30 discrete
- * actions — so it's drawn as a tally sheet, one mark per connect, grouped
+ * actions - so it's drawn as a tally sheet, one mark per connect, grouped
  * in fives the way you'd score them on paper.
  *
  * With a single accent colour, intensity is what carries meaning: marks are

@@ -104,7 +104,7 @@ export default function QueuePage() {
             Queue is clear.
           </p>
           <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
-            Nothing needs a message today. Go log some new connects — the
+            Nothing needs a message today. Go log some new connects - the
             pipeline only fills from the top.
           </p>
         </div>

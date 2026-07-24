@@ -9,7 +9,7 @@ export type TrendPoint = { day: string; count: number };
 /**
  * The chart draws in a fixed 0–100 square and is stretched to fill its box by
  * `preserveAspectRatio="none"`. That keeps one coordinate system for both the
- * SVG geometry and the HTML overlay — a point at x=40 is at `left: 40%` — and
+ * SVG geometry and the HTML overlay - a point at x=40 is at `left: 40%` - and
  * `vector-effect="non-scaling-stroke"` stops the stretch from smearing the
  * stroke or the baseline's dashes.
  */
@@ -179,7 +179,7 @@ export function TrendChart({
       </div>
 
       {/*
-        Four evenly spaced dates — a label per day would be an unreadable comb.
+        Four evenly spaced dates - a label per day would be an unreadable comb.
         Deduplicated because on a very short range the quarter marks collide,
         and the same day twice is both a wrong axis and a duplicate key.
       */}

@@ -23,7 +23,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Reach — daily outreach tracker",
+  title: "Reach - Daily Outreach Tracker",
   description: "Log every LinkedIn connect you send and hold the daily line.",
 };
 

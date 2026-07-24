@@ -1,7 +1,7 @@
 /**
  * LinkedIn profile URLs come in a lot of shapes when pasted from the app,
  * from search results, or from a share sheet. Normalising them is what makes
- * duplicate detection work — /in/jane-doe-12ab/ and the same link with
+ * duplicate detection work - /in/jane-doe-12ab/ and the same link with
  * ?miniProfileUrn=… are the same person.
  */
 

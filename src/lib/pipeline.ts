@@ -1,7 +1,7 @@
 import type { Connect, Stage } from "./types";
 import { dayKey, shiftDayKey } from "./date";
 
-/** Two follow-ups, then the thread is done — chasing past that is noise. */
+/** Two follow-ups, then the thread is done - chasing past that is noise. */
 export const MAX_FOLLOWUPS = 2;
 
 /** Days of silence before the next follow-up is due. */
@@ -24,7 +24,7 @@ export type Action = {
 };
 
 /**
- * The single next thing to do for one person — never a list, because a queue
+ * The single next thing to do for one person - never a list, because a queue
  * you can argue with is a queue you don't clear.
  */
 export function nextAction(c: Connect, today: string = dayKey()): Action | null {
@@ -59,7 +59,7 @@ export function nextAction(c: Connect, today: string = dayKey()): Action | null 
         kind: "qualify",
         dueOn,
         overdue: daysLate(dueOn),
-        label: "They replied — qualify",
+        label: "They replied - qualify",
         cta: "Mark as lead",
       };
     }
@@ -76,7 +76,7 @@ export function diffDays(from: string, to: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
-/** Both follow-ups spent and still silent — nothing left but to close it. */
+/** Both follow-ups spent and still silent - nothing left but to close it. */
 export function isStale(c: Connect, today: string = dayKey()): boolean {
   if (c.stage !== "messaged" || c.followups < MAX_FOLLOWUPS) return false;
   const from = c.last_touch_on ?? c.messaged_on ?? c.sent_on;
@@ -88,7 +88,7 @@ export type Queue = {
   due: { connect: Connect; action: Action }[];
   /** Follow-ups with a date in the future. */
   upcoming: { connect: Connect; action: Action }[];
-  /** Invites still waiting on an accept — nothing to do but wait. */
+  /** Invites still waiting on an accept - nothing to do but wait. */
   waiting: Connect[];
   /** Went quiet after both follow-ups. */
   stale: Connect[];
@@ -124,7 +124,7 @@ export function buildQueue(connects: Connect[], today: string = dayKey()): Queue
     (action.overdue >= 0 ? due : upcoming).push({ connect, action });
   }
 
-  // Most overdue first — the oldest debt is the most likely to go cold.
+  // Most overdue first - the oldest debt is the most likely to go cold.
   due.sort((a, b) => b.action.overdue - a.action.overdue);
   upcoming.sort((a, b) => a.action.dueOn.localeCompare(b.action.dueOn));
   leads.sort((a, b) => (b.lead_on ?? "").localeCompare(a.lead_on ?? ""));
@@ -137,7 +137,7 @@ export type StagePatch = Partial<Connect>;
 /**
  * Moving to a stage also stamps the day it happened, so follow-up timing and
  * the funnel work without a separate bookkeeping step. Already-set stamps are
- * kept — going back and forth shouldn't rewrite history.
+ * kept - going back and forth shouldn't rewrite history.
  */
 export function stagePatch(stage: Stage, current: Connect, today = dayKey()): StagePatch {
   const patch: StagePatch = { stage };
@@ -212,6 +212,6 @@ function reached(stage: Stage, target: Stage): boolean {
 }
 
 export function rate(part: number, whole: number): string {
-  if (whole === 0) return "—";
+  if (whole === 0) return "-";
   return `${Math.round((part / whole) * 100)}%`;
 }
