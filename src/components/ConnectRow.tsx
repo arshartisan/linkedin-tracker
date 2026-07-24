@@ -92,7 +92,7 @@ export function ConnectRow({
             href={connect.profile_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate font-mono text-xs text-muted transition-colors hover:text-amber"
+            className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate font-mono text-xs text-muted transition-colors hover:text-brand"
           >
             <span className="truncate">/in/{slug ?? connect.profile_url}</span>
             <svg
@@ -201,9 +201,7 @@ export function ConnectRow({
             <button
               type="button"
               onClick={() => complete(connect, action)}
-              className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold text-ink transition-opacity hover:opacity-90 ${
-                action.kind === "qualify" ? "bg-teal" : "bg-amber"
-              }`}
+              className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-semibold text-ink transition-opacity hover:opacity-90"
             >
               {action.cta}
             </button>
@@ -233,14 +231,14 @@ export function ConnectRow({
             onChange={(e) => setNote(e.target.value)}
             onBlur={saveDetails}
             placeholder="Note — what you said, or what to follow up on"
-            className="rounded-lg border border-line-soft bg-ink px-3 py-2 text-sm placeholder:text-muted/60 focus:border-amber focus:outline-none"
+            className="rounded-lg border border-line-soft bg-ink px-3 py-2 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none"
           />
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             onBlur={saveDetails}
             placeholder="Tags, comma separated"
-            className="rounded-lg border border-line-soft bg-ink px-3 py-2 font-mono text-xs placeholder:text-muted/60 focus:border-amber focus:outline-none"
+            className="rounded-lg border border-line-soft bg-ink px-3 py-2 font-mono text-xs placeholder:text-muted/60 focus:border-brand focus:outline-none"
           />
         </div>
       )}

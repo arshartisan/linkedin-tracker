@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useData } from "./DataProvider";
+import { LogoMark } from "./Logo";
 import { dayKey } from "@/lib/date";
 import {
   Sidebar,
@@ -91,17 +92,21 @@ export function Nav() {
     <>
       {/* Desktop rail — fixed, so the list scrolls under it instead of with it. */}
       <Sidebar collapsible="icon" className="border-line">
+        {/*
+          Collapsed to icons the lockup has no room to sit beside the trigger,
+          so the header turns into a column: mark on top, trigger under it.
+        */}
         <SidebarHeader className="px-2 py-5 group-data-[collapsible=icon]:px-0">
-          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
-            <Link
-              href="/"
-              className="block min-w-0 px-2 group-data-[collapsible=icon]:hidden"
-            >
-              <span className="font-display text-2xl font-extrabold tracking-tight">
-                Reach
-              </span>
-              <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-                Outreach pipeline
+          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-3">
+            <Link href="/" className="flex min-w-0 items-center gap-2.5 px-1">
+              <LogoMark className="size-8 shrink-0 rounded-[7px]" />
+              <span className="min-w-0 group-data-[collapsible=icon]:hidden">
+                <span className="block font-display text-2xl font-extrabold leading-none tracking-tight">
+                  Reach
+                </span>
+                <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+                  Outreach pipeline
+                </span>
               </span>
             </Link>
             <SidebarTrigger className="shrink-0 text-muted hover:text-text" />
@@ -121,7 +126,13 @@ export function Nav() {
                         asChild
                         isActive={active}
                         tooltip={link.label}
-                        className="h-10 gap-3 px-3 text-muted data-[active=true]:text-text hover:text-text"
+                        /*
+                          The active row is the one place lime appears in the
+                          rail, and it gets a clipped bar on the leading edge —
+                          which survives the collapse to icons, where the label
+                          that would otherwise carry the state is gone.
+                        */
+                        className="relative h-10 gap-3 px-3 text-muted transition-colors hover:text-text data-[active=true]:bg-surface-2 data-[active=true]:text-brand data-[active=true]:before:absolute data-[active=true]:before:top-1/2 data-[active=true]:before:left-0 data-[active=true]:before:h-5 data-[active=true]:before:w-[3px] data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-brand"
                       >
                         <Link
                           href={link.href}
@@ -132,7 +143,7 @@ export function Nav() {
                         </Link>
                       </SidebarMenuButton>
                       {count !== null && (
-                        <SidebarMenuBadge className="tabular rounded-full bg-amber px-1.5 font-mono text-[10px] font-bold text-ink peer-data-[size=default]/menu-button:top-2.5 peer-data-[active=true]/menu-button:text-ink peer-hover/menu-button:text-ink">
+                        <SidebarMenuBadge className="tabular rounded-full bg-brand px-1.5 font-mono text-[10px] font-bold text-ink peer-data-[size=default]/menu-button:top-2.5 peer-data-[active=true]/menu-button:text-ink peer-hover/menu-button:text-ink">
                           {count}
                         </SidebarMenuBadge>
                       )}
@@ -153,7 +164,7 @@ export function Nav() {
             <div className="tabular mt-1.5 flex items-baseline gap-1.5">
               <span
                 className={`font-display text-2xl font-bold ${
-                  hit ? "text-teal" : "text-text"
+                  hit ? "text-brand" : "text-text"
                 }`}
               >
                 {loading ? "—" : sentToday}
@@ -177,13 +188,13 @@ export function Nav() {
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-[10px] ${
-                active ? "text-amber" : "text-muted"
+                active ? "text-brand" : "text-muted"
               }`}
             >
               <Icon name={link.label} className="h-5 w-5" />
               {link.label}
               {count !== null && (
-                <span className="tabular absolute right-[22%] top-1.5 min-w-[15px] rounded-full bg-amber px-1 text-center font-mono text-[9px] font-bold leading-[15px] text-ink">
+                <span className="tabular absolute top-1.5 right-[22%] min-w-[15px] rounded-full bg-brand px-1 text-center font-mono text-[9px] font-bold leading-[15px] text-ink">
                   {count}
                 </span>
               )}

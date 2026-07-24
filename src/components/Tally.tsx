@@ -3,8 +3,12 @@
 /**
  * The signature element. The goal isn't a percentage, it's 30 discrete
  * actions — so it's drawn as a tally sheet, one mark per connect, grouped
- * in fives the way you'd score them on paper. Marks past the goal turn teal
- * and sit apart, so overshooting reads as surplus rather than as "done".
+ * in fives the way you'd score them on paper.
+ *
+ * With a single accent colour, intensity is what carries meaning: marks are
+ * dim lime while the day is unfinished and the whole row lights to full
+ * strength the moment the target is met, so hitting it is an event you see
+ * rather than a number you read. Surplus marks sit apart past a divider.
  */
 export function Tally({
   count,
@@ -18,6 +22,7 @@ export function Tally({
   const groups = Math.ceil(goal / 5);
   const surplus = Math.max(0, count - goal);
   const height = compact ? "h-6" : "h-14 sm:h-16";
+  const hit = count >= goal;
 
   return (
     <div className="flex items-end gap-2.5 sm:gap-3">
@@ -30,9 +35,15 @@ export function Tally({
               <span
                 key={i}
                 className={`${height} ${
-                  filled ? "tick-in bg-amber" : "bg-line"
+                  filled
+                    ? hit
+                      ? "tick-in bg-brand"
+                      : "tick-in bg-brand/55"
+                    : "bg-line"
                 } min-w-[3px] flex-1 origin-bottom rounded-full transition-colors duration-300`}
-                style={filled ? { boxShadow: "0 0 12px -2px var(--amber)" } : undefined}
+                style={
+                  filled && hit ? { boxShadow: "var(--shadow-brand)" } : undefined
+                }
               />
             );
           })}
@@ -44,12 +55,12 @@ export function Tally({
           {Array.from({ length: Math.min(surplus, 15) }, (_, i) => (
             <span
               key={i}
-              className={`${height} tick-in w-[3px] origin-bottom rounded-full bg-teal sm:w-1`}
-              style={{ boxShadow: "0 0 10px -2px var(--teal)" }}
+              className={`${height} tick-in w-[3px] origin-bottom rounded-full bg-brand sm:w-1`}
+              style={{ boxShadow: "var(--shadow-brand)" }}
             />
           ))}
           {surplus > 15 && (
-            <span className="tabular ml-1.5 self-center font-mono text-[11px] text-teal">
+            <span className="tabular ml-1.5 self-center font-mono text-[11px] text-brand">
               +{surplus - 15}
             </span>
           )}

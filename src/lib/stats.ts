@@ -45,6 +45,41 @@ export function sumSince(counts: Map<string, number>, from: string): number {
   return total;
 }
 
+/** Inclusive sum across a closed range of days — the spine of every comparison. */
+export function sumRange(
+  counts: Map<string, number>,
+  from: string,
+  to: string
+): number {
+  let total = 0;
+  for (const [day, n] of counts) if (day >= from && day <= to) total += n;
+  return total;
+}
+
+/**
+ * This window against the one immediately before it, as a signed ratio.
+ * Returns null when the previous window is empty — "up 100%" from nothing is
+ * a number that looks like insight and isn't.
+ */
+export function periodDelta(
+  counts: Map<string, number>,
+  days: number,
+  end: string = dayKey()
+): { current: number; previous: number; change: number | null } {
+  const currentFrom = shiftDayKey(end, -(days - 1));
+  const previousTo = shiftDayKey(currentFrom, -1);
+  const previousFrom = shiftDayKey(previousTo, -(days - 1));
+
+  const current = sumRange(counts, currentFrom, end);
+  const previous = sumRange(counts, previousFrom, previousTo);
+
+  return {
+    current,
+    previous,
+    change: previous === 0 ? null : (current - previous) / previous,
+  };
+}
+
 export function totalsThisWeek(counts: Map<string, number>): number {
   return sumSince(counts, weekStart(dayKey()));
 }

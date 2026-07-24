@@ -2,10 +2,16 @@
 
 import { dayKey, formatShort, parseDayKey, shiftDayKey, weekStart } from "@/lib/date";
 
+/** Cell size and gutter, in px. The column pitch falls out of the two. */
+const CELL = 11;
+const GAP = 3;
+const PITCH = CELL + GAP;
+
 /**
  * Six months of days, one column per week starting Monday. Colour encodes
- * effort against the goal, and only a day that actually hit the goal gets
- * full amber — so a wall of solid colour means a wall of met targets.
+ * effort against the goal on a single ramp, and only a day that actually hit
+ * the goal reaches full strength — so a wall of solid lime means a wall of met
+ * targets, and a day that beat the goal is the only thing that glows.
  */
 export function Heatmap({
   counts,
@@ -34,12 +40,12 @@ export function Heatmap({
     if (day > today) return "bg-transparent";
     const n = counts.get(day) ?? 0;
     if (n === 0) return "bg-line-soft";
-    if (n > goal) return "bg-teal";
     const ratio = n / goal;
-    if (ratio >= 1) return "bg-amber";
-    if (ratio >= 0.66) return "bg-amber/65";
-    if (ratio >= 0.33) return "bg-amber/40";
-    return "bg-amber/20";
+    if (ratio > 1) return "bg-brand shadow-[0_0_7px_-1px_var(--brand)]";
+    if (ratio >= 1) return "bg-brand";
+    if (ratio >= 0.66) return "bg-brand/60";
+    if (ratio >= 0.33) return "bg-brand/35";
+    return "bg-brand/18";
   }
 
   // Label a column when its Monday opens a new month.
@@ -51,28 +57,41 @@ export function Heatmap({
       : "";
   });
 
+  const width = weeks * PITCH - GAP;
+
   return (
     <div className="overflow-x-auto pb-1">
-      <div className="inline-flex min-w-full flex-col gap-1.5">
-        <div className="flex gap-[3px]">
-          {monthLabels.map((label, i) => (
-            <div
-              key={i}
-              className="w-[11px] font-mono text-[9px] uppercase tracking-wide text-muted"
-            >
-              {label}
-            </div>
-          ))}
+      <div className="inline-flex flex-col gap-1.5" style={{ width }}>
+        {/*
+          A month name is three characters wide and a column is eleven pixels,
+          so the labels cannot live *in* the grid — laid out as flex items they
+          overflow their cell and shove every later month out of register.
+          They're absolutely positioned against the column pitch instead, which
+          pins each one to the week it names and lets it overhang freely.
+        */}
+        <div className="relative h-3">
+          {monthLabels.map((label, i) =>
+            label ? (
+              <span
+                key={i}
+                className="absolute top-0 font-mono text-[9px] uppercase tracking-wide text-muted"
+                style={{ left: i * PITCH }}
+              >
+                {label}
+              </span>
+            ) : null
+          )}
         </div>
 
-        <div className="flex gap-[3px]">
+        <div className="flex" style={{ gap: GAP }}>
           {columns.map((column, i) => (
-            <div key={i} className="flex flex-col gap-[3px]">
+            <div key={i} className="flex flex-col" style={{ gap: GAP }}>
               {column.map((day) => (
                 <div
                   key={day}
                   title={`${formatShort(day)} — ${counts.get(day) ?? 0} sent`}
-                  className={`h-[11px] w-[11px] rounded-[2px] ${tone(day)}`}
+                  className={`rounded-[2px] ${tone(day)}`}
+                  style={{ width: CELL, height: CELL }}
                 />
               ))}
             </div>

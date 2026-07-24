@@ -50,7 +50,7 @@ export default function TodayPage() {
             {formatLong(today)}
           </p>
           {streak > 0 && (
-            <p className="tabular font-mono text-[11px] uppercase tracking-[0.14em] text-teal">
+            <p className="tabular font-mono text-[11px] uppercase tracking-[0.14em] text-brand">
               {streak} day{streak === 1 ? "" : "s"} on target
             </p>
           )}
@@ -60,7 +60,7 @@ export default function TodayPage() {
           <div className="tabular flex items-baseline gap-2">
             <span
               className={`font-display text-[64px] font-extrabold leading-none tracking-tight sm:text-[76px] ${
-                hit ? "text-teal" : "text-text"
+                hit ? "text-brand" : "text-text"
               }`}
             >
               {loading ? "—" : sent}
@@ -78,14 +78,14 @@ export default function TodayPage() {
                   setEditingGoal(false);
                 }}
                 onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                className="w-16 rounded-lg border border-amber bg-ink px-2 py-1 font-mono text-lg focus:outline-none"
+                className="w-16 rounded-lg border border-brand bg-ink px-2 py-1 font-mono text-lg focus:outline-none"
               />
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger
                   title="Change the daily target"
                   aria-label={`Daily target: ${goal}`}
-                  className="font-mono text-xl text-muted outline-none transition-colors hover:text-amber data-[state=open]:text-amber"
+                  className="font-mono text-xl text-muted outline-none transition-colors hover:text-brand data-[state=open]:text-brand"
                 >
                   / {goal}
                 </DropdownMenuTrigger>
@@ -159,16 +159,16 @@ export default function TodayPage() {
       {queue.due.length > 0 && (
         <Link
           href="/queue"
-          className="mb-5 flex items-center gap-3 rounded-xl border border-amber/30 bg-amber-soft/40 px-4 py-3 text-sm transition-colors hover:border-amber/60"
+          className="mb-5 flex items-center gap-3 rounded-xl border border-brand/30 bg-brand-soft/40 px-4 py-3 text-sm transition-colors hover:border-brand/60"
         >
-          <span className="tabular font-display text-lg font-bold text-amber">
+          <span className="tabular font-display text-lg font-bold text-brand">
             {queue.due.length}
           </span>
-          <span className="text-amber/90">
+          <span className="text-brand/90">
             {queue.due.length === 1 ? "person needs" : "people need"} a message
             from you
           </span>
-          <span className="ml-auto text-amber">→</span>
+          <span className="ml-auto text-brand">→</span>
         </Link>
       )}
 

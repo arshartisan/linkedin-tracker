@@ -135,7 +135,7 @@ export default function HistoryPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search name, link, note or tag"
             aria-label="Search connects"
-            className="flex-1 rounded-xl border border-line-soft bg-surface px-4 py-2.5 text-sm placeholder:text-muted/70 focus:border-amber focus:outline-none"
+            className="flex-1 rounded-xl border border-line-soft bg-surface px-4 py-2.5 text-sm placeholder:text-muted/70 focus:border-brand focus:outline-none"
           />
 
           <div className="flex gap-2.5">

@@ -36,7 +36,7 @@ export default function LeadsPage() {
         <h1 className="font-display text-3xl font-extrabold tracking-tight">Leads</h1>
         <div className="mt-4 flex items-end justify-between gap-6">
           <div className="tabular flex items-baseline gap-2">
-            <span className="font-display text-[64px] font-extrabold leading-none tracking-tight text-teal sm:text-[76px]">
+            <span className="font-display text-[64px] font-extrabold leading-none tracking-tight text-brand sm:text-[76px]">
               {leads.length}
             </span>
             <span className="font-mono text-sm text-muted">
@@ -79,14 +79,16 @@ export default function LeadsPage() {
                   className="relative border-b border-line-soft px-4 py-3 last:border-b-0"
                 >
                   <div
-                    className={`absolute inset-y-0 left-0 ${last ? "bg-teal/15" : "bg-amber/10"}`}
+                    /* The last row is the one that pays — it gets the only fill
+                       with any real weight to it. */
+                    className={`absolute inset-y-0 left-0 ${last ? "bg-brand/25" : "bg-brand/8"}`}
                     style={{ width: `${Math.max(width, step.value > 0 ? 2 : 0)}%` }}
                     aria-hidden
                   />
                   <div className="relative flex items-baseline justify-between gap-4">
                     <span className="text-sm">{step.label}</span>
                     <span className="tabular flex items-baseline gap-2 font-mono text-xs">
-                      <span className={last ? "text-teal" : "text-text"}>
+                      <span className={last ? "text-brand" : "text-text"}>
                         {step.value}
                       </span>
                       {i > 0 && (
@@ -129,7 +131,7 @@ export default function LeadsPage() {
               {leads.map((connect, i) => (
                 <li key={connect.id} className="flex flex-col">
                   {connect.lead_on && (
-                    <span className="tabular mb-1 pl-1 font-mono text-[10px] uppercase tracking-wide text-teal/70">
+                    <span className="tabular mb-1 pl-1 font-mono text-[10px] uppercase tracking-wide text-brand/70">
                       lead since {formatShort(connect.lead_on)}
                     </span>
                   )}

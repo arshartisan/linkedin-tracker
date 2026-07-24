@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useData } from "@/components/DataProvider";
 import { Heatmap } from "@/components/Heatmap";
+import { TrendChart } from "@/components/TrendChart";
+import { Skeleton } from "@/components/ui/skeleton";
 import { dayKey, formatShort, shiftDayKey, weekStart } from "@/lib/date";
+import { diffDays } from "@/lib/pipeline";
 import {
   acceptanceRate,
   averagePerActiveDay,
@@ -11,11 +14,50 @@ import {
   bestStreak,
   countsByDay,
   currentStreak,
+  periodDelta,
   replyRate,
   sumSince,
   totalsThisMonth,
   totalsThisWeek,
 } from "@/lib/stats";
+
+const RANGES = [
+  { days: 14, label: "14d" },
+  { days: 30, label: "30d" },
+  { days: 90, label: "90d" },
+] as const;
+
+type Tone = "text" | "brand" | "dim";
+
+const TONE: Record<Tone, string> = {
+  text: "text-text",
+  brand: "text-brand",
+  dim: "text-brand-dim",
+};
+
+function Panel({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={`rounded-2xl border border-line-soft bg-surface ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">
+      {children}
+    </div>
+  );
+}
 
 function Stat({
   label,
@@ -26,16 +68,14 @@ function Stat({
   label: string;
   value: string;
   detail?: string;
-  tone?: "text" | "amber" | "teal";
+  tone?: Tone;
 }) {
-  const color =
-    tone === "amber" ? "text-amber" : tone === "teal" ? "text-teal" : "text-text";
   return (
-    <div className="rounded-xl border border-line-soft bg-surface px-4 py-3.5">
-      <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
-        {label}
-      </div>
-      <div className={`tabular mt-1.5 font-display text-2xl font-bold ${color}`}>
+    <div className="rounded-2xl border border-line-soft bg-surface px-4 py-3.5 transition-colors hover:border-line">
+      <Label>{label}</Label>
+      <div
+        className={`tabular mt-1.5 font-display text-2xl font-bold ${TONE[tone]}`}
+      >
         {value}
       </div>
       {detail && <div className="mt-0.5 text-xs text-muted">{detail}</div>}
@@ -43,8 +83,49 @@ function Stat({
   );
 }
 
+/**
+ * Direction against the previous window of the same length. A fall is muted
+ * rather than red — a quiet week is a fact, not an error, and rose is spoken
+ * for by things that actually need attention.
+ */
+function Delta({ change }: { change: number | null }) {
+  if (change === null) return null;
+  const up = change >= 0;
+  const percent = Math.abs(Math.round(change * 100));
+  return (
+    <span
+      className={`tabular inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] ${
+        up ? "bg-brand-soft text-brand" : "bg-surface-2 text-muted"
+      }`}
+    >
+      <span aria-hidden>{up ? "▲" : "▼"}</span>
+      {percent}%
+      <span className="sr-only">
+        {up ? "up" : "down"} on the previous period
+      </span>
+    </span>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
+      <Skeleton className="h-9 w-32" />
+      <Skeleton className="mt-2 h-4 w-64" />
+      <Skeleton className="mt-7 h-[26rem] w-full rounded-2xl" />
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton key={i} className="h-[92px] rounded-2xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function StatsPage() {
   const { connects, goal, loading } = useData();
+  const [range, setRange] = useState<number>(14);
+
   const counts = useMemo(() => countsByDay(connects), [connects]);
   const today = dayKey();
 
@@ -58,30 +139,30 @@ export default function StatsPage() {
   const { rate, decided } = acceptanceRate(connects);
   const { rate: replies, pitched } = replyRate(connects);
 
-  const daysThisWeek = Math.round(
-    (new Date(today).getTime() - new Date(weekStart(today)).getTime()) / 86_400_000
-  ) + 1;
+  const daysThisWeek = diffDays(weekStart(today), today) + 1;
   const weekTarget = goal * daysThisWeek;
 
-  const recent: { day: string; count: number }[] = [];
-  for (let i = 13; i >= 0; i--) {
-    const day = shiftDayKey(today, -i);
-    recent.push({ day, count: counts.get(day) ?? 0 });
-  }
-  const recentMax = Math.max(goal, ...recent.map((d) => d.count));
+  const period = useMemo(() => periodDelta(counts, range), [counts, range]);
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
-        <p className="text-sm text-muted">Loading…</p>
-      </div>
-    );
+  // Left to the React Compiler rather than a useMemo — `today` isn't provably
+  // stable to it, so a manual dependency list here only defeats optimisation.
+  const points: { day: string; count: number }[] = [];
+  for (let i = range - 1; i >= 0; i--) {
+    const day = shiftDayKey(today, -i);
+    points.push({ day, count: counts.get(day) ?? 0 });
   }
+
+  const onTarget = points.filter((p) => p.count >= goal).length;
+  const rangeAverage = period.current / range;
+
+  if (loading) return <StatsSkeleton />;
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
+    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-7">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">Stats</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
+          Stats
+        </h1>
         <p className="mt-1 text-sm text-muted">
           {connects.length === 0
             ? "Numbers appear once you start logging."
@@ -89,18 +170,97 @@ export default function StatsPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <Panel className="p-4 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-lg font-bold tracking-tight">
+              Momentum
+            </h2>
+            <p className="mt-0.5 text-xs text-muted">
+              Connects per day against your target of {goal}.
+            </p>
+          </div>
+
+          {/*
+            A segmented control rather than a dropdown: three options, and the
+            one you're on should be readable without opening anything.
+          */}
+          <div
+            role="group"
+            aria-label="Chart range"
+            className="flex rounded-lg border border-line-soft bg-ink p-0.5"
+          >
+            {RANGES.map((option) => {
+              const selected = option.days === range;
+              return (
+                <button
+                  key={option.days}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setRange(option.days)}
+                  className={`tabular cursor-pointer rounded-[6px] px-3 py-1.5 font-mono text-xs transition-colors ${
+                    selected
+                      ? "bg-brand text-ink"
+                      : "text-muted hover:text-text"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <TrendChart className="mt-5" points={points} goal={goal} />
+
+        <div className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-t border-line-soft pt-4">
+          <div>
+            <Label>Sent in {range} days</Label>
+            <div className="mt-1.5 flex items-baseline gap-2.5">
+              <span className="tabular font-display text-3xl font-bold">
+                {period.current}
+              </span>
+              <Delta change={period.change} />
+            </div>
+          </div>
+
+          <div className="flex gap-8">
+            <div>
+              <Label>Per day</Label>
+              <div
+                className={`tabular mt-1.5 font-display text-xl font-bold ${
+                  rangeAverage >= goal ? "text-brand" : "text-text"
+                }`}
+              >
+                {rangeAverage.toFixed(1)}
+              </div>
+            </div>
+            <div>
+              <Label>On target</Label>
+              <div className="tabular mt-1.5 font-display text-xl font-bold">
+                {onTarget}
+                <span className="font-mono text-xs font-normal text-muted">
+                  {" "}
+                  / {range}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Panel>
+
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Stat
           label="Streak"
           value={String(streak)}
           detail={best > 0 ? `best ${best}` : "days at target"}
-          tone={streak > 0 ? "teal" : "text"}
+          tone={streak > 0 ? "brand" : "text"}
         />
         <Stat
           label="This week"
           value={String(week)}
           detail={`of ${weekTarget} so far`}
-          tone={week >= weekTarget ? "teal" : "text"}
+          tone={week >= weekTarget ? "brand" : "text"}
         />
         <Stat label="This month" value={String(month)} />
         <Stat label="Last 30 days" value={String(last30)} />
@@ -111,7 +271,7 @@ export default function StatsPage() {
           label="Avg / active day"
           value={average.toFixed(1)}
           detail={average >= goal ? "above target" : `target ${goal}`}
-          tone={average >= goal ? "teal" : "amber"}
+          tone={average >= goal ? "brand" : "dim"}
         />
         <Stat
           label="Best day"
@@ -121,65 +281,41 @@ export default function StatsPage() {
         <Stat
           label="Accept rate"
           value={decided === 0 ? "—" : `${Math.round(rate * 100)}%`}
-          detail={
-            decided === 0 ? "no invites decided yet" : `of ${decided} decided`
-          }
-          tone="teal"
+          detail={decided === 0 ? "no invites decided yet" : `of ${decided} decided`}
+          tone={decided === 0 ? "text" : "brand"}
         />
         <Stat
           label="Reply rate"
           value={pitched === 0 ? "—" : `${Math.round(replies * 100)}%`}
           detail={pitched === 0 ? "send an opener first" : `of ${pitched} pitched`}
-          tone="teal"
+          tone={pitched === 0 ? "text" : "brand"}
         />
       </div>
 
-      <section className="mt-8">
-        <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
-          Last 14 days
-        </h2>
-        <div className="rounded-2xl border border-line-soft bg-surface p-4">
-          <div className="flex h-32 items-end gap-1.5">
-            {recent.map(({ day, count }) => {
-              const height = recentMax === 0 ? 0 : (count / recentMax) * 100;
-              const met = count >= goal;
-              return (
-                <div key={day} className="group flex flex-1 flex-col items-center gap-1.5">
-                  <div className="flex w-full flex-1 items-end">
-                    <div
-                      title={`${formatShort(day)} — ${count} sent`}
-                      className={`w-full rounded-t-[3px] transition-all ${
-                        count === 0 ? "bg-line-soft" : met ? "bg-teal" : "bg-amber/70"
-                      }`}
-                      style={{ height: `${Math.max(height, count > 0 ? 4 : 2)}%` }}
-                    />
-                  </div>
-                  <span className="tabular font-mono text-[9px] text-muted">
-                    {day.slice(-2)}
-                  </span>
-                </div>
-              );
-            })}
+      <Panel className="mt-2.5 p-4 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-lg font-bold tracking-tight">
+              Six months
+            </h2>
+            <p className="mt-0.5 text-xs text-muted">
+              Every day since {formatShort(shiftDayKey(today, -181))}.
+            </p>
           </div>
-          <div className="mt-3 flex items-center gap-4 border-t border-line-soft pt-3 font-mono text-[10px] uppercase tracking-wide text-muted">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-[2px] bg-teal" /> target met
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-[2px] bg-amber/70" /> short
-            </span>
-          </div>
-        </div>
-      </section>
 
-      <section className="mt-8">
-        <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
-          Six months
-        </h2>
-        <div className="rounded-2xl border border-line-soft bg-surface p-4">
-          <Heatmap counts={counts} goal={goal} />
+          <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-wide text-muted uppercase">
+            none
+            <span className="size-[11px] rounded-[2px] bg-line-soft" />
+            <span className="size-[11px] rounded-[2px] bg-brand/18" />
+            <span className="size-[11px] rounded-[2px] bg-brand/35" />
+            <span className="size-[11px] rounded-[2px] bg-brand/60" />
+            <span className="size-[11px] rounded-[2px] bg-brand" />
+            target
+          </div>
         </div>
-      </section>
+
+        <Heatmap counts={counts} goal={goal} />
+      </Panel>
     </div>
   );
 }

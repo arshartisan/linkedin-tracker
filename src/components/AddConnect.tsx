@@ -86,7 +86,7 @@ export function AddConnect() {
             className={`w-full rounded-xl border bg-ink px-4 py-3.5 pr-24 font-mono text-sm placeholder:font-sans placeholder:text-muted/70 focus:outline-none ${
               blocked
                 ? "border-rose focus:border-rose"
-                : "border-line-soft focus:border-amber"
+                : "border-line-soft focus:border-brand"
             }`}
           />
           {valid && derivedName && !name && (
@@ -99,7 +99,7 @@ export function AddConnect() {
         <button
           type="submit"
           disabled={!valid || blocked || saving}
-          className="shrink-0 rounded-xl bg-amber px-6 py-3.5 font-display text-sm font-bold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
+          className="shrink-0 rounded-xl bg-brand px-6 py-3.5 font-display text-sm font-bold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
         >
           {saving ? "Logging…" : "Log connect"}
         </button>
@@ -145,19 +145,19 @@ export function AddConnect() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={derivedName || "Name"}
-            className="rounded-lg border border-line-soft bg-ink px-3 py-2.5 text-sm placeholder:text-muted/60 focus:border-amber focus:outline-none"
+            className="rounded-lg border border-line-soft bg-ink px-3 py-2.5 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none"
           />
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Note"
-            className="rounded-lg border border-line-soft bg-ink px-3 py-2.5 text-sm placeholder:text-muted/60 focus:border-amber focus:outline-none"
+            className="rounded-lg border border-line-soft bg-ink px-3 py-2.5 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none"
           />
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="Tags, comma separated"
-            className="rounded-lg border border-line-soft bg-ink px-3 py-2.5 font-mono text-xs placeholder:font-sans placeholder:text-sm placeholder:text-muted/60 focus:border-amber focus:outline-none"
+            className="rounded-lg border border-line-soft bg-ink px-3 py-2.5 font-mono text-xs placeholder:font-sans placeholder:text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none"
           />
         </div>
       )}

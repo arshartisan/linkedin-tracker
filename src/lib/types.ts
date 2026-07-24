@@ -77,12 +77,18 @@ export const STAGE_SHORT: Record<Stage, string> = {
   closed: "Closed",
 };
 
+/**
+ * One hue, climbing. The pipeline is a ladder, so the chip gets brighter the
+ * further along it is — grey while nothing has happened, dim lime once they're
+ * engaged, full lime on a reply, and solid lime only for a lead. `closed` is
+ * the one stage that leaves the ramp, because it is the one that isn't progress.
+ */
 export const STAGE_TONE: Record<Stage, string> = {
   pending: "bg-surface-2 text-muted",
-  accepted: "bg-amber-soft text-amber",
-  messaged: "bg-amber-soft text-amber",
-  replied: "bg-teal-soft text-teal",
-  lead: "bg-teal text-ink",
+  accepted: "bg-surface-2 text-brand-dim",
+  messaged: "bg-brand-soft text-brand-dim",
+  replied: "bg-brand-soft text-brand",
+  lead: "bg-brand text-ink",
   closed: "bg-rose-soft text-rose",
 };
 

@@ -10,9 +10,10 @@
 
 /*
   Reach — daily LinkedIn outreach tracker.
-  Dark, instrument-panel palette: near-black base with a cool cast, signal
-  amber for "work done", teal for "reply landed". Amber is reserved for the
-  tally and nothing else, so progress is the only thing that glows on the page.
+  Dark, instrument-panel palette: near-black base with a cool cast and a single
+  signal colour, the brand lime. One accent means intensity carries meaning on
+  its own — dim lime is work in progress, full-strength lime is a target met —
+  so the page has exactly one thing that glows and it is always the score.
 
   Surfaces climb in four steps — ink → surface → surface-2 → surface-3 — and
   the step is deliberately small. Depth reads from the lift (borders and
@@ -28,10 +29,19 @@
   --line-soft: #171b23; /* a hairline between siblings */
   --text: #eef1f6;
   --muted: #838d9e;
-  --amber: #ffb020;
-  --amber-soft: #4a340c;
-  --teal: #2dd4a7;
-  --teal-soft: #10352c;
+
+  /*
+    The logo lime, and the three steps below it. `dim` is the same hue burnt
+    down to ~70% over the page — it stays legible as text where a translucent
+    lime would sink into the background, and it is what "not there yet" looks
+    like. `soft` and `edge` are the tinted well and hairline that let lime type
+    sit on its own panel without a second hue entering the palette.
+  */
+  --brand: #d7fa06;
+  --brand-dim: #9bb50b;
+  --brand-soft: #2b3405;
+  --brand-edge: #4a5a08;
+
   --rose: #ff6b6b;
   --rose-soft: #3a1d1f;
 
@@ -44,6 +54,9 @@
     0 18px 44px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.6),
     inset 0 1px 0 0 rgb(255 255 255 / 0.04);
 
+  /* Reserved for lit brand marks — the tally, a met target, the chart's head. */
+  --shadow-brand: 0 0 14px -2px var(--brand);
+
   /*
     shadcn/ui speaks in semantic tokens (background, popover, accent…). The app
     is dark-only, so rather than shipping a second palette these just alias the
@@ -55,7 +68,7 @@
   --card-foreground: var(--text);
   --popover: var(--surface-3);
   --popover-foreground: var(--text);
-  --primary: var(--amber);
+  --primary: var(--brand);
   --primary-foreground: var(--ink);
   --secondary: var(--surface-2);
   --secondary-foreground: var(--text);
@@ -66,16 +79,16 @@
   --destructive-foreground: var(--ink);
   --border: var(--line);
   --input: var(--line-soft);
-  --ring: var(--amber);
+  --ring: var(--brand);
 
   --sidebar: var(--surface);
   --sidebar-foreground: var(--text);
-  --sidebar-primary: var(--amber);
+  --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: var(--ink);
   --sidebar-accent: var(--surface-2);
   --sidebar-accent-foreground: var(--text);
   --sidebar-border: var(--line);
-  --sidebar-ring: var(--amber);
+  --sidebar-ring: var(--brand);
 }
 
 @theme inline {
@@ -87,10 +100,10 @@
   --color-line-soft: var(--line-soft);
   --color-text: var(--text);
   --color-muted: var(--muted);
-  --color-amber: var(--amber);
-  --color-amber-soft: var(--amber-soft);
-  --color-teal: var(--teal);
-  --color-teal-soft: var(--teal-soft);
+  --color-brand: var(--brand);
+  --color-brand-dim: var(--brand-dim);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-edge: var(--brand-edge);
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
 
@@ -191,12 +204,12 @@ body {
 }
 
 ::selection {
-  background: var(--amber);
+  background: var(--brand);
   color: #000;
 }
 
 :focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -235,6 +248,38 @@ body {
 
 .row-in {
   animation: row-in 220ms ease-out both;
+}
+
+/*
+  The trend line draws itself left to right on mount. `pathLength="1"` is set on
+  the path, so the dash figures are in path-length units and stay correct no
+  matter how wide the chart renders.
+*/
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.draw-line {
+  stroke-dasharray: 1;
+  animation: draw-line 900ms cubic-bezier(0.32, 0.72, 0.3, 1) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade-in 700ms ease-out 250ms both;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -83,7 +83,7 @@ export default function QueuePage() {
           <div className="tabular flex items-baseline gap-2">
             <span
               className={`font-display text-[64px] font-extrabold leading-none tracking-tight sm:text-[76px] ${
-                dueCount === 0 ? "text-teal" : "text-text"
+                dueCount === 0 ? "text-brand" : "text-text"
               }`}
             >
               {dueCount}
@@ -100,7 +100,7 @@ export default function QueuePage() {
 
       {dueCount === 0 ? (
         <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-          <p className="font-display text-lg font-semibold text-teal">
+          <p className="font-display text-lg font-semibold text-brand">
             Queue is clear.
           </p>
           <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
