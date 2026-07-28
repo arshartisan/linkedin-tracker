@@ -150,6 +150,18 @@
   * {
     border-color: var(--border);
   }
+
+  /*
+    Tailwind v4's preflight drops the browser's `cursor: pointer` on buttons,
+    so every bare `<button>` in the app read as un-clickable. Restore it here
+    rather than sprinkling `cursor-pointer` on each one - disabled controls
+    keep the not-allowed cursor they set explicitly.
+  */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  label[for] {
+    cursor: pointer;
+  }
 }
 
 html {
@@ -280,6 +292,23 @@ body {
 
 .fade-in {
   animation: fade-in 700ms ease-out 250ms both;
+}
+
+/* The fake caret shadcn's input-otp slot draws in the active cell. */
+@keyframes caret-blink {
+  0%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-caret-blink {
+  animation: caret-blink 1.25s step-end infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
