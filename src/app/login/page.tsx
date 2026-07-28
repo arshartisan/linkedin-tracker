@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { LogoLockup } from "@/components/Logo";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -26,21 +26,29 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
 
   const localError = prefixProblem(phone);
   const shownError = error ?? localError;
   const valid = PHONE_PATTERN.test(phone);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy || !valid) return;
+  /*
+    Called both by the Continue button and by the input's `onComplete`, so a
+    valid number signs in the moment the tenth digit lands - the button is
+    there for the case where the last digit was corrected rather than typed.
+    The guard is a ref, not `busy`: onComplete and a click can land in the same
+    tick, before the state update has been applied.
+  */
+  async function signIn(value: string) {
+    if (inFlight.current || !PHONE_PATTERN.test(value)) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: value }),
       });
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { error?: string };
@@ -53,6 +61,7 @@ export default function LoginPage() {
     } catch {
       setError("Couldn't reach the server. Check your connection.");
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -70,7 +79,10 @@ export default function LoginPage() {
         </p>
 
         <form
-          onSubmit={submit}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void signIn(phone);
+          }}
           className="mt-8 rounded-2xl border border-line bg-surface p-5"
         >
           <label
@@ -88,6 +100,7 @@ export default function LoginPage() {
                 setPhone(next);
                 setError(null);
               }}
+              onComplete={(next) => void signIn(next)}
               maxLength={PHONE_LENGTH}
               pattern={REGEXP_ONLY_DIGITS}
               inputMode="numeric"
