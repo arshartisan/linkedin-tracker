@@ -4,9 +4,11 @@ import { useMemo, useRef, useState } from "react";
 import { useData } from "./DataProvider";
 import { isLinkedInUrl, nameFromUrl, parseTags } from "@/lib/linkedin";
 import { formatShort, relativeDay } from "@/lib/date";
+import { DUPLICATE_MESSAGE } from "@/lib/store";
+import { USER_LABEL } from "@/lib/types";
 
 export function AddConnect() {
-  const { add, findDuplicate } = useData();
+  const { me, add, findDuplicate } = useData();
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
@@ -23,9 +25,13 @@ export function AddConnect() {
     [valid, trimmed, findDuplicate]
   );
   const derivedName = valid ? nameFromUrl(trimmed) : "";
-  // One profile, one row. Logging the same person twice inflates the tally and
-  // quietly breaks the funnel rates, so a duplicate link is a hard stop.
+  // One profile, one row - across the whole team. Two of us approaching the
+  // same person is the thing this tracker exists to prevent, and a second row
+  // also inflates the tally and breaks the funnel rates. Hard stop either way.
   const blocked = Boolean(duplicate);
+  // The database said no after the form said yes: a teammate logged this person
+  // between the two. Same panel, since it's the same situation.
+  const raced = error === DUPLICATE_MESSAGE;
 
   function reset() {
     setUrl("");
@@ -43,7 +49,7 @@ export function AddConnect() {
       return;
     }
     if (blocked) {
-      setError("You've already logged this profile.");
+      setError(DUPLICATE_MESSAGE);
       return;
     }
     setSaving(true);
@@ -79,12 +85,12 @@ export function AddConnect() {
             }}
             placeholder="Paste the LinkedIn profile link"
             aria-label="LinkedIn profile link"
-            aria-invalid={blocked || undefined}
-            aria-describedby={duplicate ? "duplicate-warning" : undefined}
+            aria-invalid={blocked || raced || undefined}
+            aria-describedby={duplicate || raced ? "duplicate-warning" : undefined}
             autoComplete="off"
             spellCheck={false}
             className={`w-full rounded-xl border bg-ink px-4 py-3.5 pr-24 font-mono text-sm placeholder:font-sans placeholder:text-muted/70 focus:outline-none ${
-              blocked
+              blocked || raced
                 ? "border-rose focus:border-rose"
                 : "border-line-soft focus:border-brand"
             }`}
@@ -98,7 +104,7 @@ export function AddConnect() {
 
         <button
           type="submit"
-          disabled={!valid || blocked || saving}
+          disabled={!valid || blocked || raced || saving}
           className="shrink-0 rounded-xl bg-brand px-6 py-3.5 font-display text-sm font-bold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
         >
           {saving ? "Logging…" : "Log connect"}
@@ -113,20 +119,33 @@ export function AddConnect() {
         >
           {showDetails ? "Hide details" : "Add name, note or tags"}
         </button>
-        {error && <span className="text-xs text-rose">{error}</span>}
+        {error && !raced && <span className="text-xs text-rose">{error}</span>}
       </div>
 
-      {duplicate && (
+      {duplicate ? (
         <div
           id="duplicate-warning"
           role="alert"
           className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-rose/30 bg-rose-soft/40 px-3.5 py-2.5 text-xs"
         >
           <span className="text-rose">
-            Already logged - {duplicate.name || "this profile"},{" "}
-            {relativeDay(duplicate.sent_on)?.toLowerCase() ??
-              formatShort(duplicate.sent_on)}
-            . Update that one instead of logging it twice.
+            {duplicate.owner === me.id ? (
+              <>
+                You already connected with{" "}
+                {duplicate.name || "this profile"},{" "}
+                {relativeDay(duplicate.sent_on)?.toLowerCase() ??
+                  formatShort(duplicate.sent_on)}
+                . Update that one instead of logging it twice.
+              </>
+            ) : (
+              <>
+                {USER_LABEL[duplicate.owner]} already connected with{" "}
+                {duplicate.name || "this profile"},{" "}
+                {relativeDay(duplicate.sent_on)?.toLowerCase() ??
+                  formatShort(duplicate.sent_on)}
+                . Leave this one to {USER_LABEL[duplicate.owner]}.
+              </>
+            )}
           </span>
           <a
             href={duplicate.profile_url}
@@ -137,6 +156,16 @@ export function AddConnect() {
             Open profile
           </a>
         </div>
+      ) : (
+        raced && (
+          <div
+            id="duplicate-warning"
+            role="alert"
+            className="mt-3 rounded-xl border border-rose/30 bg-rose-soft/40 px-3.5 py-2.5 text-xs text-rose"
+          >
+            {DUPLICATE_MESSAGE} Reload to see who has them.
+          </div>
+        )
       )}
 
       {showDetails && (

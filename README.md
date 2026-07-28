@@ -1,25 +1,45 @@
 # Reach
 
-A daily LinkedIn outreach tracker. Paste a profile link the moment you send the
-invite; the tally shows whether you're going to hit 30 today.
+A daily LinkedIn outreach tracker for a small team. Paste a profile link the
+moment you send the invite; the tally shows whether you're going to hit your
+number today, and nobody on the team connects with the same person twice.
 
-No sign-in. One person, one log.
+Sign in with your mobile number. Three people share one pipeline.
 
 ## What it does
 
-- **Today** — big count against the daily target, a 30-mark tally that fills as
-  you log, and fast entry: paste a profile URL and the name is derived from it.
-- **Duplicate guard** — warns if you've already logged that profile, with the
-  date, before you double-send.
-- **Status** — mark each connect Pending / Accepted / Ignored to get an
-  acceptance rate.
-- **History** — every connect grouped by day, searchable by name, link, note or
+- **Today** — big count against your daily target, a tally that fills as you
+  log, and fast entry: paste a profile URL and the name is derived from it.
+- **Duplicate guard** — a hard stop if *anyone* on the team has already logged
+  that profile, naming who has them and when. Backed by a unique index, so it
+  holds even when two people paste the same link at once.
+- **Pipeline** — move each connect along Pending → Accepted → Messaged →
+  Replied → Lead, with follow-ups falling due automatically.
+- **History** — your connects grouped by day, searchable by name, link, note or
   tag.
-- **Stats** — streak, weekly and monthly totals, average per active day, best
-  day, a 14-day bar chart and a six-month heatmap.
+- **Queue** — who needs a message from you, and when.
+- **Leads** — your funnel, step by step, and how long a connect takes to become
+  a lead.
+- **Team** — the shared screen. Everyone's connects per day, accept rate, reply
+  rate and leads, filterable down to one person, plus a side-by-side table of
+  all three.
 
-The daily target defaults to 30 and is editable — click `/ 30` on the Today
-screen.
+Today, History, Queue and Leads are yours alone. Team is the only screen that
+shows everybody.
+
+The daily target is per person and defaults to 30 — click `/ 30` on the Today
+screen to change yours. It's stored on your user record, so it follows you
+across devices.
+
+## Signing in
+
+Three numbers are recognised, listed in `src/lib/auth.ts`. Enter one on the
+login screen and you stay signed in for a year; the sign-out control sits in the
+sidebar footer (and next to the logo on mobile).
+
+This is a gate, not an identity system: the number *is* the credential, there's
+no SMS step, and anyone who knows a number can sign in as that person. That's a
+deliberate trade for a private team tool. See the note on access below.
 
 ## Running locally
 
@@ -29,7 +49,9 @@ npm run dev
 ```
 
 It works immediately with no configuration, storing everything in browser
-localStorage. Add Supabase to sync across devices.
+localStorage — which means each person would have their own separate log, so
+Supabase is what makes the shared pipeline actually shared. Development falls
+back to a fixed signing secret; production requires `AUTH_SECRET`.
 
 ## Adding Supabase
 
@@ -38,6 +60,11 @@ localStorage. Add Supabase to sync across devices.
    before setting the keys below** — once the keys are present the app talks to
    Supabase instead of localStorage, so a missing table surfaces as an error
    rather than a silent fallback.
+
+   Upgrading an existing single-user database? Follow
+   [`supabase/MIGRATION.md`](supabase/MIGRATION.md) instead — it backfills every
+   existing row to Arsh and tells you how to clear duplicates before the unique
+   index goes on.
 3. From **Project Settings → API keys**, copy the project URL and the
    publishable key into `.env.local`:
 
@@ -54,10 +81,17 @@ localStorage. Add Supabase to sync across devices.
 
 ### A note on access
 
-There's no authentication, so the anon key is the only thing guarding the data,
-and the RLS policy in the schema grants that key full access. For a personal
-tracker on a private Vercel URL that's a reasonable trade. If you ever share the
-link, add Supabase Auth and scope the policies to `auth.uid()`.
+Sign-in is a phone-number gate in the Next.js layer — a signed, HttpOnly cookie
+checked by `src/proxy.ts` — not Supabase Auth. As far as Postgres is concerned
+the publishable key is still the only credential, and the RLS policy in the
+schema grants it full access.
+
+So the gate stops someone loading the app; it does not stop someone who pulls
+the key out of the JavaScript bundle. The `owner` column is a record of who
+logged a connect, not an enforced boundary. For a team tracker on a private
+Vercel URL that's a reasonable trade. To close it properly, move reads and
+writes behind route handlers using a service-role key, or adopt Supabase Auth
+and scope the policies to `auth.uid()`.
 
 ## Deploying to Vercel
 
@@ -65,8 +99,16 @@ link, add Supabase Auth and scope the policies to `auth.uid()`.
 npx vercel
 ```
 
-Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` under
-**Project Settings → Environment Variables**, then redeploy. Without them the
+Under **Project Settings → Environment Variables** add:
+
+| Variable | |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | publishable key |
+| `AUTH_SECRET` | any long random string — `openssl rand -hex 32` |
+
+Then redeploy. `AUTH_SECRET` is **required**: without it the login route refuses
+to sign a session and nobody can get in. Without the Supabase keys the
 deployment still runs, but each browser keeps its own separate log.
 
 ## Stack

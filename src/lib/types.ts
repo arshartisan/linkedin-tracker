@@ -20,12 +20,34 @@ export type Stage =
   | "lead"
   | "closed";
 
+/** The three people who share the tracker. Matches `users.id` in Postgres. */
+export type UserId = "arsh" | "abdul" | "rishad";
+
+/** Display order, used by the nav, the team filter and the breakdown table. */
+export const USER_IDS: UserId[] = ["arsh", "abdul", "rishad"];
+
+export const USER_LABEL: Record<UserId, string> = {
+  arsh: "Arsh",
+  abdul: "Abdul",
+  rishad: "Rishad",
+};
+
+export type User = {
+  id: UserId;
+  name: string;
+  daily_goal: number;
+};
+
+export const DEFAULT_GOAL = 30;
+
 export type Connect = {
   id: string;
   /** Local calendar day the connect was sent, as YYYY-MM-DD. */
   sent_on: string;
   created_at: string;
   profile_url: string;
+  /** Who sent the invite. Rows predating multi-user hydrate as "arsh". */
+  owner: UserId;
   name: string;
   stage: Stage;
   note: string;
@@ -44,6 +66,7 @@ export type Connect = {
 export type NewConnect = {
   profile_url: string;
   name: string;
+  owner: UserId;
   note?: string;
   tags?: string[];
   sent_on?: string;
@@ -116,6 +139,9 @@ export function hydrate(row: Partial<Connect> & Record<string, unknown>): Connec
     sent_on: String(row.sent_on ?? ""),
     created_at: String(row.created_at ?? ""),
     profile_url: String(row.profile_url ?? ""),
+    // Everything logged before multi-user was Arsh's - the same assumption the
+    // SQL backfill makes, repeated here so localStorage rows migrate too.
+    owner: row.owner && USER_IDS.includes(row.owner) ? row.owner : "arsh",
     name: String(row.name ?? ""),
     stage,
     note: String(row.note ?? ""),

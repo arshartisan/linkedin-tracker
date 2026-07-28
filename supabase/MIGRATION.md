@@ -1,3 +1,123 @@
+# Migrations
+
+Two migrations live in `schema.sql`, both guarded and both safe to re-run:
+
+1. **[Multi-user](#migrating-to-multi-user)** — the current one. Adds `users`,
+   stamps every existing row as Arsh's, and makes duplicate profiles impossible.
+2. **[Pipeline](#migrating-to-the-pipeline-schema)** — the earlier `status` →
+   `stage` upgrade, kept here for reference.
+
+---
+
+# Migrating to multi-user
+
+Three people now share the tracker. This migration adds a `users` table, an
+`owner` column on `connects` backfilled to `arsh`, and a **global unique index**
+on the LinkedIn profile so the same person can't be connected with twice.
+
+**Do step 1 before anything else — the unique index is the one step that can
+fail, and it fails on data you already have.**
+
+## 1. Check for existing duplicates (do this first)
+
+```sql
+select substring(lower(profile_url) from 'linkedin\.com/(?:in|pub)/([^/?#]+)') as slug,
+       count(*) as copies,
+       array_agg(id) as ids
+from public.connects
+group by 1
+having count(*) > 1;
+```
+
+If this returns nothing, you're clear — skip to step 2.
+
+If it returns rows, decide which copy to keep for each slug (usually the one
+furthest along the pipeline, or the earliest `sent_on`) and delete the rest by
+id:
+
+```sql
+delete from public.connects where id in ('…', '…');
+```
+
+Re-run the check until it comes back empty. If you skip this, `create unique
+index` aborts and the rest of the file still applies — you just won't have the
+duplicate guard, and re-running after cleanup will add it.
+
+## 2. Back up
+
+```sql
+create table connects_backup_multiuser as select * from public.connects;
+```
+
+## 3. Run `schema.sql`
+
+Paste **the entire file** into the SQL editor and hit Run. The multi-user block
+sits below the pipeline migration; running the file piecemeal will skip parts of
+it.
+
+## 4. Verify
+
+Everything that existed is Arsh's:
+
+```sql
+select owner, count(*) from public.connects group by owner;
+```
+
+The three users exist with their goals:
+
+```sql
+select * from public.users;
+```
+
+The duplicate guard bites — this must fail with `23505`:
+
+```sql
+insert into public.connects (profile_url, owner)
+select profile_url, 'abdul' from public.connects limit 1;
+```
+
+Nothing was lost:
+
+```sql
+select
+  (select count(*) from public.connects)              as now,
+  (select count(*) from connects_backup_multiuser)    as before;
+```
+
+## 5. Deploy
+
+Set `AUTH_SECRET` in the deployment environment (any long random string —
+`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
+before pushing. Without it the login route refuses to sign a session and nobody
+can get in.
+
+**Run the SQL first, then deploy.** The new build writes an `owner` on every
+insert, so it needs the column to exist. The reverse order is safe too: `owner`
+keeps its `'arsh'` default precisely so the old single-user build carries on
+working against the migrated table until the new one goes live.
+
+## What changes for you
+
+- Everything already in the tracker shows up under Arsh. Abdul and Rishad start
+  empty.
+- Today, History, Queue and Leads are personal. **Team** (`/stats`) is the shared
+  screen, with an All / per-person filter.
+- The daily goal moved from browser storage into `users.daily_goal`, so it now
+  follows you across devices — and each person sets their own. Existing browser
+  goals are not migrated; set yours once on the Team screen.
+
+## If it goes wrong
+
+```sql
+drop table public.connects;
+alter table connects_backup_multiuser rename to connects;
+```
+
+Then re-apply the RLS policies from the bottom of `schema.sql`, since renaming a
+table does not carry policies across.
+
+---
+
 # Migrating to the pipeline schema
 
 The tracker moved from a three-value `status` (`pending` / `accepted` / `ignored`)

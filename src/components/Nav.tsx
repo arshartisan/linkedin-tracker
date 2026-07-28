@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useData } from "./DataProvider";
 import { LogoLockup, LogoMark } from "./Logo";
+import { SignOutButton } from "./SignOutButton";
 import { dayKey } from "@/lib/date";
 import {
   Sidebar,
@@ -20,12 +21,16 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+/*
+  The first four are yours alone. Team is the one shared screen - everyone's
+  numbers, filterable down to one person - so it sits last, after the work.
+*/
 const LINKS = [
   { href: "/", label: "Today" },
   { href: "/history", label: "History" },
   { href: "/queue", label: "Queue" },
   { href: "/leads", label: "Leads" },
-  // { href: "/stats", label: "Stats" },
+  { href: "/stats", label: "Team" },
 ] as const;
 
 type Label = (typeof LINKS)[number]["label"];
@@ -79,9 +84,9 @@ function Icon({ name, className }: { name: Label; className?: string }) {
 
 export function Nav() {
   const pathname = usePathname();
-  const { connects, queue, goal, loading } = useData();
+  const { me, mine, queue, goal, loading } = useData();
   const today = dayKey();
-  const sentToday = connects.filter((c) => c.sent_on === today).length;
+  const sentToday = mine.filter((c) => c.sent_on === today).length;
   const hit = sentToday >= goal;
 
   // Only the queue carries a count - a badge on everything is a badge on nothing.
@@ -155,8 +160,16 @@ export function Nav() {
         {/* Collapsed to icons there is no room for the tally, so it steps aside. */}
         <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
           <div className="rounded-xl border border-line-soft bg-surface-2/50 px-3.5 py-3">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-              Today
+            {/*
+              Whose tally this is. With three people sharing the tracker the
+              name has to sit next to the number, or you can't tell at a glance
+              whether you're looking at your own day.
+            */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+                {me.name} · Today
+              </div>
+              <SignOutButton className="-mr-1 shrink-0 rounded-md p-1 text-muted transition-colors hover:text-rose disabled:opacity-50" />
             </div>
             <div className="tabular mt-1.5 flex items-baseline gap-1.5">
               <span

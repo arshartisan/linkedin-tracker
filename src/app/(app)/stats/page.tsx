@@ -6,7 +6,8 @@ import { Heatmap } from "@/components/Heatmap";
 import { TrendChart } from "@/components/TrendChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { dayKey, formatShort, shiftDayKey, weekStart } from "@/lib/date";
-import { diffDays } from "@/lib/pipeline";
+import { diffDays, funnel } from "@/lib/pipeline";
+import { USER_IDS, USER_LABEL, type UserId } from "@/lib/types";
 import {
   acceptanceRate,
   averagePerActiveDay,
@@ -26,6 +27,14 @@ const RANGES = [
   { days: 30, label: "30d" },
   { days: 90, label: "90d" },
 ] as const;
+
+/** "all" is the team; the rest are the three of us. */
+type Owner = UserId | "all";
+
+const OWNERS: { value: Owner; label: string }[] = [
+  { value: "all", label: "All" },
+  ...USER_IDS.map((id) => ({ value: id as Owner, label: USER_LABEL[id] })),
+];
 
 type Tone = "text" | "brand" | "dim";
 
@@ -107,6 +116,83 @@ function Delta({ change }: { change: number | null }) {
   );
 }
 
+/**
+ * A segmented control rather than a dropdown: a handful of options, and the one
+ * you're on should be readable without opening anything. Used for both the
+ * range and the person.
+ */
+function Segmented<T extends string | number>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly { value: T; label: string }[];
+  value: T;
+  onChange: (next: T) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className="flex rounded-lg border border-line-soft bg-ink p-0.5"
+    >
+      {options.map((option) => {
+        const selected = option.value === value;
+        return (
+          <button
+            key={String(option.value)}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(option.value)}
+            className={`tabular cursor-pointer rounded-[6px] px-3 py-1.5 font-mono text-xs transition-colors ${
+              selected ? "bg-brand text-ink" : "text-muted hover:text-text"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Th({
+  children,
+  className = "text-right",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <th
+      scope="col"
+      className={`pb-2 font-mono text-[10px] font-normal tracking-[0.16em] text-muted uppercase ${className}`}
+    >
+      {children}
+    </th>
+  );
+}
+
+/** A number and, under it, the denominator that makes it mean something. */
+function Td({
+  value,
+  detail,
+  tone = "text",
+}: {
+  value: string;
+  detail?: string;
+  tone?: Tone;
+}) {
+  return (
+    <td className="tabular py-3 text-right">
+      <div className={`font-mono ${TONE[tone]}`}>{value}</div>
+      {detail && <div className="mt-0.5 text-[11px] text-muted">{detail}</div>}
+    </td>
+  );
+}
+
 function StatsSkeleton() {
   return (
     <div className="px-5 py-8 sm:px-8 sm:py-12">
@@ -123,10 +209,30 @@ function StatsSkeleton() {
 }
 
 export default function StatsPage() {
-  const { connects, goal, loading } = useData();
+  const { connects, goals, me, loading } = useData();
   const [range, setRange] = useState<number>(14);
+  const [owner, setOwner] = useState<Owner>("all");
 
-  const counts = useMemo(() => countsByDay(connects), [connects]);
+  /*
+    Every metric on this page is a pure function of a Connect[], so filtering
+    once here is the whole of the per-person view - stats.ts and pipeline.ts
+    don't need to know anyone exists.
+  */
+  const scoped = useMemo(
+    () => (owner === "all" ? connects : connects.filter((c) => c.owner === owner)),
+    [connects, owner]
+  );
+
+  /*
+    A team day is on target when all three have hit theirs, so the combined
+    target is the sum. Anything else would make the team line trivially green.
+  */
+  const goal =
+    owner === "all"
+      ? USER_IDS.reduce((sum, id) => sum + (goals[id] ?? 0), 0)
+      : goals[owner];
+
+  const counts = useMemo(() => countsByDay(scoped), [scoped]);
   const today = dayKey();
 
   const streak = currentStreak(counts, goal);
@@ -136,8 +242,8 @@ export default function StatsPage() {
   const last30 = sumSince(counts, shiftDayKey(today, -29));
   const average = averagePerActiveDay(counts);
   const peak = bestDay(counts);
-  const { rate, decided } = acceptanceRate(connects);
-  const { rate: replies, pitched } = replyRate(connects);
+  const { rate, decided } = acceptanceRate(scoped);
+  const { rate: replies, pitched } = replyRate(scoped);
 
   const daysThisWeek = diffDays(weekStart(today), today) + 1;
   const weekTarget = goal * daysThisWeek;
@@ -155,19 +261,55 @@ export default function StatsPage() {
   const onTarget = points.filter((p) => p.count >= goal).length;
   const rangeAverage = period.current / range;
 
+  /*
+    One row per person, always all three regardless of the filter above - the
+    point of this table is the side-by-side. Scoped to the selected window so
+    the numbers answer "how are we doing lately", not "ever".
+  */
+  // Left to the React Compiler, like `points` above - `since` derives from
+  // `today`, which isn't provably stable, so a manual dependency list here
+  // only defeats optimisation.
+  const since = shiftDayKey(today, -(range - 1));
+  const breakdown = USER_IDS.map((id) => {
+    const rows = connects.filter((c) => c.owner === id && c.sent_on >= since);
+    return {
+      id,
+      sent: rows.length,
+      accept: acceptanceRate(rows),
+      reply: replyRate(rows),
+      leads: funnel(rows).leads,
+      target: (goals[id] ?? 0) * range,
+    };
+  });
+
   if (loading) return <StatsSkeleton />;
 
   return (
     <div className="px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-7">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Stats
+          Team
         </h1>
         <p className="mt-1 text-sm text-muted">
-          {connects.length === 0
+          {scoped.length === 0
             ? "Numbers appear once you start logging."
-            : `${connects.length} connects logged across ${counts.size} active days.`}
+            : `${scoped.length} connects logged across ${counts.size} active days${
+                owner === "all" ? " by the three of you" : ""
+              }.`}
         </p>
+
+        {/*
+          The one control that changes what every panel below means, so it sits
+          under the title rather than inside any one of them.
+        */}
+        <div className="mt-4">
+          <Segmented
+            label="Whose numbers"
+            options={OWNERS}
+            value={owner}
+            onChange={setOwner}
+          />
+        </div>
       </header>
 
       <Panel className="p-4 sm:p-6">
@@ -177,38 +319,22 @@ export default function StatsPage() {
               Momentum
             </h2>
             <p className="mt-0.5 text-xs text-muted">
-              Connects per day against your target of {goal}.
+              Connects per day against{" "}
+              {owner === "all"
+                ? `the combined target of ${goal}`
+                : owner === me.id
+                  ? `your target of ${goal}`
+                  : `${USER_LABEL[owner]}'s target of ${goal}`}
+              .
             </p>
           </div>
 
-          {/*
-            A segmented control rather than a dropdown: three options, and the
-            one you're on should be readable without opening anything.
-          */}
-          <div
-            role="group"
-            aria-label="Chart range"
-            className="flex rounded-lg border border-line-soft bg-ink p-0.5"
-          >
-            {RANGES.map((option) => {
-              const selected = option.days === range;
-              return (
-                <button
-                  key={option.days}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setRange(option.days)}
-                  className={`tabular cursor-pointer rounded-[6px] px-3 py-1.5 font-mono text-xs transition-colors ${
-                    selected
-                      ? "bg-brand text-ink"
-                      : "text-muted hover:text-text"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
+          <Segmented
+            label="Chart range"
+            options={RANGES.map((r) => ({ value: r.days, label: r.label }))}
+            value={range}
+            onChange={setRange}
+          />
         </div>
 
         <TrendChart className="mt-5" points={points} goal={goal} />
@@ -291,6 +417,86 @@ export default function StatsPage() {
           tone={pitched === 0 ? "text" : "brand"}
         />
       </div>
+
+      <Panel className="mt-2.5 p-4 sm:p-6">
+        <div className="mb-4">
+          <h2 className="font-display text-lg font-bold tracking-tight">
+            Side by side
+          </h2>
+          <p className="mt-0.5 text-xs text-muted">
+            The last {range} days, whoever is selected above.
+          </p>
+        </div>
+
+        {/* Narrow screens scroll the table rather than the page. */}
+        <div className="-mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[30rem] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line-soft text-left">
+                <Th className="text-left">Person</Th>
+                <Th>Sent</Th>
+                <Th>Accept</Th>
+                <Th>Reply</Th>
+                <Th>Leads</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {breakdown.map((row) => (
+                <tr
+                  key={row.id}
+                  className={`border-b border-line-soft/60 last:border-0 ${
+                    row.id === me.id ? "bg-surface-2/40" : ""
+                  }`}
+                >
+                  <td className="py-3 pr-3">
+                    <span className="font-display font-semibold">
+                      {USER_LABEL[row.id]}
+                    </span>
+                    {row.id === me.id && (
+                      <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.16em] text-brand">
+                        you
+                      </span>
+                    )}
+                  </td>
+                  <td className="tabular py-3 text-right font-mono">
+                    <span
+                      className={row.sent >= row.target ? "text-brand" : "text-text"}
+                    >
+                      {row.sent}
+                    </span>
+                    <span className="text-muted"> / {row.target}</span>
+                  </td>
+                  <Td
+                    value={
+                      row.accept.decided === 0
+                        ? "-"
+                        : `${Math.round(row.accept.rate * 100)}%`
+                    }
+                    detail={
+                      row.accept.decided === 0
+                        ? undefined
+                        : `${row.accept.decided} decided`
+                    }
+                  />
+                  <Td
+                    value={
+                      row.reply.pitched === 0
+                        ? "-"
+                        : `${Math.round(row.reply.rate * 100)}%`
+                    }
+                    detail={
+                      row.reply.pitched === 0
+                        ? undefined
+                        : `${row.reply.pitched} pitched`
+                    }
+                  />
+                  <Td value={String(row.leads)} tone={row.leads > 0 ? "brand" : "text"} />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
 
       <Panel className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">

@@ -57,7 +57,7 @@ function pageWindow(current: number, total: number): (number | "gap")[] {
 }
 
 export default function HistoryPage() {
-  const { connects, goal, loading } = useData();
+  const { mine, goal, loading } = useData();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [pageSize, setPageSize] = useState<number>(25);
@@ -73,7 +73,7 @@ export default function HistoryPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return connects.filter((c) => {
+    return mine.filter((c) => {
       if (filter !== "all" && c.stage !== filter) return false;
       if (!q) return true;
       return (
@@ -83,7 +83,7 @@ export default function HistoryPage() {
         c.tags.some((t) => t.includes(q))
       );
     });
-  }, [connects, query, filter]);
+  }, [mine, query, filter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   // Deleting rows can shrink the list under you while you sit on the last page.
@@ -197,10 +197,10 @@ export default function HistoryPage() {
       ) : days.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line px-6 py-14 text-center">
           <p className="font-display text-lg font-semibold">
-            {connects.length === 0 ? "No connects logged yet." : "No matches."}
+            {mine.length === 0 ? "No connects logged yet." : "No matches."}
           </p>
           <p className="mt-1.5 text-sm text-muted">
-            {connects.length === 0
+            {mine.length === 0
               ? "Log your first one on the Today screen."
               : "Try a different name, tag or status."}
           </p>

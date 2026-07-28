@@ -16,6 +16,7 @@ import { useData } from "@/components/DataProvider";
 import { LogoLockup } from "@/components/Logo";
 import { AddConnect } from "@/components/AddConnect";
 import { ConnectRow } from "@/components/ConnectRow";
+import { SignOutButton } from "@/components/SignOutButton";
 import { Tally } from "@/components/Tally";
 import { dayKey, formatLong } from "@/lib/date";
 import { countsByDay, currentStreak } from "@/lib/stats";
@@ -24,15 +25,15 @@ import { countsByDay, currentStreak } from "@/lib/stats";
 const GOAL_PRESETS = [10, 15, 20, 25, 30, 50];
 
 export default function TodayPage() {
-  const { connects, queue, goal, setGoal, loading, error, mode } = useData();
+  const { me, mine, queue, goal, setGoal, loading, error, mode } = useData();
   const [editingGoal, setEditingGoal] = useState(false);
   const today = dayKey();
 
   const todays = useMemo(
-    () => connects.filter((c) => c.sent_on === today),
-    [connects, today]
+    () => mine.filter((c) => c.sent_on === today),
+    [mine, today]
   );
-  const counts = useMemo(() => countsByDay(connects), [connects]);
+  const counts = useMemo(() => countsByDay(mine), [mine]);
   const streak = currentStreak(counts, goal);
 
   const sent = todays.length;
@@ -44,9 +45,16 @@ export default function TodayPage() {
       <header className="mb-8">
         {/*
           Below md the rail is replaced by the bottom tab bar, which has no room
-          for the lockup - so on mobile the page carries the mark itself.
+          for the lockup, the name or a sixth control - so on mobile the page
+          carries the mark, whose log this is, and the way out.
         */}
-        <LogoLockup className="mb-6 h-7 w-auto md:hidden" />
+        <div className="mb-6 flex items-center gap-3 md:hidden">
+          <LogoLockup className="h-7 w-auto" />
+          <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+            {me.name}
+          </span>
+          <SignOutButton className="rounded-md p-1 text-muted transition-colors hover:text-rose disabled:opacity-50" />
+        </div>
 
         <div className="flex items-center justify-between gap-4">
           {/* Prerendered at build time, so the date only settles on the client. */}

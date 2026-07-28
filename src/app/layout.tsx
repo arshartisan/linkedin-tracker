@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { DataProvider } from "@/components/DataProvider";
-import { Nav } from "@/components/Nav";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 const display = Bricolage_Grotesque({
   variable: "--font-display",
@@ -31,6 +28,11 @@ export const viewport = {
   themeColor: "#0a0d12",
 };
 
+/*
+  Fonts and the stylesheet only. The signed-in shell - sidebar, data provider -
+  lives in (app)/layout.tsx, so /login renders on a bare page instead of behind
+  a nav it can't use yet.
+*/
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,15 +43,7 @@ export default function RootLayout({
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable} h-full`}
     >
-      <body className="min-h-full">
-        <DataProvider>
-          <SidebarProvider>
-            <Nav />
-            {/* The rail is fixed, so only this pane scrolls. */}
-            <SidebarInset className="pb-24 md:pb-0">{children}</SidebarInset>
-          </SidebarProvider>
-        </DataProvider>
-      </body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

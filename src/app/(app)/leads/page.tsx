@@ -7,10 +7,10 @@ import { formatShort } from "@/lib/date";
 import { diffDays, funnel, rate } from "@/lib/pipeline";
 
 export default function LeadsPage() {
-  const { connects, queue, loading } = useData();
+  const { mine, queue, loading } = useData();
   const leads = queue.leads;
 
-  const f = useMemo(() => funnel(connects), [connects]);
+  const f = useMemo(() => funnel(mine), [mine]);
 
   /** How long a connect takes to become a lead - median beats mean on a small n. */
   const medianDays = useMemo(() => {
