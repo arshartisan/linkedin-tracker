@@ -89,14 +89,29 @@ export function Nav() {
   const sentToday = mine.filter((c) => c.sent_on === today).length;
   const hit = sentToday >= goal;
 
-  // Only the queue carries a count - a badge on everything is a badge on nothing.
+  /*
+    Only the queue carries a count - a badge on everything is a badge on
+    nothing. And within the queue only the openers count: accepts waiting on a
+    first message are the work that goes cold. Follow-ups can wait a day.
+  */
+  const pitches = queue.due.filter((d) => d.action.kind === "pitch").length;
   const badge = (label: Label) =>
-    label === "Queue" && queue.due.length > 0 ? queue.due.length : null;
+    label === "Queue" && pitches > 0 ? pitches : null;
 
   return (
     <>
-      {/* Desktop rail - fixed, so the list scrolls under it instead of with it. */}
-      <Sidebar collapsible="icon" className="border-line">
+      {/*
+        Desktop rail - fixed, so the list scrolls under it instead of with it.
+        The panel itself is glass: a translucent surface over the page, blurred
+        and slightly saturated so the list scrolling beneath reads as movement
+        rather than detail. shadcn paints `bg-sidebar` on its inner element, so
+        the tint is applied through it; the inset highlight is the lit edge
+        that keeps the rail from dissolving into the ink beside it.
+      */}
+      <Sidebar
+        collapsible="icon"
+        className="border-line **:data-[sidebar=sidebar]:bg-surface/55 **:data-[sidebar=sidebar]:shadow-[inset_-1px_0_0_0_rgb(255_255_255/0.05),inset_1px_0_0_0_rgb(255_255_255/0.03)] **:data-[sidebar=sidebar]:backdrop-blur-2xl **:data-[sidebar=sidebar]:backdrop-saturate-150"
+      >
         {/*
           Collapsed to icons the lockup has no room to sit beside the trigger,
           so the header turns into a column: mark on top, trigger under it.
@@ -134,7 +149,7 @@ export function Nav() {
                           which survives the collapse to icons, where the label
                           that would otherwise carry the state is gone.
                         */
-                        className="relative h-10 gap-3 px-3 text-muted transition-colors hover:text-text data-[active=true]:bg-surface-2 data-[active=true]:text-brand data-[active=true]:before:absolute data-[active=true]:before:top-1/2 data-[active=true]:before:left-0 data-[active=true]:before:h-5 data-[active=true]:before:w-[3px] data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-brand"
+                        className="relative h-10 gap-3 px-3 text-muted transition-colors hover:bg-white/5 hover:text-text data-[active=true]:bg-white/8 data-[active=true]:text-brand data-[active=true]:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.07)] data-[active=true]:before:absolute data-[active=true]:before:top-1/2 data-[active=true]:before:left-0 data-[active=true]:before:h-5 data-[active=true]:before:w-[3px] data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-brand"
                       >
                         <Link
                           href={link.href}
@@ -159,7 +174,8 @@ export function Nav() {
 
         {/* Collapsed to icons there is no room for the tally, so it steps aside. */}
         <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
-          <div className="rounded-xl border border-line-soft bg-surface-2/50 px-3.5 py-3">
+          {/* Frosted, like the rail - the tally is a pane, not a solid tile. */}
+          <div className="rounded-xl border border-white/8 bg-white/6 px-3.5 py-3 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.07)] backdrop-blur-md">
             {/*
               Whose tally this is. With three people sharing the tracker the
               name has to sit next to the number, or you can't tell at a glance
@@ -186,8 +202,8 @@ export function Nav() {
         <SidebarRail />
       </Sidebar>
 
-      {/* Mobile tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-ink/95 backdrop-blur md:hidden">
+      {/* Mobile tab bar - the same glass, sitting over content that scrolls under it. */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/8 bg-ink/70 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] backdrop-blur-2xl backdrop-saturate-150 md:hidden">
         {LINKS.map((link) => {
           const active = pathname === link.href;
           const count = badge(link.label);
