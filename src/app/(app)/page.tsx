@@ -40,6 +40,17 @@ export default function TodayPage() {
   const left = Math.max(0, goal - sent);
   const hit = sent >= goal;
 
+  /*
+    Same rule as the queue badge in the rail: only accepts still waiting on a
+    first message count here. Follow-ups and replies to qualify are also due,
+    but they're not what goes cold, and folding them in inflates the number
+    past anything you'd act on today.
+  */
+  const pitches = useMemo(
+    () => queue.due.filter((d) => d.action.kind === "pitch").length,
+    [queue.due]
+  );
+
   return (
     <div className="px-5 py-8 sm:px-8 sm:py-12">
       <header className="mb-8">
@@ -171,17 +182,16 @@ export default function TodayPage() {
       )}
 
       {/* Sending invites is only half the job - the queue is where deals start. */}
-      {queue.due.length > 0 && (
+      {pitches > 0 && (
         <Link
           href="/queue"
           className="mb-5 flex items-center gap-3 rounded-xl border border-brand/30 bg-brand-soft/40 px-4 py-3 text-sm transition-colors hover:border-brand/60"
         >
           <span className="tabular font-display text-lg font-bold text-brand">
-            {queue.due.length}
+            {pitches}
           </span>
           <span className="text-brand/90">
-            {queue.due.length === 1 ? "person needs" : "people need"} a message
-            from you
+            {pitches === 1 ? "person needs" : "people need"} an opener from you
           </span>
           <span className="ml-auto text-brand">→</span>
         </Link>
