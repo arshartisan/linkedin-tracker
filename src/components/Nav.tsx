@@ -157,7 +157,13 @@ export function Nav() {
   }
 
   const menu = (links: NavLink[]) => (
-    <SidebarMenu className="gap-1">
+    /*
+      Collapsed, shadcn pins each button to `size-8!` - a fixed 32px in a 48px
+      rail. A fixed-width child in a stretch column lands at the start of the
+      cross axis, so it has to be centred explicitly or the icons sit off to one
+      side of the rail.
+    */
+    <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
       {links.map((link) => {
         const active = pathname === link.href;
         const count = badge(link);
@@ -224,15 +230,15 @@ export function Nav() {
           </Link>
         </SidebarHeader>
 
-        <SidebarContent className="px-2">
-          <SidebarGroup className="py-1">
+        <SidebarContent className="px-2 group-data-[collapsible=icon]:px-0">
+          <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
               LinkedIn
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu(LINKEDIN)}</SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className="py-1">
+          <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
               Local
             </SidebarGroupLabel>
@@ -240,7 +246,7 @@ export function Nav() {
           </SidebarGroup>
 
           {/* Team counts both pipelines, so it sits under both rather than in one. */}
-          <SidebarGroup className="mt-auto py-1">
+          <SidebarGroup className="mt-auto py-1 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
               Shared
             </SidebarGroupLabel>
@@ -303,7 +309,7 @@ export function Nav() {
               <Icon name={link.icon} className="h-5 w-5" />
               {link.label}
               {count !== null && (
-                <span className="tabular absolute top-1 right-[22%] min-w-[15px] rounded-full bg-brand px-1 text-center text-[9px] font-bold leading-[15px] text-ink">
+                <span className="tabular absolute top-1 right-[22%] min-w-3.75 rounded-full bg-brand px-1 text-center text-[9px] leading-3.75 font-bold text-ink">
                   {count}
                 </span>
               )}
