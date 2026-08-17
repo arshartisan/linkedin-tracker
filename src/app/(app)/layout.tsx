@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { BizProvider } from "@/components/BizProvider";
 import { DataProvider } from "@/components/DataProvider";
 import { Nav } from "@/components/Nav";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -19,12 +20,19 @@ export default async function AppLayout({
   if (!me) redirect("/login");
 
   return (
+    /*
+      BizProvider sits inside DataProvider because it reads `me` from it rather
+      than taking the session a second time - and outside SidebarProvider
+      because the nav badges a count from both pipelines.
+    */
     <DataProvider me={me}>
-      <SidebarProvider>
-        <Nav />
-        {/* The rail is fixed, so only this pane scrolls. */}
-        <SidebarInset className="pb-24 md:pb-0">{children}</SidebarInset>
-      </SidebarProvider>
+      <BizProvider>
+        <SidebarProvider>
+          <Nav />
+          {/* The rail is fixed, so only this pane scrolls. */}
+          <SidebarInset className="pb-24 md:pb-0">{children}</SidebarInset>
+        </SidebarProvider>
+      </BizProvider>
     </DataProvider>
   );
 }

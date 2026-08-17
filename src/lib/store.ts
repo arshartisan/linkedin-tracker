@@ -1,4 +1,10 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  hasSupabase,
+  newId,
+  storeMode,
+  supabase,
+  type StoreMode,
+} from "./supabase";
 import {
   DEFAULT_GOAL,
   USER_IDS,
@@ -13,24 +19,11 @@ import {
 import { dayKey } from "./date";
 import { normaliseUrl } from "./linkedin";
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-// Supabase renamed the client-side credential: `anon` keys are now "publishable"
-// keys (sb_publishable_…). Both are read directly rather than through a variable
-// so Next.js can inline them into the browser bundle at build time.
-const KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-export const hasSupabase = Boolean(URL && KEY);
-
-let client: SupabaseClient | null = null;
-function supabase(): SupabaseClient {
-  if (!client) client = createClient(URL!, KEY!, { auth: { persistSession: false } });
-  return client;
-}
-
-export type StoreMode = "supabase" | "local";
-export const storeMode: StoreMode = hasSupabase ? "supabase" : "local";
+// The client, the credential check and the id helper moved to ./supabase when
+// the local-business section arrived and needed the same three. Re-exported
+// here so existing imports from "@/lib/store" keep working.
+export { hasSupabase, storeMode };
+export type { StoreMode };
 
 const TABLE = "connects";
 const USERS_TABLE = "users";
@@ -65,19 +58,6 @@ async function readRemoteUsers(): Promise<User[]> {
   const { data, error } = await supabase().from(USERS_TABLE).select("*");
   if (error) throw new Error(error.message);
   return (data ?? []) as User[];
-}
-
-/** crypto.randomUUID() is missing outside secure contexts; fall back rather than throw. */
-function newId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 function buildRow(input: NewConnect): Connect {
