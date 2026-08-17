@@ -37,7 +37,7 @@ export function TrendChart({
   if (points.length < 2) {
     return (
       <div
-        className={`flex h-52 items-center justify-center rounded-xl border border-dashed border-line ${className}`}
+        className={`flex h-52 items-center justify-center rounded-well border border-dashed border-line ${className}`}
       >
         <p className="text-sm text-muted">Not enough days logged yet.</p>
       </div>
@@ -157,7 +157,7 @@ export function TrendChart({
             }, -100%)`,
           }}
         >
-          <div className="rounded-lg border border-line bg-surface-3 px-2.5 py-1.5 shadow-[var(--shadow-float)]">
+          <div className="rounded-control border border-line bg-surface-3 px-3 py-1.5 shadow-[var(--sh-float)]">
             <div className="tabular font-mono text-[10px] whitespace-nowrap text-muted">
               {formatShort(activePoint.day)}
             </div>
@@ -169,7 +169,7 @@ export function TrendChart({
               >
                 {activePoint.count}
               </span>
-              <span className="font-mono text-[10px] font-normal text-muted">
+              <span className="text-[10px] font-semibold text-muted">
                 {" "}
                 / {goal}
               </span>

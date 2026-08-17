@@ -9,26 +9,43 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Reach - daily LinkedIn outreach tracker.
-  Dark, instrument-panel palette: near-black base with a cool cast and a single
-  signal colour, the brand lime. One accent means intensity carries meaning on
-  its own - dim lime is work in progress, full-strength lime is a target met -
-  so the page has exactly one thing that glows and it is always the score.
+  Reach - outreach tracker, dark instrument panel with one signal colour.
 
-  Surfaces climb in four steps - ink → surface → surface-2 → surface-3 - and
-  the step is deliberately small. Depth reads from the lift (borders and
-  shadow), not from grey getting lighter, which is what keeps a near-black UI
-  from turning muddy as panels stack.
+  ── Surfaces ──────────────────────────────────────────────────────────────
+  The layout is built from cards that sit *above* the page and wells that sit
+  *inside* those cards. That is the whole structural idea: a panel lifts off
+  the background, and the rows within it recess back into the panel, so nesting
+  reads as depth rather than as more boxes.
+
+      ink      the page, the floor everything sits on
+      surface  a card - lifted off the page, edge lit along the top
+      well     a row or block *inside* a card - recessed back down
+      raised   a chip, hover state, or the selected segment of a control
+      float    menus, tooltips, sheets - above everything
+
+  Note `well` is darker than `surface`. On a light UI a recessed panel is grey
+  on white; the dark equivalent has to go down, not up, or the nesting inverts
+  and every card reads as a stack of tiles.
+
+  ── Colour ────────────────────────────────────────────────────────────────
+  One accent, the brand lime, so intensity carries meaning on its own: dim lime
+  is work in progress, full-strength lime is a target met. The page has exactly
+  one thing that glows and it is always the score.
 */
 :root {
-  --ink: #090b0f; /* page */
-  --surface: #101319; /* cards, rails */
-  --surface-2: #171b23; /* hover, chips, inset wells */
-  --surface-3: #1d222c; /* floating: menus, tooltips, sheets */
-  --line: #242a35; /* a visible edge */
-  --line-soft: #171b23; /* a hairline between siblings */
+  --ink: #0a0c11; /* page */
+  --surface: #161a22; /* cards, rails */
+  --well: #10131a; /* recessed rows inside a card */
+  --surface-2: #1e232d; /* chips, hover, the selected segment */
+  --surface-3: #252b37; /* floating: menus, tooltips, sheets */
+  --line: #262d3a; /* a visible edge */
+  --line-soft: #1a1f28; /* a hairline between siblings */
   --text: #eef1f6;
-  --muted: #838d9e;
+  /*
+    Nudged up from #8791a3, which cleared 4.5:1 on every surface except the
+    floating one - dropdown labels landed at 4.47. This clears AA on all five.
+  */
+  --muted: #8b95a7;
 
   /*
     The logo lime, and the three steps below it. `dim` is the same hue burnt
@@ -46,16 +63,53 @@
   --rose-soft: #3a1d1f;
 
   /*
+    ── Radii ───────────────────────────────────────────────────────────────
+    Generous and consistent. A card is a soft rectangle, a row inside it is a
+    slightly tighter one, and anything that reads as a control is a full pill.
+    Three steps, no improvising per component.
+  */
+  --r-card: 24px;
+  --r-well: 16px;
+  --r-control: 12px;
+
+  /*
+    ── Elevation ───────────────────────────────────────────────────────────
+    A card is separated from the page by a soft drop shadow plus a 1px inner
+    highlight along its top edge. At this black level the highlight is doing
+    most of the work - the shadow alone is nearly invisible against near-black,
+    but a lit top edge reads as a physical lift immediately.
+  */
+  --sh-card:
+    0 1px 2px 0 rgb(0 0 0 / 0.5), 0 8px 24px -8px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.045);
+
+  /* The selected segment of a control, or a nav row - a smaller lift. */
+  --sh-raised:
+    0 1px 2px 0 rgb(0 0 0 / 0.45), 0 4px 10px -4px rgb(0 0 0 / 0.4),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+
+  /*
     Anything that floats above the page gets a real drop shadow plus a 1px
     inner highlight. The highlight is what separates a menu from the card
     behind it when both are within a few percent of black.
   */
-  --shadow-float:
+  --sh-float:
     0 18px 44px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.6),
     inset 0 1px 0 0 rgb(255 255 255 / 0.04);
 
   /* Reserved for lit brand marks - the tally, a met target, the chart's head. */
   --shadow-brand: 0 0 14px -2px var(--brand);
+
+  /*
+    ── Type ────────────────────────────────────────────────────────────────
+    `ui-rounded` is the generic that resolves to SF Pro Rounded on Apple
+    platforms, so Mac and iOS get the real face. Nunito loads underneath it for
+    everyone else - SF Pro Rounded cannot legally be served as a webfont.
+  */
+  --stack-rounded:
+    ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system,
+    var(--font-rounded), system-ui, sans-serif;
+  --stack-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
 
   /*
     shadcn/ui speaks in semantic tokens (background, popover, accent…). The app
@@ -94,6 +148,7 @@
 @theme inline {
   --color-ink: var(--ink);
   --color-surface: var(--surface);
+  --color-well: var(--well);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-line: var(--line);
@@ -107,9 +162,18 @@
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
 
-  --font-display: var(--font-display);
-  --font-sans: var(--font-body);
-  --font-mono: var(--font-mono);
+  /* Everything is set in the rounded face; mono is for figures and URLs. */
+  --font-display: var(--stack-rounded);
+  --font-sans: var(--stack-rounded);
+  --font-mono: var(--stack-mono);
+
+  --radius-card: var(--r-card);
+  --radius-well: var(--r-well);
+  --radius-control: var(--r-control);
+
+  --shadow-card: var(--sh-card);
+  --shadow-raised: var(--sh-raised);
+  --shadow-float: var(--sh-float);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -162,6 +226,17 @@
   label[for] {
     cursor: pointer;
   }
+
+  /*
+    A rounded face carries a touch more optical weight than a grotesque at the
+    same size, so headings sit a hair tighter than the default and body copy
+    gets a slightly looser line to keep the softness from reading as crowding.
+  */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.018em;
+  }
 }
 
 html {
@@ -171,8 +246,71 @@ html {
 body {
   background: var(--ink);
   color: var(--text);
-  font-family: var(--font-body), system-ui, sans-serif;
+  font-family: var(--stack-rounded);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+  ── Structural utilities ───────────────────────────────────────────────────
+  The three surfaces, as classes, so a card is one word rather than five
+  utilities repeated across forty files - and so changing what "a card" means
+  is one edit here rather than a find-and-replace.
+*/
+/*
+  These live in `components` rather than unlayered so that a utility passed
+  alongside them still wins - `<Card className="bg-rose-soft/25">` has to be
+  able to retint one card without a fight. Unlayered rules beat every @layer,
+  which would make these classes impossible to override at the call site.
+*/
+@layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card);
+  }
+
+  .well {
+    background: var(--well);
+    border: 1px solid transparent;
+    border-radius: var(--r-well);
+  }
+
+  /* A well you can act on: it lifts toward the card tone on hover. */
+  .well-interactive {
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .well-interactive:hover {
+    background: var(--surface-2);
+    border-color: var(--line-soft);
+  }
+}
+
+/*
+  The small uppercase caption - section headings, stat labels, nav group
+  headers. It used to be set in mono; in the rounded face at a wide tracking it
+  keeps the same quiet, systematic role without the typewriter texture that was
+  fighting the soft geometry everywhere else.
+*/
+@layer components {
+  .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+}
+
+/* Numerals should never jitter as counts change. */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 /*
@@ -186,14 +324,15 @@ body {
 [data-slot="tooltip-content"] {
   background-color: var(--surface-3);
   border-color: var(--line);
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--sh-float);
+  border-radius: var(--r-well);
   /*
     `bg-accent` is the row hover, and surface-2 sits *below* the panel it would
     be painted on. Rebinding the token here - rather than chasing the utility -
     lets the highlight climb one more step, as `@theme inline` compiles
     `bg-accent` straight down to `var(--accent)`.
   */
-  --accent: #272d39;
+  --accent: #2f3644;
 }
 
 /*
@@ -210,11 +349,6 @@ body {
   fill: var(--surface-3);
 }
 
-/* Numerals should never jitter as counts change. */
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
-
 ::selection {
   background: var(--brand);
   color: #000;
@@ -223,7 +357,7 @@ body {
 :focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 /* Thin scrollbars so long lists don't grow a heavy grey column. */

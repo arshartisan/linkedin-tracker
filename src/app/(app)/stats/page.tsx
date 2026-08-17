@@ -5,6 +5,15 @@ import { useData } from "@/components/DataProvider";
 import { Heatmap } from "@/components/Heatmap";
 import { TrendChart } from "@/components/TrendChart";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  Delta,
+  Label,
+  Page,
+  PageHeader,
+  Segmented,
+  Well,
+} from "@/components/ui/layout";
 import { dayKey, formatShort, shiftDayKey, weekStart } from "@/lib/date";
 import { diffDays, funnel } from "@/lib/pipeline";
 import { USER_IDS, USER_LABEL, type UserId } from "@/lib/types";
@@ -44,30 +53,12 @@ const TONE: Record<Tone, string> = {
   dim: "text-brand-dim",
 };
 
-function Panel({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={`rounded-2xl border border-line-soft bg-surface ${className}`}
-    >
-      {children}
-    </section>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">
-      {children}
-    </div>
-  );
-}
-
+/**
+ * A tile in the stat grid. Label above the figure here, not below it as the
+ * shared `Stat` has it: these come eight at a time in a uniform grid, and a
+ * reader scanning for "accept rate" needs the name to be the thing on the
+ * gridline. The shared one is for figures you meet singly.
+ */
 function Stat({
   label,
   value,
@@ -80,81 +71,13 @@ function Stat({
   tone?: Tone;
 }) {
   return (
-    <div className="rounded-2xl border border-line-soft bg-surface px-4 py-3.5 transition-colors hover:border-line">
+    <Card className="px-4 py-3.5">
       <Label>{label}</Label>
-      <div
-        className={`tabular mt-1.5 font-display text-2xl font-bold ${TONE[tone]}`}
-      >
+      <div className={`tabular mt-1.5 font-display text-2xl font-extrabold ${TONE[tone]}`}>
         {value}
       </div>
       {detail && <div className="mt-0.5 text-xs text-muted">{detail}</div>}
-    </div>
-  );
-}
-
-/**
- * Direction against the previous window of the same length. A fall is muted
- * rather than red - a quiet week is a fact, not an error, and rose is spoken
- * for by things that actually need attention.
- */
-function Delta({ change }: { change: number | null }) {
-  if (change === null) return null;
-  const up = change >= 0;
-  const percent = Math.abs(Math.round(change * 100));
-  return (
-    <span
-      className={`tabular inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] ${
-        up ? "bg-brand-soft text-brand" : "bg-surface-2 text-muted"
-      }`}
-    >
-      <span aria-hidden>{up ? "▲" : "▼"}</span>
-      {percent}%
-      <span className="sr-only">
-        {up ? "up" : "down"} on the previous period
-      </span>
-    </span>
-  );
-}
-
-/**
- * A segmented control rather than a dropdown: a handful of options, and the one
- * you're on should be readable without opening anything. Used for both the
- * range and the person.
- */
-function Segmented<T extends string | number>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: readonly { value: T; label: string }[];
-  value: T;
-  onChange: (next: T) => void;
-}) {
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      className="flex rounded-lg border border-line-soft bg-ink p-0.5"
-    >
-      {options.map((option) => {
-        const selected = option.value === value;
-        return (
-          <button
-            key={String(option.value)}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(option.value)}
-            className={`tabular cursor-pointer rounded-[6px] px-3 py-1.5 font-mono text-xs transition-colors ${
-              selected ? "bg-brand text-ink" : "text-muted hover:text-text"
-            }`}
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+    </Card>
   );
 }
 
@@ -168,7 +91,7 @@ function Th({
   return (
     <th
       scope="col"
-      className={`pb-2 font-mono text-[10px] font-normal tracking-[0.16em] text-muted uppercase ${className}`}
+      className={`label pb-2 font-semibold ${className}`}
     >
       {children}
     </th>
@@ -187,7 +110,7 @@ function Td({
 }) {
   return (
     <td className="tabular py-3 text-right">
-      <div className={`font-mono ${TONE[tone]}`}>{value}</div>
+      <div className={`font-semibold ${TONE[tone]}`}>{value}</div>
       {detail && <div className="mt-0.5 text-[11px] text-muted">{detail}</div>}
     </td>
   );
@@ -195,16 +118,16 @@ function Td({
 
 function StatsSkeleton() {
   return (
-    <div className="px-5 py-8 sm:px-8 sm:py-12">
+    <Page>
       <Skeleton className="h-9 w-32" />
       <Skeleton className="mt-2 h-4 w-64" />
-      <Skeleton className="mt-7 h-[26rem] w-full rounded-2xl" />
+      <Skeleton className="mt-7 h-[26rem] w-full rounded-card" />
       <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {Array.from({ length: 8 }, (_, i) => (
-          <Skeleton key={i} className="h-[92px] rounded-2xl" />
+          <Skeleton key={i} className="h-[92px] rounded-card" />
         ))}
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -285,37 +208,34 @@ export default function StatsPage() {
   if (loading) return <StatsSkeleton />;
 
   return (
-    <div className="px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-7">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Team
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          {scoped.length === 0
+    <Page>
+      <PageHeader
+        title="Team"
+        lead={
+          scoped.length === 0
             ? "Numbers appear once you start logging."
             : `${scoped.length} connects logged across ${counts.size} active days${
                 owner === "all" ? " by the three of you" : ""
-              }.`}
-        </p>
-
-        {/*
+              }.`
+        }
+        /*
           The one control that changes what every panel below means, so it sits
-          under the title rather than inside any one of them.
-        */}
-        <div className="mt-4">
+          beside the title rather than inside any one panel.
+        */
+        actions={
           <Segmented
             label="Whose numbers"
             options={OWNERS}
             value={owner}
             onChange={setOwner}
           />
-        </div>
-      </header>
+        }
+      />
 
-      <Panel className="p-4 sm:p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-bold tracking-tight">
+            <h2 className="font-display text-lg font-bold">
               Momentum
             </h2>
             <p className="mt-0.5 text-xs text-muted">
@@ -339,7 +259,7 @@ export default function StatsPage() {
 
         <TrendChart className="mt-5" points={points} goal={goal} />
 
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-t border-line-soft pt-4">
+        <Well className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 px-4 py-3.5">
           <div>
             <Label>Sent in {range} days</Label>
             <div className="mt-1.5 flex items-baseline gap-2.5">
@@ -363,17 +283,14 @@ export default function StatsPage() {
             </div>
             <div>
               <Label>On target</Label>
-              <div className="tabular mt-1.5 font-display text-xl font-bold">
+              <div className="tabular mt-1.5 font-display text-xl font-extrabold">
                 {onTarget}
-                <span className="font-mono text-xs font-normal text-muted">
-                  {" "}
-                  / {range}
-                </span>
+                <span className="text-xs font-semibold text-muted"> / {range}</span>
               </div>
             </div>
           </div>
-        </div>
-      </Panel>
+        </Well>
+      </Card>
 
       <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Stat
@@ -418,9 +335,9 @@ export default function StatsPage() {
         />
       </div>
 
-      <Panel className="mt-2.5 p-4 sm:p-6">
+      <Card className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4">
-          <h2 className="font-display text-lg font-bold tracking-tight">
+          <h2 className="font-display text-lg font-bold">
             Side by side
           </h2>
           <p className="mt-0.5 text-xs text-muted">
@@ -453,12 +370,12 @@ export default function StatsPage() {
                       {USER_LABEL[row.id]}
                     </span>
                     {row.id === me.id && (
-                      <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.16em] text-brand">
+                      <span className="label ml-2 text-[10px] text-brand">
                         you
                       </span>
                     )}
                   </td>
-                  <td className="tabular py-3 text-right font-mono">
+                  <td className="tabular py-3 text-right font-semibold">
                     <span
                       className={row.sent >= row.target ? "text-brand" : "text-text"}
                     >
@@ -496,12 +413,12 @@ export default function StatsPage() {
             </tbody>
           </table>
         </div>
-      </Panel>
+      </Card>
 
-      <Panel className="mt-2.5 p-4 sm:p-6">
+      <Card className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-bold tracking-tight">
+            <h2 className="font-display text-lg font-bold">
               Six months
             </h2>
             <p className="mt-0.5 text-xs text-muted">
@@ -509,7 +426,7 @@ export default function StatsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-wide text-muted uppercase">
+          <div className="label flex items-center gap-1.5">
             none
             <span className="size-[11px] rounded-[2px] bg-line-soft" />
             <span className="size-[11px] rounded-[2px] bg-brand/18" />
@@ -521,7 +438,7 @@ export default function StatsPage() {
         </div>
 
         <Heatmap counts={counts} goal={goal} />
-      </Panel>
-    </div>
+      </Card>
+    </Page>
   );
 }

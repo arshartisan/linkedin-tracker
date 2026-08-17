@@ -20,7 +20,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 
 /*
@@ -63,7 +62,7 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 1.6,
+    strokeWidth: 1.7,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
     "aria-hidden": true,
@@ -99,10 +98,10 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
     case "grid":
       return (
         <svg {...common}>
-          <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
-          <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
-          <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
-          <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
+          <rect x="4" y="4" width="6.5" height="6.5" rx="2" />
+          <rect x="13.5" y="4" width="6.5" height="6.5" rx="2" />
+          <rect x="4" y="13.5" width="6.5" height="6.5" rx="2" />
+          <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2" />
         </svg>
       );
     case "list":
@@ -137,6 +136,7 @@ export function Nav() {
   const today = dayKey();
   const sentToday = mine.filter((c) => c.sent_on === today).length;
   const hit = sentToday >= goal;
+  const pct = goal > 0 ? Math.min(1, sentToday / goal) : 0;
 
   const inLocal = pathname.startsWith("/local");
 
@@ -157,7 +157,7 @@ export function Nav() {
   }
 
   const menu = (links: NavLink[]) => (
-    <SidebarMenu>
+    <SidebarMenu className="gap-1">
       {links.map((link) => {
         const active = pathname === link.href;
         const count = badge(link);
@@ -168,12 +168,12 @@ export function Nav() {
               isActive={active}
               tooltip={link.label}
               /*
-                The active row is the one place lime appears in the rail, and it
-                gets a clipped bar on the leading edge - which survives the
-                collapse to icons, where the label that would otherwise carry
-                the state is gone.
+                The active row is a card lifted out of the rail - the same
+                move the content area makes, so the nav reads as part of one
+                system. It is the only lit thing in the sidebar, which is why
+                it needs no colour beyond the icon to be found.
               */
-              className="relative h-10 gap-3 px-3 text-muted transition-colors hover:bg-white/5 hover:text-text data-[active=true]:bg-white/8 data-[active=true]:text-brand data-[active=true]:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.07)] data-[active=true]:before:absolute data-[active=true]:before:top-1/2 data-[active=true]:before:left-0 data-[active=true]:before:h-5 data-[active=true]:before:w-[3px] data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-brand"
+              className="h-10 gap-3 rounded-control px-3 text-[13px] font-semibold text-muted transition-all hover:bg-surface/70 hover:text-text data-[active=true]:bg-surface data-[active=true]:text-text data-[active=true]:shadow-raised data-[active=true]:[&_svg]:text-brand"
             >
               <Link href={link.href} aria-current={active ? "page" : undefined}>
                 <Icon name={link.icon} />
@@ -181,7 +181,7 @@ export function Nav() {
               </Link>
             </SidebarMenuButton>
             {count !== null && (
-              <SidebarMenuBadge className="tabular rounded-full bg-brand px-1.5 font-mono text-[10px] font-bold text-ink peer-data-[size=default]/menu-button:top-2.5 peer-data-[active=true]/menu-button:text-ink peer-hover/menu-button:text-ink">
+              <SidebarMenuBadge className="tabular rounded-full bg-brand px-1.5 text-[10px] font-bold text-ink peer-data-[size=default]/menu-button:top-2.5 peer-data-[active=true]/menu-button:text-ink peer-hover/menu-button:text-ink">
                 {count}
               </SidebarMenuBadge>
             )}
@@ -204,79 +204,81 @@ export function Nav() {
   return (
     <>
       {/*
-        Desktop rail - fixed, so the list scrolls under it instead of with it.
-        The panel itself is glass: a translucent surface over the page, blurred
-        and slightly saturated so the list scrolling beneath reads as movement
-        rather than detail. shadcn paints `bg-sidebar` on its inner element, so
-        the tint is applied through it; the inset highlight is the lit edge
-        that keeps the rail from dissolving into the ink beside it.
+        The rail sits flush with the page rather than floating over it as its
+        own glass pane. That is the whole shift: depth now comes from the cards
+        lifting *off* a single quiet background, so a second translucent plane
+        here would compete with the thing it is meant to frame.
       */}
       <Sidebar
         collapsible="icon"
-        className="border-line **:data-[sidebar=sidebar]:bg-surface/55 **:data-[sidebar=sidebar]:shadow-[inset_-1px_0_0_0_rgb(255_255_255/0.05),inset_1px_0_0_0_rgb(255_255_255/0.03)] **:data-[sidebar=sidebar]:backdrop-blur-2xl **:data-[sidebar=sidebar]:backdrop-saturate-150"
+        className="border-line-soft **:data-[sidebar=sidebar]:bg-ink"
       >
-        {/*
-          Collapsed to icons the lockup has no room to sit beside the trigger,
-          so the header turns into a column: mark on top, trigger under it.
-        */}
-        <SidebarHeader className="px-2 py-5 group-data-[collapsible=icon]:px-0">
-          <div className="flex items-center justify-between gap-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-3">
-            <Link href="/" className="flex min-w-0 flex-col gap-1.5 px-1 items-start">
-              {/* The lockup carries the wordmark; collapsed, only the plate fits. */}
-              <LogoLockup className="h-8 w-auto group-data-[collapsible=icon]:hidden" />
-              <LogoMark className="hidden size-8 shrink-0 rounded-[7px] group-data-[collapsible=icon]:block" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted group-data-[collapsible=icon]:hidden">
-                Outreach pipeline
-              </span>
-            </Link>
-            <SidebarTrigger className="shrink-0 text-muted hover:text-text" />
-          </div>
+        <SidebarHeader className="px-3 py-5 group-data-[collapsible=icon]:px-0">
+          <Link
+            href="/"
+            className="flex min-w-0 items-center gap-2.5 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          >
+            {/* The lockup carries the wordmark; collapsed, only the plate fits. */}
+            <LogoLockup className="h-7 w-auto group-data-[collapsible=icon]:hidden" />
+            <LogoMark className="hidden size-8 shrink-0 rounded-[9px] group-data-[collapsible=icon]:block" />
+          </Link>
         </SidebarHeader>
 
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted/60">
+        <SidebarContent className="px-2">
+          <SidebarGroup className="py-1">
+            <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
               LinkedIn
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu(LINKEDIN)}</SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted/60">
+          <SidebarGroup className="py-1">
+            <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
               Local
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu(LOCAL)}</SidebarGroupContent>
           </SidebarGroup>
 
           {/* Team counts both pipelines, so it sits under both rather than in one. */}
-          <SidebarGroup className="mt-auto">
+          <SidebarGroup className="mt-auto py-1">
+            <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
+              Shared
+            </SidebarGroupLabel>
             <SidebarGroupContent>{menu([TEAM])}</SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
         {/* Collapsed to icons there is no room for the tally, so it steps aside. */}
-        <SidebarFooter className="p-4 group-data-[collapsible=icon]:hidden">
-          {/* Frosted, like the rail - the tally is a pane, not a solid tile. */}
-          <div className="rounded-xl border border-white/8 bg-white/6 px-3.5 py-3 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.07)] backdrop-blur-md">
-            {/*
-              Whose tally this is. With three people sharing the tracker the
-              name has to sit next to the number, or you can't tell at a glance
-              whether you're looking at your own day.
-            */}
+        <SidebarFooter className="p-3 group-data-[collapsible=icon]:hidden">
+          <div className="card px-3.5 py-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-                {me.name} · Today
-              </div>
-              <SignOutButton className="-mr-1 shrink-0 rounded-md p-1 text-muted transition-colors hover:text-rose disabled:opacity-50" />
+              <span className="label text-[10px]">{me.name} · Today</span>
+              <SignOutButton className="-mr-1 shrink-0 rounded-full p-1 text-muted transition-colors hover:text-rose disabled:opacity-50" />
             </div>
-            <div className="tabular mt-1.5 flex items-baseline gap-1.5">
+
+            <div className="tabular mt-2 flex items-baseline gap-1.5">
               <span
-                className={`font-display text-2xl font-bold ${hit ? "text-brand" : "text-text"
-                  }`}
+                className={`font-display text-[26px] leading-none font-extrabold ${
+                  hit ? "text-brand" : "text-text"
+                }`}
               >
                 {loading ? "-" : sentToday}
               </span>
-              <span className="font-mono text-xs text-muted">/ {goal}</span>
+              <span className="text-xs text-muted">/ {goal}</span>
+            </div>
+
+            {/*
+              A single quiet bar rather than the full tally: the sidebar needs
+              to answer "am I close" in peripheral vision, and the tally proper
+              lives on Today where it can be read properly.
+            */}
+            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-well">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  hit ? "bg-brand" : "bg-brand/45"
+                }`}
+                style={{ width: `${Math.max(pct * 100, sentToday > 0 ? 4 : 0)}%` }}
+              />
             </div>
           </div>
         </SidebarFooter>
@@ -284,8 +286,8 @@ export function Nav() {
         <SidebarRail />
       </Sidebar>
 
-      {/* Mobile tab bar - the same glass, sitting over content that scrolls under it. */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/8 bg-ink/70 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] backdrop-blur-2xl backdrop-saturate-150 md:hidden">
+      {/* Mobile tab bar - sits over content that scrolls under it. */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line-soft bg-ink/85 backdrop-blur-xl md:hidden">
         {mobileLinks.map((link) => {
           const active = pathname === link.href;
           const count = badge(link);
@@ -294,13 +296,14 @@ export function Nav() {
               key={link.href}
               href={link.href}
               aria-current={active ? "page" : undefined}
-              className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-[10px] ${active ? "text-brand" : "text-muted"
-                }`}
+              className={`relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold ${
+                active ? "text-brand" : "text-muted"
+              }`}
             >
               <Icon name={link.icon} className="h-5 w-5" />
               {link.label}
               {count !== null && (
-                <span className="tabular absolute top-1.5 right-[22%] min-w-[15px] rounded-full bg-brand px-1 text-center font-mono text-[9px] font-bold leading-[15px] text-ink">
+                <span className="tabular absolute top-1 right-[22%] min-w-[15px] rounded-full bg-brand px-1 text-center text-[9px] font-bold leading-[15px] text-ink">
                   {count}
                 </span>
               )}
@@ -311,13 +314,13 @@ export function Nav() {
         {/* The way out of this section, and the only tab that isn't a screen. */}
         <Link
           href={swap.href}
-          className="relative flex flex-1 flex-col items-center gap-1 border-l border-white/8 py-3 text-[10px] text-muted"
+          className="relative flex flex-1 flex-col items-center gap-1 border-l border-line-soft py-2.5 text-[10px] font-semibold text-muted"
         >
           <Icon name={swap.icon} className="h-5 w-5" />
           {swap.label}
           {(inLocal ? pitches : localToDo) > 0 && (
             <span
-              className="absolute top-2.5 right-[26%] size-1.5 rounded-full bg-brand"
+              className="absolute top-2 right-[26%] size-1.5 rounded-full bg-brand"
               aria-label="Work waiting in the other section"
             />
           )}

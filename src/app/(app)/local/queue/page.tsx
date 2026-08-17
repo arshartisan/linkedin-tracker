@@ -2,6 +2,14 @@
 
 import { useBiz } from "@/components/BizProvider";
 import { BizRow } from "@/components/BizRow";
+import {
+  Card,
+  EmptyState,
+  Page,
+  PageHeader,
+  SectionHeading,
+  Well,
+} from "@/components/ui/layout";
 import { MAX_BIZ_FOLLOWUPS } from "@/lib/biz-pipeline";
 import { formatShort } from "@/lib/date";
 
@@ -18,9 +26,9 @@ export default function LocalQueuePage() {
 
   if (loading) {
     return (
-      <div className="px-5 py-8 sm:px-8 sm:py-12">
+      <Page>
         <p className="text-sm text-muted">Loading…</p>
-      </div>
+      </Page>
     );
   }
 
@@ -32,33 +40,58 @@ export default function LocalQueuePage() {
     queue.unreachable.length === 0;
 
   return (
-    <div className="px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-8">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Local queue
-        </h1>
-        <div className="tabular mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-          <span className="flex items-baseline gap-2">
-            <span className="font-display text-[52px] font-extrabold leading-none tracking-tight text-brand">
+    <Page>
+      <PageHeader
+        title="Local queue"
+        lead="Research on the left of the day, messaging on the right of it."
+      />
+
+      <Card className="mb-5 p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="tabular flex items-baseline gap-2.5">
+            <span className="font-display text-[56px] leading-none font-extrabold text-brand sm:text-[68px]">
               {queue.research.length + queue.due.length}
             </span>
-            <span className="font-mono text-sm text-muted">to do now</span>
-          </span>
-          {queue.upcoming.length > 0 && (
-            <span className="font-mono text-xs text-muted/70">
-              {queue.upcoming.length} coming up
-            </span>
-          )}
+            <span className="text-sm text-muted">to do now</span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Well className="min-w-[104px] px-3.5 py-2.5">
+              <div
+                className={`tabular font-display text-xl leading-none font-extrabold ${
+                  queue.research.length > 0 ? "text-text" : "text-muted/40"
+                }`}
+              >
+                {queue.research.length}
+              </div>
+              <div className="mt-1 text-[11px] text-muted">To research</div>
+            </Well>
+            <Well className="min-w-[104px] px-3.5 py-2.5">
+              <div
+                className={`tabular font-display text-xl leading-none font-extrabold ${
+                  queue.due.length > 0 ? "text-text" : "text-muted/40"
+                }`}
+              >
+                {queue.due.length}
+              </div>
+              <div className="mt-1 text-[11px] text-muted">To message</div>
+            </Well>
+            {queue.upcoming.length > 0 && (
+              <Well className="min-w-[104px] px-3.5 py-2.5">
+                <div className="tabular font-display text-xl leading-none font-extrabold text-muted/70">
+                  {queue.upcoming.length}
+                </div>
+                <div className="mt-1 text-[11px] text-muted">Coming up</div>
+              </Well>
+            )}
+          </div>
         </div>
-      </header>
+      </Card>
 
       {nothing && (
-        <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-          <p className="font-display text-lg font-semibold">Queue&apos;s clear.</p>
-          <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
-            Nothing waiting. Head to Prospect and sweep another search.
-          </p>
-        </div>
+        <EmptyState title="Queue's clear.">
+          Nothing waiting. Head to Prospect and sweep another search.
+        </EmptyState>
       )}
 
       <div className="flex flex-col gap-9">
@@ -83,48 +116,52 @@ export default function LocalQueuePage() {
         </Lane>
 
         {queue.upcoming.length > 0 && (
-          <Lane title="Coming up" count={queue.upcoming.length}>
-            {queue.upcoming.map(({ business, action }, i) => (
-              <li
-                key={business.id}
-                className="row-in flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-line-soft bg-surface/50 px-4 py-3"
-                style={{ animationDelay: `${Math.min(i, 12) * 22}ms` }}
-              >
-                <span className="min-w-0 flex-1 truncate text-sm">{business.name}</span>
-                <span className="text-xs text-muted">{action.label}</span>
-                <span className="tabular font-mono text-[10px] uppercase tracking-wide text-muted/70">
-                  {formatShort(action.dueOn)}
-                </span>
-              </li>
-            ))}
-          </Lane>
+          <section>
+            <SectionHeading count={queue.upcoming.length}>Coming up</SectionHeading>
+            <Card className="p-2">
+              <ul className="flex flex-col gap-1">
+                {queue.upcoming.map(({ business, action }, i) => (
+                  <Well
+                    as="li"
+                    key={business.id}
+                    className="row-in flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
+                    style={{ animationDelay: `${Math.min(i, 12) * 22}ms` }}
+                  >
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {business.name}
+                    </span>
+                    <span className="text-xs text-muted">{action.label}</span>
+                    <span className="tabular text-[10px] font-bold tracking-wide text-muted/70 uppercase">
+                      {formatShort(action.dueOn)}
+                    </span>
+                  </Well>
+                ))}
+              </ul>
+            </Card>
+          </section>
         )}
 
-        {queue.stale.length > 0 && (
-          <Lane
-            title="Gone quiet"
-            count={queue.stale.length}
-            hint={`No reply after ${MAX_BIZ_FOLLOWUPS} follow-ups.`}
-          >
-            {queue.stale.map((business, i) => (
-              <BizRow key={business.id} business={business} index={i} />
-            ))}
-          </Lane>
-        )}
+        <Lane
+          title="Gone quiet"
+          count={queue.stale.length}
+          hint={`No reply after ${MAX_BIZ_FOLLOWUPS} follow-ups.`}
+        >
+          {queue.stale.map((business, i) => (
+            <BizRow key={business.id} business={business} index={i} />
+          ))}
+        </Lane>
 
-        {queue.unreachable.length > 0 && (
-          <Lane
-            title="No contact found"
-            count={queue.unreachable.length}
-            hint="Parked, not deleted - a number can turn up later."
-          >
-            {queue.unreachable.map((business, i) => (
-              <BizRow key={business.id} business={business} index={i} showAction={false} />
-            ))}
-          </Lane>
-        )}
+        <Lane
+          title="No contact found"
+          count={queue.unreachable.length}
+          hint="Parked, not deleted - a number can turn up later."
+        >
+          {queue.unreachable.map((business, i) => (
+            <BizRow key={business.id} business={business} index={i} showAction={false} />
+          ))}
+        </Lane>
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -142,12 +179,10 @@ function Lane({
   if (count === 0) return null;
   return (
     <section>
-      <h2 className="mb-1 flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+      <SectionHeading count={count} hint={hint}>
         {title}
-        <span className="tabular text-muted/60">{count}</span>
-      </h2>
-      {hint && <p className="mb-3 text-xs text-muted/70">{hint}</p>}
-      <ul className="flex flex-col gap-2">{children}</ul>
+      </SectionHeading>
+      <ul className="grid gap-2.5">{children}</ul>
     </section>
   );
 }

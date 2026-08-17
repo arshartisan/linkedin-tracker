@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BizProvider } from "@/components/BizProvider";
 import { DataProvider } from "@/components/DataProvider";
 import { Nav } from "@/components/Nav";
+import { TopBar } from "@/components/TopBar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth";
 
@@ -30,7 +31,10 @@ export default async function AppLayout({
         <SidebarProvider>
           <Nav />
           {/* The rail is fixed, so only this pane scrolls. */}
-          <SidebarInset className="pb-24 md:pb-0">{children}</SidebarInset>
+          <SidebarInset className="min-w-0 pb-24 md:pb-0">
+            <TopBar />
+            {children}
+          </SidebarInset>
         </SidebarProvider>
       </BizProvider>
     </DataProvider>

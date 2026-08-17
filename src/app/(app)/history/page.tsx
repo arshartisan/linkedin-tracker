@@ -23,6 +23,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Card,
+  EmptyState,
+  FIELD,
+  Page,
+  PageHeader,
+} from "@/components/ui/layout";
 import { formatLong, relativeDay } from "@/lib/date";
 import { STAGES, STAGE_LABEL, type Stage } from "@/lib/types";
 import type { Connect } from "@/lib/types";
@@ -117,35 +124,30 @@ export default function HistoryPage() {
     setPaging({ signature, page: Math.min(Math.max(next, 1), pageCount) });
 
   return (
-    <div className="px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-6">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          History
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          Every connect you&apos;ve logged, newest first. Search before you send
-          to avoid doubling up.
-        </p>
-      </header>
+    <Page>
+      <PageHeader
+        title="History"
+        lead="Every connect you’ve logged, newest first. Search before you send to avoid doubling up."
+      />
 
-      <div className="sticky top-0 z-10 -mx-5 mb-5 bg-ink/90 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8">
+      <Card className="mb-5 p-3.5">
         <div className="flex flex-col gap-2.5 sm:flex-row">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search name, link, note or tag"
             aria-label="Search connects"
-            className="flex-1 rounded-xl border border-line-soft bg-surface px-4 py-2.5 text-sm placeholder:text-muted/70 focus:border-brand focus:outline-none"
+            className={`${FIELD} flex-1`}
           />
 
           <div className="flex gap-2.5">
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex flex-1 items-center justify-between gap-2 rounded-xl border border-line-soft bg-surface px-3.5 py-2.5 text-sm text-muted outline-none transition-colors hover:text-text data-[state=open]:text-text sm:flex-none">
+              <DropdownMenuTrigger className="flex flex-1 items-center justify-between gap-2 rounded-control border border-line-soft bg-well px-3.5 py-2.5 text-sm font-semibold text-muted outline-none transition-colors hover:text-text data-[state=open]:text-text sm:flex-none">
                 {FILTER_LABEL[filter]}
                 <ChevronDownIcon className="size-3.5 opacity-70" aria-hidden />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                <DropdownMenuLabel className="label">
                   Filter by stage
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -163,12 +165,12 @@ export default function HistoryPage() {
             </DropdownMenu>
 
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 rounded-xl border border-line-soft bg-surface px-3.5 py-2.5 font-mono text-xs text-muted outline-none transition-colors hover:text-text data-[state=open]:text-text">
+              <DropdownMenuTrigger className="flex items-center gap-2 rounded-control border border-line-soft bg-well px-3.5 py-2.5 text-xs font-semibold text-muted outline-none transition-colors hover:text-text data-[state=open]:text-text">
                 {pageSize} / page
                 <ChevronDownIcon className="size-3.5 opacity-70" aria-hidden />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-36">
-                <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                <DropdownMenuLabel className="label">
                   Rows per page
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -190,21 +192,18 @@ export default function HistoryPage() {
             </DropdownMenu>
           </div>
         </div>
-      </div>
+      </Card>
 
       {loading ? (
         <p className="text-sm text-muted">Loading…</p>
       ) : days.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-line px-6 py-14 text-center">
-          <p className="font-display text-lg font-semibold">
-            {mine.length === 0 ? "No connects logged yet." : "No matches."}
-          </p>
-          <p className="mt-1.5 text-sm text-muted">
-            {mine.length === 0
-              ? "Log your first one on the Today screen."
-              : "Try a different name, tag or status."}
-          </p>
-        </div>
+        <EmptyState
+          title={mine.length === 0 ? "No connects logged yet." : "No matches."}
+        >
+          {mine.length === 0
+            ? "Log your first one on the Today screen."
+            : "Try a different name, tag or status."}
+        </EmptyState>
       ) : (
         <>
           <div className="flex flex-col gap-8">
@@ -217,7 +216,7 @@ export default function HistoryPage() {
                       <h2 className="truncate font-display text-sm font-bold">
                         {relativeDay(day) ?? formatLong(day)}
                       </h2>
-                      <p className="tabular font-mono text-[11px] text-muted">
+                      <p className="tabular text-[11px] text-muted">
                         {total} of {goal}
                         {rows.length !== total && ` · ${rows.length} here`}
                       </p>
@@ -226,7 +225,7 @@ export default function HistoryPage() {
                       <Tally count={total} goal={goal} compact />
                     </div>
                   </div>
-                  <ul className="grid gap-2 lg:grid-cols-2">
+                  <ul className="grid gap-2 xl:grid-cols-2">
                     {rows.map((connect, i) => (
                       <ConnectRow key={connect.id} connect={connect} index={i} />
                     ))}
@@ -237,7 +236,7 @@ export default function HistoryPage() {
           </div>
 
           <div className="mt-10 flex flex-col items-center gap-3 border-t border-line-soft pt-6">
-            <p className="tabular font-mono text-[11px] text-muted">
+            <p className="tabular text-[11px] text-muted">
               {start + 1}–{start + pageRows.length} of {filtered.length}
             </p>
 
@@ -270,7 +269,7 @@ export default function HistoryPage() {
                         <PaginationLink
                           href="#"
                           isActive={entry === current}
-                          className="tabular font-mono text-xs"
+                          className="tabular text-xs font-semibold"
                           onClick={(e) => {
                             e.preventDefault();
                             goTo(entry);
@@ -303,6 +302,6 @@ export default function HistoryPage() {
           </div>
         </>
       )}
-    </div>
+    </Page>
   );
 }

@@ -9,6 +9,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Card,
+  Chip,
+  EmptyState,
+  Page,
+  PageHeader,
+  SectionHeading,
+  Well,
+} from "@/components/ui/layout";
 import { formatShort } from "@/lib/date";
 import type { ActionKind, Queue } from "@/lib/pipeline";
 
@@ -30,18 +39,6 @@ const GROUPS: { kind: ActionKind; title: string; blurb: string }[] = [
   },
 ];
 
-function Heading({ title, count, blurb }: { title: string; count: number; blurb?: string }) {
-  return (
-    <div className="mb-3">
-      <h2 className="flex items-baseline gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
-        {title}
-        <span className="tabular text-muted/60">{count}</span>
-      </h2>
-      {blurb && <p className="mt-1 text-xs text-muted/70">{blurb}</p>}
-    </div>
-  );
-}
-
 export default function QueuePage() {
   const { queue, loading } = useData();
   const { due, upcoming, waiting, stale } = queue;
@@ -62,52 +59,66 @@ export default function QueuePage() {
 
   if (loading) {
     return (
-      <div className="px-5 py-8 sm:px-8 sm:py-12">
-        <ul className="grid gap-2 lg:grid-cols-2">
+      <Page>
+        <ul className="grid gap-2 xl:grid-cols-2">
           {[0, 1, 2, 3].map((i) => (
-            <li
-              key={i}
-              className="h-17.5 animate-pulse rounded-xl border border-line-soft bg-surface"
-            />
+            <li key={i} className="h-[76px] animate-pulse rounded-well bg-surface" />
           ))}
         </ul>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-8">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">Queue</h1>
-        <div className="mt-4 flex items-end justify-between gap-6">
-          <div className="tabular flex items-baseline gap-2">
+    <Page>
+      <PageHeader
+        title="Queue"
+        lead="Everything waiting on a message from you, most overdue first."
+        actions={late > 0 ? <Chip tone="rose">{late} overdue</Chip> : null}
+      />
+
+      <Card className="mb-5 p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="tabular flex items-baseline gap-2.5">
             <span
-              className={`font-display text-[64px] font-extrabold leading-none tracking-tight sm:text-[76px] ${
+              className={`font-display text-[56px] leading-none font-extrabold sm:text-[68px] ${
                 dueCount === 0 ? "text-brand" : "text-text"
               }`}
             >
               {dueCount}
             </span>
-            <span className="font-mono text-sm text-muted">to action</span>
+            <span className="text-sm text-muted">to action</span>
           </div>
-          {late > 0 && (
-            <p className="tabular pb-2 text-right font-mono text-[11px] uppercase tracking-[0.14em] text-rose">
-              {late} overdue
-            </p>
-          )}
+
+          {/*
+            The three lanes as a strip: what the number above is actually made
+            of, without having to scroll to find out.
+          */}
+          <div className="flex flex-wrap gap-2">
+            {GROUPS.map(({ kind, title }) => {
+              const n = byKind.get(kind)?.length ?? 0;
+              return (
+                <Well key={kind} className="min-w-[104px] px-3.5 py-2.5">
+                  <div
+                    className={`tabular font-display text-xl leading-none font-extrabold ${
+                      n > 0 ? "text-text" : "text-muted/40"
+                    }`}
+                  >
+                    {n}
+                  </div>
+                  <div className="mt-1 text-[11px] text-muted">{title}</div>
+                </Well>
+              );
+            })}
+          </div>
         </div>
-      </header>
+      </Card>
 
       {dueCount === 0 ? (
-        <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-          <p className="font-display text-lg font-semibold text-brand">
-            Queue is clear.
-          </p>
-          <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
-            Nothing needs a message today. Go log some new connects - the
-            pipeline only fills from the top.
-          </p>
-        </div>
+        <EmptyState title={<span className="text-brand">Queue is clear.</span>}>
+          Nothing needs a message today. Go log some new connects - the pipeline
+          only fills from the top.
+        </EmptyState>
       ) : (
         <div className="flex flex-col gap-8">
           {GROUPS.map(({ kind, title, blurb }) => {
@@ -115,8 +126,10 @@ export default function QueuePage() {
             if (!items?.length) return null;
             return (
               <section key={kind}>
-                <Heading title={title} count={items.length} blurb={blurb} />
-                <ul className="grid gap-2 lg:grid-cols-2">
+                <SectionHeading count={items.length} hint={blurb}>
+                  {title}
+                </SectionHeading>
+                <ul className="grid gap-2 xl:grid-cols-2">
                   {items.map(({ connect, action }, i) => (
                     <ConnectRow
                       key={connect.id}
@@ -134,12 +147,13 @@ export default function QueuePage() {
 
       {stale.length > 0 && (
         <section className="mt-10">
-          <Heading
-            title="Went quiet"
+          <SectionHeading
             count={stale.length}
-            blurb="Both follow-ups sent, no reply. Close them so the queue stays honest."
-          />
-          <ul className="grid gap-2 lg:grid-cols-2">
+            hint="Both follow-ups sent, no reply. Close them so the queue stays honest."
+          >
+            Went quiet
+          </SectionHeading>
+          <ul className="grid gap-2 xl:grid-cols-2">
             {stale.map((connect, i) => (
               <ConnectRow key={connect.id} connect={connect} index={i} />
             ))}
@@ -149,25 +163,28 @@ export default function QueuePage() {
 
       {upcoming.length > 0 && (
         <section className="mt-10">
-          <Heading title="Coming up" count={upcoming.length} />
-          <ul className="grid gap-1.5 lg:grid-cols-2">
-            {upcoming.slice(0, 8).map(({ connect, action }) => (
-              <li
-                key={connect.id}
-                className="flex items-center gap-3 rounded-lg border border-line-soft bg-surface px-3.5 py-2.5 text-sm"
-              >
-                <span className="min-w-0 flex-1 truncate">
-                  {connect.name || "Unnamed"}
-                </span>
-                <span className="shrink-0 text-xs text-muted">{action.label}</span>
-                <span className="tabular shrink-0 font-mono text-[11px] text-muted/70">
-                  {formatShort(action.dueOn)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <SectionHeading count={upcoming.length}>Coming up</SectionHeading>
+          <Card className="p-2">
+            <ul className="flex flex-col gap-1">
+              {upcoming.slice(0, 8).map(({ connect, action }) => (
+                <Well
+                  as="li"
+                  key={connect.id}
+                  className="flex items-center gap-3 px-3.5 py-2.5 text-sm"
+                >
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {connect.name || "Unnamed"}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted">{action.label}</span>
+                  <span className="tabular shrink-0 text-[11px] text-muted/70">
+                    {formatShort(action.dueOn)}
+                  </span>
+                </Well>
+              ))}
+            </ul>
+          </Card>
           {upcoming.length > 8 && (
-            <p className="tabular mt-2 font-mono text-[11px] text-muted/60">
+            <p className="tabular mt-2 text-[11px] text-muted/60">
               +{upcoming.length - 8} more
             </p>
           )}
@@ -185,14 +202,16 @@ export default function QueuePage() {
             <CollapsibleTrigger className="w-full text-left outline-none">
               <div className="flex items-start gap-2">
                 <ChevronRightIcon
-                  className="mt-px size-3.5 shrink-0 text-muted transition-transform group-data-[state=open]/waiting:rotate-90"
+                  className="mt-0.5 size-3.5 shrink-0 text-muted transition-transform group-data-[state=open]/waiting:rotate-90"
                   aria-hidden
                 />
-                <Heading title="Waiting on accept" count={waiting.length} />
+                <SectionHeading count={waiting.length}>
+                  Waiting on accept
+                </SectionHeading>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <ul className="grid gap-2 lg:grid-cols-2">
+              <ul className="grid gap-2 xl:grid-cols-2">
                 {waiting.map((connect, i) => (
                   <ConnectRow key={connect.id} connect={connect} index={i} />
                 ))}
@@ -201,6 +220,6 @@ export default function QueuePage() {
           </section>
         </Collapsible>
       )}
-    </div>
+    </Page>
   );
 }

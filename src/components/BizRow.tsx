@@ -36,6 +36,8 @@ import {
   type BizAction,
 } from "@/lib/biz-pipeline";
 import { messageFor, varsFor } from "@/lib/biz-message";
+import { FIELD } from "@/components/ui/layout";
+import { ROW } from "./ConnectRow";
 
 /** "2 days late" reads as pressure; "in 2 days" reads as a plan. */
 function timing(action: BizAction): { text: string; late: boolean } {
@@ -47,10 +49,7 @@ function timing(action: BizAction): { text: string; late: boolean } {
 }
 
 const CHIP =
-  "inline-flex items-center gap-1 rounded-md bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-muted transition-colors hover:text-brand";
-
-const FIELD =
-  "rounded-lg border border-line-soft bg-ink px-3 py-2 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none";
+  "inline-flex min-w-0 items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-muted transition-colors hover:text-brand";
 
 export function BizRow({
   business,
@@ -76,13 +75,13 @@ export function BizRow({
 
   return (
     <li
-      className="row-in rounded-xl border border-line-soft bg-surface px-4 py-3.5 transition-colors hover:border-line"
+      className={ROW}
       style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}
     >
       <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-medium">{business.name || "Unnamed"}</span>
+            <span className="truncate font-semibold">{business.name || "Unnamed"}</span>
             {business.stage === "contacted" && business.followups > 0 && (
               <span
                 className="tabular shrink-0 font-mono text-[10px] text-muted"
@@ -94,7 +93,7 @@ export function BizRow({
             )}
           </div>
 
-          <div className="mt-0.5 font-mono text-xs text-muted">
+          <div className="mt-0.5 text-xs text-muted">
             {categoryLabel(business.category)} · {city?.name ?? business.city}
           </div>
 
@@ -110,7 +109,7 @@ export function BizRow({
                 href={waLink(business.whatsapp)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-md bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] text-brand transition-opacity hover:opacity-80"
+                className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-semibold text-brand transition-opacity hover:opacity-80"
               >
                 WhatsApp {formatPhone(business.whatsapp)}
               </a>
@@ -147,7 +146,7 @@ export function BizRow({
               {business.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-md bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-muted"
+                  className="rounded-full bg-surface-2 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted"
                 >
                   {tag}
                 </span>
@@ -167,7 +166,7 @@ export function BizRow({
           <DropdownMenu onOpenChange={(open) => !open && setConfirmDelete(false)}>
             <DropdownMenuTrigger
               aria-label="Business actions"
-              className="rounded-md p-1.5 text-muted transition-colors outline-none hover:bg-surface-2 hover:text-text data-[state=open]:bg-surface-2 data-[state=open]:text-text"
+              className="flex size-8 items-center justify-center rounded-full text-muted transition-colors outline-none hover:bg-surface-2 hover:text-text data-[state=open]:bg-surface-2 data-[state=open]:text-text"
             >
               <MoreHorizontalIcon className="size-4" aria-hidden />
             </DropdownMenuTrigger>
@@ -222,14 +221,14 @@ export function BizRow({
       )}
 
       {exhausted && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
+        <div className="well mt-3 flex flex-wrap items-center gap-2 px-3.5 py-2.5">
           <span className="text-xs text-muted">
             No reply after {MAX_BIZ_FOLLOWUPS} follow-ups.
           </span>
           <button
             type="button"
             onClick={() => setStage(business, "closed")}
-            className="ml-auto rounded-lg bg-surface-2 px-3 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-rose"
+            className="ml-auto rounded-full bg-surface-2 px-4 py-1.5 text-[11px] font-bold text-muted transition-colors hover:text-rose"
           >
             Close it out
           </button>
@@ -289,11 +288,11 @@ function ResearchPanel({ business, action }: { business: Business; action: BizAc
   }
 
   return (
-    <div className="mt-3 border-t border-line-soft pt-3">
+    <div className="well mt-3 px-3.5 py-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-muted">{action.label}</span>
         <span
-          className={`tabular font-mono text-[10px] uppercase tracking-wide ${
+          className={`tabular text-[10px] font-bold uppercase tracking-wide ${
             timing(action).late ? "text-rose" : "text-muted/70"
           }`}
         >
@@ -309,7 +308,7 @@ function ResearchPanel({ business, action }: { business: Business; action: BizAc
             href={business.website}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-md bg-surface-2 px-2 py-1 text-[11px] text-muted transition-colors hover:text-brand"
+            className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-muted transition-colors hover:text-brand"
           >
             Their website
           </a>
@@ -318,7 +317,7 @@ function ResearchPanel({ business, action }: { business: Business; action: BizAc
           href={business.facebook || links.facebook}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md bg-surface-2 px-2 py-1 text-[11px] text-muted transition-colors hover:text-brand"
+          className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-muted transition-colors hover:text-brand"
         >
           {business.facebook ? "Their Facebook" : "Find on Facebook"}
         </a>
@@ -326,7 +325,7 @@ function ResearchPanel({ business, action }: { business: Business; action: BizAc
           href={links.whatsapp}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md bg-surface-2 px-2 py-1 text-[11px] text-muted transition-colors hover:text-brand"
+          className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-muted transition-colors hover:text-brand"
         >
           Search “whatsapp”
         </a>
@@ -334,7 +333,7 @@ function ResearchPanel({ business, action }: { business: Business; action: BizAc
           href={links.google}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md bg-surface-2 px-2 py-1 text-[11px] text-muted transition-colors hover:text-brand"
+          className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-muted transition-colors hover:text-brand"
         >
           Search contact
         </a>
@@ -356,14 +355,14 @@ function ResearchPanel({ business, action }: { business: Business; action: BizAc
           type="button"
           onClick={save}
           disabled={!number.trim()}
-          className="rounded-lg bg-brand px-3 py-2 text-[11px] font-semibold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
+          className="rounded-full bg-brand px-4 py-2 text-[11px] font-bold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
         >
           {action.cta}
         </button>
         <button
           type="button"
           onClick={() => setStage(business, "unreachable")}
-          className="rounded-lg px-2.5 py-2 text-[11px] text-muted transition-colors hover:bg-surface-2 hover:text-rose"
+          className="rounded-full px-3 py-2 text-[11px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-rose"
         >
           No number
         </button>
@@ -398,11 +397,11 @@ function MessagePanel({ business, action }: { business: Business; action: BizAct
   const t = timing(action);
 
   return (
-    <div className="mt-3 border-t border-line-soft pt-3">
+    <div className="well mt-3 px-3.5 py-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-muted">{action.label}</span>
         <span
-          className={`tabular font-mono text-[10px] uppercase tracking-wide ${
+          className={`tabular text-[10px] font-bold uppercase tracking-wide ${
             t.late ? "text-rose" : "text-muted/70"
           }`}
         >
@@ -424,7 +423,7 @@ function MessagePanel({ business, action }: { business: Business; action: BizAct
             href={waLink(business.whatsapp, text)}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-surface-2 px-3 py-1.5 text-[11px] font-semibold text-brand transition-colors hover:bg-surface-3"
+            className="rounded-full bg-surface-2 px-4 py-2 text-[11px] font-bold text-brand transition-colors hover:bg-surface-3"
           >
             Open WhatsApp
           </a>
@@ -439,7 +438,7 @@ function MessagePanel({ business, action }: { business: Business; action: BizAct
             <button
               type="button"
               onClick={() => setStage(business, "closed")}
-              className="rounded-lg px-2.5 py-1.5 text-[11px] text-muted transition-colors hover:bg-surface-2 hover:text-rose"
+              className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-rose"
             >
               Not a fit
             </button>
@@ -447,7 +446,7 @@ function MessagePanel({ business, action }: { business: Business; action: BizAct
           <button
             type="button"
             onClick={() => complete(business, action)}
-            className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-semibold text-ink transition-opacity hover:opacity-90"
+            className="rounded-full bg-brand px-4 py-1.5 text-[11px] font-bold text-ink transition-opacity hover:opacity-90"
           >
             {action.cta}
           </button>

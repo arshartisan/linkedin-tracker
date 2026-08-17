@@ -7,9 +7,7 @@ import { parseTags } from "@/lib/linkedin";
 import { formatShort, relativeDay } from "@/lib/date";
 import { USER_LABEL } from "@/lib/types";
 import { toE164, type Category, type City } from "@/lib/biz";
-
-const FIELD =
-  "rounded-lg border border-line-soft bg-ink px-3 py-2.5 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none";
+import { FIELD, PrimaryButton } from "@/components/ui/layout";
 
 /**
  * The logging half of a sweep. You have the search results open in another tab;
@@ -100,7 +98,7 @@ export function AddBusiness({
   }
 
   return (
-    <form onSubmit={submit} className="rounded-xl border border-line bg-surface p-3.5">
+    <form onSubmit={submit} className="well p-3.5">
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           ref={nameRef}
@@ -113,17 +111,17 @@ export function AddBusiness({
           aria-label="Business name"
           aria-invalid={blocked || raced || undefined}
           autoComplete="off"
-          className={`min-w-0 flex-1 ${FIELD} ${
-            blocked || raced ? "border-rose focus:border-rose" : ""
+          className={`min-w-0 flex-1 ${FIELD} bg-ink ${
+            blocked || raced ? "border-rose/60 focus:border-rose" : ""
           }`}
         />
-        <button
+        <PrimaryButton
           type="submit"
           disabled={!name.trim() || blocked || saving}
-          className="shrink-0 rounded-lg bg-brand px-5 py-2.5 font-display text-sm font-bold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
+          className="shrink-0"
         >
           {saving ? "Logging…" : "Log"}
-        </button>
+        </PrimaryButton>
       </div>
 
       <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -134,28 +132,28 @@ export function AddBusiness({
             setError(null);
           }}
           placeholder="Website"
-          className={`${FIELD} py-2 text-xs`}
+          className={`${FIELD} bg-ink py-2 text-xs`}
         />
         <input
           value={facebook}
           onChange={(e) => setFacebook(e.target.value)}
           placeholder="Facebook page"
-          className={`${FIELD} py-2 text-xs`}
+          className={`${FIELD} bg-ink py-2 text-xs`}
         />
         <input
           value={whatsapp}
           onChange={(e) => setWhatsapp(e.target.value)}
           placeholder={city.dial ? `WhatsApp (+${city.dial})` : "WhatsApp"}
           inputMode="tel"
-          className={`${FIELD} py-2 font-mono text-xs placeholder:font-sans`}
+          className={`${FIELD} bg-ink py-2 font-mono text-xs placeholder:font-sans`}
         />
       </div>
 
       {more && (
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          <input value={maps} onChange={(e) => setMaps(e.target.value)} placeholder="Maps link" className={`${FIELD} py-2 text-xs`} />
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note" className={`${FIELD} py-2 text-xs`} />
-          <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" className={`${FIELD} py-2 font-mono text-xs placeholder:font-sans`} />
+          <input value={maps} onChange={(e) => setMaps(e.target.value)} placeholder="Maps link" className={`${FIELD} bg-ink py-2 text-xs`} />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note" className={`${FIELD} bg-ink py-2 text-xs`} />
+          <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" className={`${FIELD} bg-ink py-2 font-mono text-xs placeholder:font-sans`} />
         </div>
       )}
 
@@ -163,12 +161,12 @@ export function AddBusiness({
         <button
           type="button"
           onClick={() => setMore((v) => !v)}
-          className="text-xs text-muted transition-colors hover:text-text"
+          className="text-xs font-semibold text-muted transition-colors hover:text-text"
         >
           {more ? "Fewer fields" : "Maps, note, tags"}
         </button>
         {added > 0 && !error && !duplicate && (
-          <span className="tabular font-mono text-[10px] uppercase tracking-wide text-brand-dim">
+          <span className="label tabular text-[10px] text-brand-dim">
             {added} logged here
           </span>
         )}
@@ -176,7 +174,7 @@ export function AddBusiness({
       </div>
 
       {duplicate ? (
-        <p role="alert" className="mt-2 rounded-lg border border-rose/30 bg-rose-soft/40 px-3 py-2 text-xs text-rose">
+        <p role="alert" className="mt-2 rounded-well border border-rose/25 bg-rose-soft/35 px-3.5 py-2.5 text-xs text-rose">
           {USER_LABEL[duplicate.owner]} already logged{" "}
           {duplicate.name || "this business"}
           {duplicate.found_on
@@ -186,7 +184,7 @@ export function AddBusiness({
         </p>
       ) : (
         raced && (
-          <p role="alert" className="mt-2 rounded-lg border border-rose/30 bg-rose-soft/40 px-3 py-2 text-xs text-rose">
+          <p role="alert" className="mt-2 rounded-well border border-rose/25 bg-rose-soft/35 px-3.5 py-2.5 text-xs text-rose">
             {BIZ_DUPLICATE_MESSAGE} Reload to see who has it.
           </p>
         )

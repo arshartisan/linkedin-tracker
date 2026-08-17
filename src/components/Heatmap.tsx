@@ -74,7 +74,7 @@ export function Heatmap({
             label ? (
               <span
                 key={i}
-                className="absolute top-0 font-mono text-[9px] uppercase tracking-wide text-muted"
+                className="absolute top-0 text-[9px] font-semibold uppercase tracking-wide text-muted"
                 style={{ left: i * PITCH }}
               >
                 {label}

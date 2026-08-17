@@ -1,22 +1,36 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Nunito, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({
-  variable: "--font-display",
+/*
+  The UI is set in SF Pro Rounded, which is why the stack in globals.css leads
+  with the `ui-rounded` generic - on Apple platforms that resolves to the real
+  thing, at the optical sizes Apple ships it in.
+
+  It cannot be self-hosted: Apple licenses SF for use on Apple platforms, not
+  for redistribution as a webfont. So Nunito loads underneath it as the
+  cross-platform rounded face - geometric, generous counters, the same soft
+  temperament - and Windows and Android get a rounded UI rather than falling
+  back to something grotesque.
+*/
+const rounded = Nunito({
+  variable: "--font-rounded",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
-const body = Inter_Tight({
-  variable: "--font-body",
-  subsets: ["latin"],
-});
-
+/*
+  Mono earns its place on one job now: figures that must not jitter as they
+  change, and URLs. Everything that used to be set in it - the small uppercase
+  captions especially - moved to the rounded face, which is most of what makes
+  the new look calmer than the old one.
+*/
 const mono = JetBrains_Mono({
-  variable: "--font-mono",
+  variable: "--font-jetbrains",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +39,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0a0d12",
+  themeColor: "#0a0c11",
 };
 
 /*
@@ -41,7 +55,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${display.variable} ${body.variable} ${mono.variable} h-full`}
+      className={`${rounded.variable} ${mono.variable} h-full`}
     >
       <body className="min-h-full">{children}</body>
     </html>

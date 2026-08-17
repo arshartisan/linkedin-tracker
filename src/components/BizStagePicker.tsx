@@ -34,13 +34,13 @@ export function BizStagePicker({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Pipeline stage: ${BIZ_STAGE_LABEL[value]}`}
-        className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg py-1.5 pl-2.5 pr-2 text-[11px] font-medium transition-opacity outline-none hover:opacity-90 ${BIZ_STAGE_TONE[value]}`}
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-2 pl-3 text-[11px] font-bold transition-opacity outline-none hover:opacity-90 ${BIZ_STAGE_TONE[value]}`}
       >
         {BIZ_STAGE_LABEL[value]}
         <ChevronDownIcon className="size-3 opacity-70" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+        <DropdownMenuLabel className="label">
           Stage
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

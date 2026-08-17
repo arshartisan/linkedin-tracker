@@ -5,6 +5,14 @@ import { CheckIcon, PlusIcon } from "lucide-react";
 import { useBiz } from "@/components/BizProvider";
 import { AddBusiness } from "@/components/AddBusiness";
 import { BizRow } from "@/components/BizRow";
+import {
+  Card,
+  EmptyState,
+  Page,
+  PageHeader,
+  SectionHeading,
+  Well,
+} from "@/components/ui/layout";
 import { formatShort, relativeDay } from "@/lib/date";
 import { USER_LABEL } from "@/lib/types";
 import {
@@ -46,8 +54,7 @@ export default function LocalPage() {
   const sweptCells = useMemo(
     () =>
       CATEGORIES.reduce(
-        (n, cat) =>
-          n + cities.filter((c) => sweeps.has(cellKey(cat.id, c.id))).length,
+        (n, cat) => n + cities.filter((c) => sweeps.has(cellKey(cat.id, c.id))).length,
         0
       ),
     [cities, sweeps]
@@ -55,53 +62,61 @@ export default function LocalPage() {
 
   if (loading) {
     return (
-      <div className="px-5 py-8 sm:px-8 sm:py-12">
+      <Page>
         <p className="text-sm text-muted">Loading…</p>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-7">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Prospect
-        </h1>
-        <p className="mt-1.5 max-w-xl text-sm text-muted">
-          One cell per search. Run it, log what it turns up, tick it off.
-        </p>
+    <Page>
+      <PageHeader
+        title="Prospect"
+        lead="One cell per search. Run it, log what it turns up, tick it off."
+      />
 
-        <div className="tabular mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-[52px] font-extrabold leading-none tracking-tight text-brand">
+      <Card className="mb-4 p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="tabular flex items-baseline gap-2.5">
+            <span className="font-display text-[56px] leading-none font-extrabold text-brand sm:text-[68px]">
               {businesses.length}
             </span>
-            <span className="font-mono text-sm text-muted">businesses logged</span>
+            <span className="text-sm text-muted">businesses logged</span>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-2xl font-bold leading-none">
+
+          <Well className="min-w-[180px] px-4 py-3">
+            <div className="tabular font-display text-xl leading-none font-extrabold">
               {sweptCells}
-            </span>
-            <span className="font-mono text-xs text-muted">
-              / {totalCells} searches swept
-            </span>
-          </div>
+              <span className="text-sm font-semibold text-muted"> / {totalCells}</span>
+            </div>
+            <div className="mt-1 text-[11px] text-muted">searches swept</div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink">
+              <div
+                className="h-full rounded-full bg-brand/70 transition-all duration-500"
+                style={{
+                  width: `${totalCells === 0 ? 0 : (sweptCells / totalCells) * 100}%`,
+                }}
+              />
+            </div>
+          </Well>
         </div>
-      </header>
+      </Card>
 
       <CityBar />
 
-      <Grid
-        cities={cities}
-        selected={selected}
-        onSelect={(next) =>
-          setSelected((prev) =>
-            prev && prev.category === next.category && prev.city === next.city
-              ? null
-              : next
-          )
-        }
-      />
+      <Card className="p-3 sm:p-4">
+        <Grid
+          cities={cities}
+          selected={selected}
+          onSelect={(next) =>
+            setSelected((prev) =>
+              prev && prev.category === next.category && prev.city === next.city
+                ? null
+                : next
+            )
+          }
+        />
+      </Card>
 
       {category && city && (
         <CellPanel
@@ -113,7 +128,7 @@ export default function LocalPage() {
       )}
 
       {!category && cities.length > 0 && (
-        <p className="mt-6 text-sm text-muted">
+        <p className="mt-5 text-sm text-muted">
           Pick a cell to open its searches.
           {businesses.length === 0 && (
             <span className="text-muted/60">
@@ -123,7 +138,7 @@ export default function LocalPage() {
           )}
         </p>
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -158,21 +173,24 @@ function CityBar() {
     setAdding(false);
   }
 
+  const miniField =
+    "rounded-full border border-line-soft bg-well px-3 py-1.5 text-[11px] focus:border-brand-edge focus:outline-none";
+
   return (
     <div className="mb-4 flex flex-wrap items-center gap-1.5">
       {cities.map((c) => (
         <span
           key={c.id}
-          className="group inline-flex items-center gap-1.5 rounded-lg bg-surface-2 py-1.5 pl-2.5 pr-1.5 text-[11px]"
+          className="group inline-flex items-center gap-1.5 rounded-full bg-surface py-1.5 pr-1.5 pl-3.5 text-[11px] font-semibold shadow-raised"
         >
           {c.name}
-          {c.region && <span className="text-muted/60">{c.region}</span>}
+          {c.region && <span className="font-normal text-muted/60">{c.region}</span>}
           <button
             type="button"
             onClick={() => setCityActive(c.id, false)}
             aria-label={`Retire ${c.name}`}
             title="Retire this city - its businesses stay"
-            className="rounded px-1 text-muted opacity-0 transition-opacity hover:text-rose group-hover:opacity-100 focus-visible:opacity-100"
+            className="rounded-full px-1.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose focus-visible:opacity-100"
           >
             ×
           </button>
@@ -184,7 +202,7 @@ function CityBar() {
           key={c.id}
           type="button"
           onClick={() => setCityActive(c.id, true)}
-          className="rounded-lg border border-dashed border-line px-2.5 py-1.5 text-[11px] text-muted/60 transition-colors hover:text-text"
+          className="rounded-full border border-dashed border-line px-3 py-1.5 text-[11px] font-semibold text-muted/60 transition-colors hover:text-text"
         >
           {c.name} ↩
         </button>
@@ -197,13 +215,13 @@ function CityBar() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="City"
-            className="w-28 rounded-lg border border-line-soft bg-ink px-2.5 py-1.5 text-[11px] focus:border-brand focus:outline-none"
+            className={`${miniField} w-28`}
           />
           <input
             value={region}
             onChange={(e) => setRegion(e.target.value)}
             placeholder="Region / country"
-            className="w-36 rounded-lg border border-line-soft bg-ink px-2.5 py-1.5 text-[11px] focus:border-brand focus:outline-none"
+            className={`${miniField} w-36`}
           />
           <input
             value={dial}
@@ -211,18 +229,18 @@ function CityBar() {
             placeholder="Dial (974)"
             inputMode="numeric"
             title="Country calling code - what turns a local number into one WhatsApp accepts"
-            className="w-24 rounded-lg border border-line-soft bg-ink px-2.5 py-1.5 font-mono text-[11px] focus:border-brand focus:outline-none"
+            className={`${miniField} w-24 font-mono`}
           />
           <button
             type="submit"
-            className="rounded-lg bg-brand px-2.5 py-1.5 text-[11px] font-semibold text-ink"
+            className="rounded-full bg-brand px-3 py-1.5 text-[11px] font-bold text-ink"
           >
             Add
           </button>
           <button
             type="button"
             onClick={() => setAdding(false)}
-            className="px-1.5 text-[11px] text-muted hover:text-text"
+            className="px-1.5 text-[11px] font-semibold text-muted hover:text-text"
           >
             Cancel
           </button>
@@ -231,7 +249,7 @@ function CityBar() {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-1 rounded-lg border border-dashed border-line px-2.5 py-1.5 text-[11px] text-muted transition-colors hover:border-brand-edge hover:text-brand"
+          className="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-3 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:border-brand-edge hover:text-brand"
         >
           <PlusIcon className="size-3" aria-hidden />
           City
@@ -254,12 +272,9 @@ function Grid({
 
   if (cities.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-        <p className="font-display text-lg font-semibold">No cities.</p>
-        <p className="mt-1.5 text-sm text-muted">
-          Add one above and the grid builds itself.
-        </p>
-      </div>
+      <EmptyState title="No cities." className="border-0">
+        Add one above and the grid builds itself.
+      </EmptyState>
     );
   }
 
@@ -269,17 +284,13 @@ function Grid({
       table scrolls sideways with the category column pinned - which is the one
       you need to keep reading the row you're on.
     */
-    <div className="-mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0">
+    <div className="overflow-x-auto">
       <table className="w-full min-w-[520px] border-separate border-spacing-0">
         <thead>
           <tr>
-            <th className="sticky left-0 z-10 bg-ink pb-2 text-left" />
+            <th className="sticky left-0 z-10 bg-surface pb-2 text-left" />
             {cities.map((c) => (
-              <th
-                key={c.id}
-                scope="col"
-                className="pb-2 text-center font-mono text-[10px] font-normal uppercase tracking-[0.16em] text-muted"
-              >
+              <th key={c.id} scope="col" className="label pb-2 text-center text-[10px]">
                 {c.name}
               </th>
             ))}
@@ -325,7 +336,7 @@ function GroupRows({
         <th
           colSpan={cities.length + 1}
           scope="colgroup"
-          className="sticky left-0 pt-4 pb-1.5 text-left font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-muted/60"
+          className="label sticky left-0 bg-surface pt-4 pb-1.5 text-left text-[10px] text-muted/50"
         >
           {group}
         </th>
@@ -334,7 +345,7 @@ function GroupRows({
         <tr key={category.id} className="group">
           <th
             scope="row"
-            className="sticky left-0 z-10 max-w-[9rem] truncate bg-ink py-1 pr-3 text-left text-xs font-normal"
+            className="sticky left-0 z-10 max-w-[9.5rem] truncate bg-surface py-1 pr-3 text-left text-[13px] font-medium"
           >
             {category.label}
           </th>
@@ -361,14 +372,14 @@ function GroupRows({
                     quiet with a tick - done work should stop asking for
                     attention.
                   */
-                  className={`tabular flex h-9 w-full items-center justify-center rounded-lg border font-mono text-xs transition-colors ${
+                  className={`tabular flex h-9 w-full items-center justify-center rounded-control border text-xs font-bold transition-all ${
                     active
-                      ? "border-brand bg-brand-soft text-brand"
+                      ? "border-brand-edge bg-brand-soft text-brand"
                       : swept
-                        ? "border-line-soft bg-surface/60 text-muted/70 hover:border-line"
+                        ? "border-transparent bg-well text-muted/60 hover:text-muted"
                         : count > 0
-                          ? "border-brand-edge/50 bg-surface text-brand hover:border-brand-edge"
-                          : "border-line-soft bg-surface-2/40 text-muted/40 hover:border-line hover:text-muted"
+                          ? "border-brand-edge/40 bg-surface-2 text-brand shadow-raised"
+                          : "border-transparent bg-well/60 text-muted/30 hover:bg-well hover:text-muted"
                   }`}
                 >
                   {swept && count === 0 ? (
@@ -406,18 +417,16 @@ function CellPanel({
   const swept = sweeps.get(cellKey(category.id, city.id));
 
   return (
-    <section className="fade-in mt-6 rounded-2xl border border-line bg-surface/40 p-4 sm:p-5">
+    <Card className="fade-in mt-4 p-4 sm:p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="font-display text-lg font-bold">
           {category.label}{" "}
-          <span className="font-mono text-xs font-normal text-muted">
-            in {city.name}
-          </span>
+          <span className="text-xs font-semibold text-muted">in {city.name}</span>
         </h2>
         <button
           type="button"
           onClick={onClose}
-          className="text-xs text-muted transition-colors hover:text-text"
+          className="text-xs font-semibold text-muted transition-colors hover:text-text"
         >
           Close
         </button>
@@ -429,13 +438,13 @@ function CellPanel({
         and Facebook the ones with neither - which in Doha and Lusail is most
         of the small operators worth pitching.
       */}
-      <div className="mt-3.5 flex flex-col gap-2">
+      <div className="mt-3.5 flex flex-col gap-1.5">
         {queriesFor(category, city).map((query) => {
           const links = searchLinks(query);
           return (
-            <div
+            <Well
               key={query}
-              className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-line-soft bg-ink px-3 py-2.5"
+              className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3.5 py-2.5"
             >
               <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted">
                 {query}
@@ -452,12 +461,12 @@ function CellPanel({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-md bg-surface-2 px-2 py-1 text-[11px] text-muted transition-colors hover:text-brand"
+                  className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-muted transition-colors hover:text-brand"
                 >
                   {label}
                 </a>
               ))}
-            </div>
+            </Well>
           );
         })}
       </div>
@@ -469,14 +478,15 @@ function CellPanel({
       <div className="mt-3.5 flex flex-wrap items-center gap-3 border-t border-line-soft pt-3.5">
         {swept ? (
           <>
-            <span className="font-mono text-[11px] text-muted">
-              Swept {relativeDay(swept.swept_on)?.toLowerCase() ?? formatShort(swept.swept_on)}{" "}
+            <span className="text-[11px] text-muted">
+              Swept{" "}
+              {relativeDay(swept.swept_on)?.toLowerCase() ?? formatShort(swept.swept_on)}{" "}
               by {USER_LABEL[swept.owner]}
             </span>
             <button
               type="button"
               onClick={() => clearSweep(category.id, city.id)}
-              className="text-[11px] text-muted transition-colors hover:text-text"
+              className="text-[11px] font-semibold text-muted transition-colors hover:text-text"
             >
               Sweep it again
             </button>
@@ -485,7 +495,7 @@ function CellPanel({
           <button
             type="button"
             onClick={() => markSwept(category.id, city.id, inCell.length)}
-            className="rounded-lg bg-surface-2 px-3 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-brand"
+            className="rounded-full bg-surface-2 px-4 py-2 text-[11px] font-bold text-muted transition-colors hover:text-brand"
           >
             Mark this search swept
           </button>
@@ -493,12 +503,15 @@ function CellPanel({
       </div>
 
       {inCell.length > 0 && (
-        <ul className="mt-3.5 flex flex-col gap-2">
-          {inCell.map((business, i) => (
-            <BizRow key={business.id} business={business} index={i} showAction={false} />
-          ))}
-        </ul>
+        <div className="mt-3.5">
+          <SectionHeading count={inCell.length}>Logged here</SectionHeading>
+          <ul className="flex flex-col gap-2">
+            {inCell.map((business, i) => (
+              <BizRow key={business.id} business={business} index={i} showAction={false} />
+            ))}
+          </ul>
+        </div>
       )}
-    </section>
+    </Card>
   );
 }

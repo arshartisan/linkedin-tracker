@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FIELD } from "@/components/ui/layout";
 import { formatShort, formatTime } from "@/lib/date";
 import { parseTags, profileSlug } from "@/lib/linkedin";
 import { isStale, MAX_FOLLOWUPS, nextAction, type Action } from "@/lib/pipeline";
@@ -29,6 +30,15 @@ function timing(action: Action): { text: string; late: boolean } {
   if (action.overdue === -1) return { text: "tomorrow", late: false };
   return { text: formatShort(action.dueOn), late: false };
 }
+
+/**
+ * A row is a card in its own right: lists here are long and often grouped by
+ * day, so wrapping each group in an outer panel would stack four radii deep.
+ * The row carries the lift instead, and the wells appear one level in - the
+ * action panel and the editor.
+ */
+export const ROW =
+  "row-in rounded-well border border-line-soft bg-surface px-4 py-3.5 transition-colors hover:border-line";
 
 export function ConnectRow({
   connect,
@@ -64,22 +74,19 @@ export function ConnectRow({
   }
 
   return (
-    <li
-      className="row-in rounded-xl border border-line-soft bg-surface px-4 py-3.5 transition-colors hover:border-line"
-      style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}
-    >
+    <li className={ROW} style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}>
       <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate font-medium">
+            <span className="truncate font-semibold">
               {connect.name || slug || "Unnamed"}
             </span>
-            <span className="tabular shrink-0 font-mono text-[11px] text-muted">
+            <span className="tabular shrink-0 text-[11px] text-muted">
               {formatTime(connect.created_at)}
             </span>
             {connect.stage === "messaged" && connect.followups > 0 && (
               <span
-                className="tabular shrink-0 font-mono text-[10px] text-muted"
+                className="tabular shrink-0 text-[10px] text-muted"
                 title={`${connect.followups} of ${MAX_FOLLOWUPS} follow-ups sent`}
               >
                 {"•".repeat(connect.followups)}
@@ -92,7 +99,7 @@ export function ConnectRow({
             href={connect.profile_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate font-mono text-xs text-muted transition-colors hover:text-brand"
+            className="mt-1 inline-flex max-w-full items-center gap-1 truncate font-mono text-xs text-muted transition-colors hover:text-brand"
           >
             <span className="truncate">/in/{slug ?? connect.profile_url}</span>
             <svg
@@ -112,7 +119,7 @@ export function ConnectRow({
               {connect.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-md bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-muted"
+                  className="rounded-full bg-surface-2 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted uppercase"
                 >
                   {tag}
                 </span>
@@ -134,7 +141,7 @@ export function ConnectRow({
           <DropdownMenu onOpenChange={(open) => !open && setConfirmDelete(false)}>
             <DropdownMenuTrigger
               aria-label="Connect actions"
-              className="rounded-md p-1.5 text-muted transition-colors outline-none hover:bg-surface-2 hover:text-text data-[state=open]:bg-surface-2 data-[state=open]:text-text"
+              className="flex size-8 items-center justify-center rounded-full text-muted transition-colors outline-none hover:bg-surface-2 hover:text-text data-[state=open]:bg-surface-2 data-[state=open]:text-text"
             >
               <MoreHorizontalIcon className="size-4" aria-hidden />
             </DropdownMenuTrigger>
@@ -178,10 +185,10 @@ export function ConnectRow({
       </div>
 
       {showCta && action && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
+        <div className="well mt-3 flex flex-wrap items-center gap-2 px-3.5 py-2.5">
           <span className="text-xs text-muted">{action.label}</span>
           <span
-            className={`tabular font-mono text-[10px] uppercase tracking-wide ${
+            className={`tabular text-[10px] font-bold tracking-wide uppercase ${
               timing(action).late ? "text-rose" : "text-muted/70"
             }`}
           >
@@ -193,7 +200,7 @@ export function ConnectRow({
               <button
                 type="button"
                 onClick={() => setStage(connect, "closed")}
-                className="rounded-lg px-2.5 py-1.5 text-[11px] text-muted transition-colors hover:bg-surface-2 hover:text-rose"
+                className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-rose"
               >
                 Not a fit
               </button>
@@ -201,7 +208,7 @@ export function ConnectRow({
             <button
               type="button"
               onClick={() => complete(connect, action)}
-              className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-semibold text-ink transition-opacity hover:opacity-90"
+              className="rounded-full bg-brand px-3.5 py-1.5 text-[11px] font-bold text-ink transition-opacity hover:opacity-90"
             >
               {action.cta}
             </button>
@@ -210,14 +217,14 @@ export function ConnectRow({
       )}
 
       {exhausted && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line-soft pt-3">
+        <div className="well mt-3 flex flex-wrap items-center gap-2 px-3.5 py-2.5">
           <span className="text-xs text-muted">
             No reply after {MAX_FOLLOWUPS} follow-ups.
           </span>
           <button
             type="button"
             onClick={() => setStage(connect, "closed")}
-            className="ml-auto rounded-lg bg-surface-2 px-3 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-rose"
+            className="ml-auto rounded-full bg-surface-2 px-3.5 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-rose"
           >
             Close it out
           </button>
@@ -231,14 +238,14 @@ export function ConnectRow({
             onChange={(e) => setNote(e.target.value)}
             onBlur={saveDetails}
             placeholder="Note - what you said, or what to follow up on"
-            className="rounded-lg border border-line-soft bg-ink px-3 py-2 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none"
+            className={FIELD}
           />
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             onBlur={saveDetails}
             placeholder="Tags, comma separated"
-            className="rounded-lg border border-line-soft bg-ink px-3 py-2 font-mono text-xs placeholder:text-muted/60 focus:border-brand focus:outline-none"
+            className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`}
           />
         </div>
       )}

@@ -3,6 +3,13 @@
 import { useMemo, useState } from "react";
 import { useBiz } from "@/components/BizProvider";
 import { BizRow } from "@/components/BizRow";
+import {
+  Card,
+  EmptyState,
+  FIELD,
+  Page,
+  PageHeader,
+} from "@/components/ui/layout";
 import { USER_LABEL, type UserId } from "@/lib/types";
 import {
   BIZ_STAGES,
@@ -55,83 +62,87 @@ export default function LocalPipelinePage() {
 
   if (loading) {
     return (
-      <div className="px-5 py-8 sm:px-8 sm:py-12">
+      <Page>
         <p className="text-sm text-muted">Loading…</p>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="px-5 py-8 sm:px-8 sm:py-12">
-      <header className="mb-6">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Local pipeline
-        </h1>
-        <p className="mt-1.5 text-sm text-muted">
-          {businesses.length} business{businesses.length === 1 ? "" : "es"} across{" "}
-          {cities.length} cit{cities.length === 1 ? "y" : "ies"}.
-        </p>
-      </header>
+    <Page>
+      <PageHeader
+        title="Local pipeline"
+        lead={`${businesses.length} business${
+          businesses.length === 1 ? "" : "es"
+        } across ${cities.length} cit${cities.length === 1 ? "y" : "ies"}.`}
+      />
 
-      <div className="mb-4 flex flex-wrap items-center gap-1.5">
-        <Tab active={stage === "all"} onClick={() => setStage("all")}>
-          All <span className="tabular ml-1 text-muted/60">{businesses.length}</span>
-        </Tab>
-        {BIZ_STAGES.map((s) => (
-          <Tab key={s} active={stage === s} onClick={() => setStage(s)}>
-            {BIZ_STAGE_LABEL[s]}
-            <span className="tabular ml-1 text-muted/60">{perStage.get(s) ?? 0}</span>
-          </Tab>
-        ))}
-      </div>
-
-      <div className="mb-6 flex flex-wrap items-center gap-2">
+      {/*
+        Filters live in their own card above the list rather than floating in a
+        sticky bar. There are five of them; a sticky strip that tall eats a
+        phone screen, and the list is scrolled past far more often than the
+        filters are changed.
+      */}
+      <Card className="mb-5 p-3.5">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search name, site, note or tag"
-          className="min-w-0 flex-1 basis-56 rounded-lg border border-line-soft bg-ink px-3 py-2 text-sm placeholder:text-muted/60 focus:border-brand focus:outline-none"
+          aria-label="Search businesses"
+          className={FIELD}
         />
-        <Select value={city} onChange={setCity} label="City">
-          {cities.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          <Tab active={stage === "all"} onClick={() => setStage("all")}>
+            All <span className="tabular ml-1 opacity-60">{businesses.length}</span>
+          </Tab>
+          {BIZ_STAGES.map((s) => (
+            <Tab key={s} active={stage === s} onClick={() => setStage(s)}>
+              {BIZ_STAGE_LABEL[s]}
+              <span className="tabular ml-1 opacity-60">{perStage.get(s) ?? 0}</span>
+            </Tab>
           ))}
-        </Select>
-        <Select value={category} onChange={setCategory} label="Category">
-          {CATEGORIES.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label}
-            </option>
-          ))}
-        </Select>
-        <Select value={owner} onChange={(v) => setOwner(v as Owner)} label="Anyone">
-          {(Object.keys(USER_LABEL) as UserId[]).map((id) => (
-            <option key={id} value={id}>
-              {USER_LABEL[id]}
-            </option>
-          ))}
-        </Select>
-      </div>
+        </div>
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <Select value={city} onChange={setCity} label="City">
+            {cities.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+          <Select value={category} onChange={setCategory} label="Category">
+            {CATEGORIES.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
+            ))}
+          </Select>
+          <Select value={owner} onChange={(v) => setOwner(v as Owner)} label="Anyone">
+            {(Object.keys(USER_LABEL) as UserId[]).map((id) => (
+              <option key={id} value={id}>
+                {USER_LABEL[id]}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </Card>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-          <p className="font-display text-lg font-semibold">Nothing here.</p>
-          <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
-            {businesses.length === 0
-              ? "Sweep a search on Prospect and the businesses land here."
-              : "No business matches those filters."}
-          </p>
-        </div>
+        <EmptyState title="Nothing here.">
+          {businesses.length === 0
+            ? "Sweep a search on Prospect and the businesses land here."
+            : "No business matches those filters."}
+        </EmptyState>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2.5">
           {rows.map((business, i) => (
             <Grouped key={business.id} business={business} index={i} />
           ))}
         </ul>
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -141,7 +152,7 @@ function Grouped({ business, index }: { business: Business; index: number }) {
   const city = cityById(business.city);
   return (
     <li className="flex flex-col">
-      <span className="mb-1 pl-1 font-mono text-[10px] uppercase tracking-wide text-muted/60">
+      <span className="label mb-1 pl-1 text-muted/60">
         {USER_LABEL[business.owner]} · {categoryLabel(business.category)} ·{" "}
         {city?.name ?? business.city}
       </span>
@@ -166,8 +177,10 @@ function Tab({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
-        active ? "bg-brand-soft text-brand" : "bg-surface-2 text-muted hover:text-text"
+      className={`rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all ${
+        active
+          ? "bg-surface-2 text-text shadow-raised"
+          : "bg-well text-muted hover:text-text"
       }`}
     >
       {children}
@@ -192,7 +205,7 @@ function Select({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       aria-label={label}
-      className={`rounded-lg border border-line-soft bg-ink px-2.5 py-2 text-xs focus:border-brand focus:outline-none ${
+      className={`rounded-full border border-line-soft bg-well px-3 py-2 text-xs font-semibold focus:border-brand-edge focus:outline-none ${
         value === "all" ? "text-muted" : "text-text"
       }`}
     >

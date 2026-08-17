@@ -60,7 +60,7 @@ export function Tally({
             />
           ))}
           {surplus > 15 && (
-            <span className="tabular ml-1.5 self-center font-mono text-[11px] text-brand">
+            <span className="tabular ml-1.5 self-center text-[11px] font-bold text-brand">
               +{surplus - 15}
             </span>
           )}

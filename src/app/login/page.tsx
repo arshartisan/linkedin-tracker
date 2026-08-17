@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { LogoLockup } from "@/components/Logo";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { PrimaryButton } from "@/components/ui/layout";
 
 const PHONE_LENGTH = 10;
 const PHONE_PATTERN = /^07\d{8}$/;
@@ -66,7 +67,7 @@ export default function LoginPage() {
     }
   }
 
-  const slotClass = `h-11 w-7 border-y border-r border-line-soft bg-ink font-mono text-sm text-text shadow-none first:rounded-l-xl first:border-l last:rounded-r-xl data-[active=true]:z-10 data-[active=true]:border-brand data-[active=true]:ring-0 ${
+  const slotClass = `h-12 w-7 border-y border-r border-line-soft bg-well font-mono text-sm font-semibold text-text shadow-none first:rounded-l-control first:border-l last:rounded-r-control data-[active=true]:z-10 data-[active=true]:border-brand data-[active=true]:ring-0 ${
     shownError ? "border-rose data-[active=true]:border-rose" : ""
   }`;
 
@@ -74,7 +75,7 @@ export default function LoginPage() {
     <main className="flex min-h-dvh items-center justify-center px-5 py-16">
       <div className="w-full max-w-sm">
         <LogoLockup className="mx-auto h-9 w-auto" />
-        <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+        <p className="label mt-3 text-center">
           Outreach pipeline
         </p>
 
@@ -83,11 +84,11 @@ export default function LoginPage() {
             e.preventDefault();
             void signIn(phone);
           }}
-          className="mt-8 rounded-2xl border border-line bg-surface p-5"
+          className="card mt-8 p-5"
         >
           <label
             htmlFor="phone"
-            className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted"
+            className="label"
           >
             Your mobile number
           </label>
@@ -129,20 +130,16 @@ export default function LoginPage() {
             </InputOTP>
           </div>
 
-          <button
-            type="submit"
-            disabled={busy || !valid}
-            className="mt-4 w-full rounded-xl bg-brand px-6 py-3.5 font-display text-sm font-bold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted"
-          >
+          <PrimaryButton type="submit" disabled={busy || !valid} className="mt-4 w-full py-3.5">
             {busy ? "Checking…" : "Continue"}
-          </button>
+          </PrimaryButton>
 
           {shownError ? (
             <p id="login-error" role="alert" className="mt-3 text-xs text-rose">
               {shownError}
             </p>
           ) : (
-            <p className="mt-3 text-center font-mono text-[10px] tracking-[0.14em] text-muted/70">
+            <p className="mt-3 text-center font-mono text-[10px] tracking-[0.14em] text-muted/60">
               07X XXX XXXX
             </p>
           )}
