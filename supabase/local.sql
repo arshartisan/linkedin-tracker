@@ -42,6 +42,28 @@ on conflict (id) do nothing;
 
 
 -- ---------------------------------------------------------------------------
+-- Categories
+-- ---------------------------------------------------------------------------
+-- Only the trades someone has *added* from the picker. The sixteen the grid
+-- ships with live in src/lib/biz.ts and are not stored — a code constant is the
+-- right home for a list that ships with the app, and duplicating it here would
+-- mean two places to edit.
+--
+-- A built-in that gets retired writes a row with the same id and active=false;
+-- deleting that row is what puts it back on the grid.
+create table if not exists public.biz_categories (
+  id      text primary key,
+  -- Also the search term: "tyre shops" becomes "tyre shops in {city}".
+  label   text not null,
+  -- Which block of the grid it sits in. Free text: the picker can invent one.
+  "group" text not null default 'Other',
+  queries text[] not null default '{}',
+  sort    smallint not null default 0,
+  active  boolean not null default true
+);
+
+
+-- ---------------------------------------------------------------------------
 -- Businesses
 -- ---------------------------------------------------------------------------
 -- One row per business found. `category` and `city` are free text on purpose:
@@ -162,6 +184,7 @@ create table if not exists public.biz_sweeps (
 -- it full access. `owner` is a record of who did the work, not a boundary.
 alter table public.businesses enable row level security;
 alter table public.biz_cities enable row level security;
+alter table public.biz_categories enable row level security;
 alter table public.biz_sweeps enable row level security;
 
 drop policy if exists "anon full access" on public.businesses;
@@ -170,6 +193,10 @@ create policy "anon full access" on public.businesses
 
 drop policy if exists "anon full access" on public.biz_cities;
 create policy "anon full access" on public.biz_cities
+  for all to anon using (true) with check (true);
+
+drop policy if exists "anon full access" on public.biz_categories;
+create policy "anon full access" on public.biz_categories
   for all to anon using (true) with check (true);
 
 drop policy if exists "anon full access" on public.biz_sweeps;

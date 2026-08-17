@@ -16,10 +16,7 @@ import {
 import { formatShort, relativeDay } from "@/lib/date";
 import { USER_LABEL } from "@/lib/types";
 import {
-  CATEGORIES,
-  CATEGORY_GROUPS,
   cellKey,
-  citySlug,
   queriesFor,
   searchLinks,
   type Category,
@@ -36,28 +33,29 @@ import {
  * cells rather than searching until you get bored.
  */
 export default function LocalPage() {
-  const { cities, sweeps, businesses, loading } = useBiz();
+  const { cities, categories, sweeps, businesses, loading } = useBiz();
   const [selected, setSelected] = useState<{ category: string; city: string } | null>(
     null
   );
+  const [logging, setLogging] = useState(false);
 
   const category = useMemo(
-    () => CATEGORIES.find((c) => c.id === selected?.category),
-    [selected]
+    () => categories.find((c) => c.id === selected?.category),
+    [categories, selected]
   );
   const city = useMemo(
     () => cities.find((c) => c.id === selected?.city),
     [cities, selected]
   );
 
-  const totalCells = CATEGORIES.length * cities.length;
+  const totalCells = categories.length * cities.length;
   const sweptCells = useMemo(
     () =>
-      CATEGORIES.reduce(
+      categories.reduce(
         (n, cat) => n + cities.filter((c) => sweeps.has(cellKey(cat.id, c.id))).length,
         0
       ),
-    [cities, sweeps]
+    [categories, cities, sweeps]
   );
 
   if (loading) {
@@ -73,7 +71,32 @@ export default function LocalPage() {
       <PageHeader
         title="Prospect"
         lead="One cell per search. Run it, log what it turns up, tick it off."
+        actions={
+          <button
+            type="button"
+            onClick={() => setLogging((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-4 py-2 text-xs font-bold text-muted transition-colors hover:text-brand"
+          >
+            <PlusIcon className="size-3.5" aria-hidden />
+            {logging ? "Close" : "Log a business"}
+          </button>
+        }
       />
+
+      {/*
+        The same form the cells carry, with its type and city unpinned. A
+        business you walked past, or one a friend mentioned, does not belong to
+        a search you were running - and hunting for its cell first was the tax
+        this removes.
+      */}
+      {logging && (
+        <Card className="fade-in mb-4 p-4 sm:p-5">
+          <SectionHeading hint="Pick the type and city, or add ones that aren't there yet.">
+            Log a business
+          </SectionHeading>
+          <AddBusiness />
+        </Card>
+      )}
 
       <Card className="mb-4 p-5 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
@@ -118,6 +141,8 @@ export default function LocalPage() {
         />
       </Card>
 
+      <RetiredCategories />
+
       {category && city && (
         <CellPanel
           key={cellKey(category.id, city.id)}
@@ -148,29 +173,48 @@ export default function LocalPage() {
  * and burying it a click away would make the grid look like a fixed fact.
  */
 function CityBar() {
-  const { cities, allCities, addCity, setCityActive } = useBiz();
+  const { cities, allCities, businesses, addCity, setCityActive, removeCity } = useBiz();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [region, setRegion] = useState("");
   const [dial, setDial] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const retired = allCities.filter((c) => !c.active);
+
+  // What is logged against each city, which is what decides whether its × is a
+  // retire or a delete: a city with businesses cannot go away without leaving
+  // them pointing at an id that resolves to nothing.
+  const logged = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const b of businesses) counts.set(b.city, (counts.get(b.city) ?? 0) + 1);
+    return counts;
+  }, [businesses]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    await addCity({
-      id: citySlug(trimmed),
-      name: trimmed,
-      region: region.trim(),
-      dial: dial.replace(/\D/g, ""),
-      sort: cities.length + 1,
-      active: true,
-    });
-    setName("");
-    setRegion("");
-    setDial("");
-    setAdding(false);
+    if (!name.trim()) return;
+    setError(null);
+    try {
+      await addCity({ name, region, dial });
+      setName("");
+      setRegion("");
+      setDial("");
+      setAdding(false);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function drop(city: City) {
+    setError(null);
+    try {
+      // Nothing logged against it, so nothing to orphan - it goes for good.
+      // Otherwise it retires, and the chip moves to the dashed row below.
+      if ((logged.get(city.id) ?? 0) === 0) await removeCity(city.id);
+      else await setCityActive(city.id, false);
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   const miniField =
@@ -178,35 +222,60 @@ function CityBar() {
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-1.5">
-      {cities.map((c) => (
+      {cities.map((c) => {
+        const count = logged.get(c.id) ?? 0;
+        return (
+          <span
+            key={c.id}
+            className="group inline-flex items-center gap-1.5 rounded-full bg-surface py-1.5 pr-1.5 pl-3.5 text-[11px] font-semibold shadow-raised"
+          >
+            {c.name}
+            {c.region && <span className="font-normal text-muted/60">{c.region}</span>}
+            <button
+              type="button"
+              onClick={() => drop(c)}
+              aria-label={count > 0 ? `Retire ${c.name}` : `Delete ${c.name}`}
+              title={
+                count > 0
+                  ? `Retire ${c.name} - its ${count} logged ${count === 1 ? "business stays" : "businesses stay"}`
+                  : `Delete ${c.name} - nothing is logged against it`
+              }
+              className="rounded-full px-1.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose focus-visible:opacity-100"
+            >
+              ×
+            </button>
+          </span>
+        );
+      })}
+
+      {retired.map((c) => (
         <span
           key={c.id}
-          className="group inline-flex items-center gap-1.5 rounded-full bg-surface py-1.5 pr-1.5 pl-3.5 text-[11px] font-semibold shadow-raised"
+          className="group inline-flex items-center rounded-full border border-dashed border-line py-1.5 pr-1.5 pl-3 text-[11px] font-semibold text-muted/60"
         >
-          {c.name}
-          {c.region && <span className="font-normal text-muted/60">{c.region}</span>}
           <button
             type="button"
-            onClick={() => setCityActive(c.id, false)}
-            aria-label={`Retire ${c.name}`}
-            title="Retire this city - its businesses stay"
-            className="rounded-full px-1.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose focus-visible:opacity-100"
+            onClick={() => setCityActive(c.id, true)}
+            title={`Bring ${c.name} back into the grid`}
+            className="transition-colors hover:text-text"
           >
-            ×
+            {c.name} ↩
           </button>
+          {(logged.get(c.id) ?? 0) === 0 && (
+            <button
+              type="button"
+              onClick={() => removeCity(c.id)}
+              aria-label={`Delete ${c.name}`}
+              title="Delete for good"
+              className="rounded-full px-1.5 opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose focus-visible:opacity-100"
+            >
+              ×
+            </button>
+          )}
         </span>
       ))}
 
-      {retired.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          onClick={() => setCityActive(c.id, true)}
-          className="rounded-full border border-dashed border-line px-3 py-1.5 text-[11px] font-semibold text-muted/60 transition-colors hover:text-text"
-        >
-          {c.name} ↩
-        </button>
-      ))}
+      {error && <span className="text-[11px] text-rose">{error}</span>}
 
       {adding ? (
         <form onSubmit={submit} className="flex flex-wrap items-center gap-1.5">
@@ -259,6 +328,49 @@ function CityBar() {
   );
 }
 
+/**
+ * The types taken off the grid, and the way back. Under the grid rather than
+ * above it: this is the undo for a row you removed, not a list anyone needs to
+ * read on the way in.
+ */
+function RetiredCategories() {
+  const { allCategories, businesses, setCategoryActive, removeCategory } = useBiz();
+  const retired = allCategories.filter((c) => !c.active);
+  if (retired.length === 0) return null;
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <span className="label mr-1 text-[10px] text-muted/45">Off the grid</span>
+      {retired.map((c) => (
+        <span
+          key={c.id}
+          className="group inline-flex items-center rounded-full border border-dashed border-line py-1 pr-1 pl-2.5 text-[11px] font-semibold text-muted/60"
+        >
+          <button
+            type="button"
+            onClick={() => setCategoryActive(c.id, true)}
+            title={`Put ${c.label} back on the grid`}
+            className="transition-colors hover:text-text"
+          >
+            {c.label} ↩
+          </button>
+          {c.custom && !businesses.some((b) => b.category === c.id) && (
+            <button
+              type="button"
+              onClick={() => removeCategory(c.id)}
+              aria-label={`Delete ${c.label}`}
+              title="Delete for good"
+              className="rounded-full px-1.5 opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose focus-visible:opacity-100"
+            >
+              ×
+            </button>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function Grid({
   cities,
   selected,
@@ -268,7 +380,7 @@ function Grid({
   selected: { category: string; city: string } | null;
   onSelect: (cell: { category: string; city: string }) => void;
 }) {
-  const { sweeps, countIn } = useBiz();
+  const { sweeps, countIn, categoryGroups } = useBiz();
 
   if (cities.length === 0) {
     return (
@@ -297,7 +409,7 @@ function Grid({
           </tr>
         </thead>
         <tbody>
-          {CATEGORY_GROUPS.map((group) => (
+          {categoryGroups.map((group) => (
             <GroupRows
               key={group}
               group={group}
@@ -329,7 +441,19 @@ function GroupRows({
   sweeps: ReturnType<typeof useBiz>["sweeps"];
   countIn: ReturnType<typeof useBiz>["countIn"];
 }) {
-  const rows = CATEGORIES.filter((c) => c.group === group);
+  const { categories, businesses, setCategoryActive, removeCategory } = useBiz();
+  const rows = categories.filter((c) => c.group === group);
+
+  // Same rule as the city chips: a type with nothing logged against it can go,
+  // one with businesses only retires.
+  async function drop(category: Category) {
+    const used = businesses.some((b) => b.category === category.id);
+    if (used || !category.custom) await setCategoryActive(category.id, false);
+    else await removeCategory(category.id);
+  }
+
+  if (rows.length === 0) return null;
+
   return (
     <>
       <tr>
@@ -345,9 +469,20 @@ function GroupRows({
         <tr key={category.id} className="group">
           <th
             scope="row"
-            className="sticky left-0 z-10 max-w-[9.5rem] truncate bg-surface py-1 pr-3 text-left text-[13px] font-medium"
+            className="sticky left-0 z-10 max-w-[9.5rem] bg-surface py-1 pr-3 text-left text-[13px] font-medium"
           >
-            {category.label}
+            <span className="flex items-center gap-1">
+              <span className="min-w-0 truncate">{category.label}</span>
+              <button
+                type="button"
+                onClick={() => drop(category)}
+                aria-label={`Remove ${category.label} from the grid`}
+                title="Take this type off the grid"
+                className="shrink-0 rounded-full px-1 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose focus-visible:opacity-100"
+              >
+                ×
+              </button>
+            </span>
           </th>
           {cities.map((city) => {
             const swept = sweeps.get(cellKey(category.id, city.id));

@@ -14,7 +14,6 @@ import { USER_LABEL, type UserId } from "@/lib/types";
 import {
   BIZ_STAGES,
   BIZ_STAGE_LABEL,
-  CATEGORIES,
   categoryLabel,
   type BizStage,
   type Business,
@@ -28,7 +27,7 @@ type Owner = UserId | "all";
  * ask when a stage chip needs correcting or a note needs adding.
  */
 export default function LocalPipelinePage() {
-  const { businesses, cities, loading } = useBiz();
+  const { businesses, cities, categories, loading } = useBiz();
   const [stage, setStage] = useState<BizStage | "all">("all");
   const [city, setCity] = useState("all");
   const [category, setCategory] = useState("all");
@@ -113,7 +112,7 @@ export default function LocalPipelinePage() {
             ))}
           </Select>
           <Select value={category} onChange={setCategory} label="Category">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.label}
               </option>

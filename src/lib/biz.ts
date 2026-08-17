@@ -199,7 +199,12 @@ export function citySlug(name: string): string {
 // The search grid
 // ---------------------------------------------------------------------------
 
-export type CategoryGroup = "Home" | "Laundry" | "Auto" | "Beauty";
+/**
+ * Groups are free text so a category added from the picker can invent one. The
+ * four below are what the built-in list uses, and what the group dropdown
+ * offers before anyone types their own.
+ */
+export type CategoryGroup = string;
 
 export type Category = {
   id: string;
@@ -212,11 +217,27 @@ export type Category = {
    * neither search finds the other.
    */
   queries: string[];
+  sort: number;
+  /** Retired categories keep resolving to a label but leave the grid. */
+  active: boolean;
+  /** False for the sixteen below, true for anything added from the picker. */
+  custom: boolean;
 };
 
-export const CATEGORY_GROUPS: CategoryGroup[] = ["Home", "Laundry", "Auto", "Beauty"];
+/** What a category looks like before the runtime fields are filled in. */
+type BuiltinCategory = Pick<Category, "id" | "label" | "group" | "queries">;
 
-export const CATEGORIES: Category[] = [
+export const BUILTIN_CATEGORY_GROUPS: CategoryGroup[] = [
+  "Home",
+  "Laundry",
+  "Auto",
+  "Beauty",
+];
+
+/** Where a category invented from the picker lands if no group is chosen. */
+export const DEFAULT_CATEGORY_GROUP = "Other";
+
+const BUILTINS: BuiltinCategory[] = [
   { id: "cleaning", label: "Cleaning services", group: "Home", queries: ["cleaning services in {city}"] },
   { id: "deep-cleaning", label: "Deep cleaning", group: "Home", queries: ["deep cleaning company in {city}"] },
   { id: "maid-service", label: "Maid service", group: "Home", queries: ["maid service in {city}"] },
@@ -238,14 +259,95 @@ export const CATEGORIES: Category[] = [
   { id: "gym", label: "Gym", group: "Beauty", queries: ["gym in {city}", "fitness center in {city}"] },
 ];
 
-const CATEGORY_BY_ID = new Map(CATEGORIES.map((c) => [c.id, c]));
+/** The sixteen trades the grid ships with. Order here is order in the grid. */
+export const CATEGORIES: Category[] = BUILTINS.map((c, i) => ({
+  ...c,
+  sort: i + 1,
+  active: true,
+  custom: false,
+}));
+
+export function categorySlug(label: string): string {
+  return citySlug(label);
+}
+
+/**
+ * A category invented from the picker. One query, phrased the way the built-in
+ * ones are - the label *is* the search term, which is why the picker asks for
+ * "plumbers" rather than "Plumbing (residential)".
+ */
+export function makeCategory(
+  label: string,
+  group: string,
+  sort: number
+): Category {
+  const trimmed = label.trim();
+  return {
+    id: categorySlug(trimmed),
+    label: trimmed,
+    group: group.trim() || DEFAULT_CATEGORY_GROUP,
+    queries: [`${trimmed.toLowerCase()} in {city}`],
+    sort,
+    active: true,
+    custom: true,
+  };
+}
+
+export function hydrateCategory(
+  row: Partial<Category> & Record<string, unknown>
+): Category {
+  const label = String(row.label ?? "");
+  const queries = Array.isArray(row.queries) && row.queries.length > 0
+    ? row.queries.map(String)
+    : [`${label.toLowerCase()} in {city}`];
+  return {
+    id: String(row.id ?? ""),
+    label,
+    group: String(row.group ?? DEFAULT_CATEGORY_GROUP),
+    queries,
+    sort: typeof row.sort === "number" ? row.sort : 0,
+    active: row.active !== false,
+    custom: true,
+  };
+}
+
+const BUILTIN_IDS = new Set(CATEGORIES.map((c) => c.id));
+
+/** True for the sixteen that live in code. They retire but never delete. */
+export function isBuiltinCategory(id: string): boolean {
+  return BUILTIN_IDS.has(id);
+}
+
+/**
+ * Built-ins first, then whatever has been added, with a stored row of the same
+ * id winning - that is what lets someone retire "Gym" without the code changing
+ * underneath them. Retiring a built-in stores an override, so such a row is
+ * still marked as built-in: deleting it would only put the row back.
+ */
+export function mergeCategories(stored: Category[]): Category[] {
+  const byId = new Map(CATEGORIES.map((c) => [c.id, c]));
+  for (const c of stored) byId.set(c.id, { ...c, custom: !BUILTIN_IDS.has(c.id) });
+  return [...byId.values()];
+}
+
+/**
+ * Categories are resolved by id in three places that have no provider to read
+ * from (biz-message, the leads table, the pipeline rows). The built-ins are a
+ * constant, but the added ones only exist at runtime, so the provider hands
+ * them here once they load and every `categoryLabel(id)` resolves after that.
+ */
+let registry = new Map(CATEGORIES.map((c) => [c.id, c]));
+
+export function registerCategories(all: Category[]): void {
+  registry = new Map(all.map((c) => [c.id, c]));
+}
 
 export function categoryLabel(id: string): string {
-  return CATEGORY_BY_ID.get(id)?.label ?? id;
+  return registry.get(id)?.label ?? id;
 }
 
 export function findCategory(id: string): Category | undefined {
-  return CATEGORY_BY_ID.get(id);
+  return registry.get(id);
 }
 
 /** The searches for one cell of the grid, with `{city}` filled in. */

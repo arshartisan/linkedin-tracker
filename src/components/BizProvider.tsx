@@ -12,12 +12,18 @@ import {
 import { bizStore } from "@/lib/biz-store";
 import { storeMode } from "@/lib/supabase";
 import {
+  BUILTIN_CATEGORY_GROUPS,
   DEFAULT_CITIES,
   cellKey,
+  citySlug,
   dedupeKey,
+  makeCategory,
+  mergeCategories,
+  registerCategories,
   type BizStage,
   type Business,
   type BusinessPatch,
+  type Category,
   type City,
   type NewBusiness,
   type Sweep,
@@ -47,8 +53,22 @@ type Ctx = {
   /** Including retired ones, so an old business still resolves to a label. */
   allCities: City[];
   cityById: (id: string) => City | undefined;
-  addCity: (city: City) => Promise<void>;
+  /** Creates or overwrites. Returns the stored city, id included. */
+  addCity: (input: { name: string; region: string; dial: string }) => Promise<City>;
   setCityActive: (id: string, active: boolean) => Promise<void>;
+  /** Hard delete. Refuses while anything is logged against the city. */
+  removeCity: (id: string) => Promise<void>;
+  /** Active categories, built-in and added, in grid order. */
+  categories: Category[];
+  /** Including retired ones. */
+  allCategories: Category[];
+  categoryById: (id: string) => Category | undefined;
+  addCategory: (input: { label: string; group: string }) => Promise<Category>;
+  setCategoryActive: (id: string, active: boolean) => Promise<void>;
+  /** Hard delete. Refuses while anything is logged against the category. */
+  removeCategory: (id: string) => Promise<void>;
+  /** Category groups in grid order, invented ones included. */
+  categoryGroups: string[];
   /** Swept cells, keyed by `cellKey(category, city)`. */
   sweeps: Map<string, Sweep>;
   markSwept: (category: string, city: string, found: number) => Promise<void>;
@@ -80,6 +100,7 @@ export function BizProvider({ children }: { children: React.ReactNode }) {
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [allCities, setAllCities] = useState<City[]>(DEFAULT_CITIES);
+  const [customCategories, setCustomCategories] = useState<Category[]>([]);
   const [sweepRows, setSweepRows] = useState<Sweep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,11 +115,20 @@ export function BizProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([bizStore.list(), bizStore.listCities(), bizStore.listSweeps()])
-      .then(([rows, cities, sweeps]) => {
+    Promise.all([
+      bizStore.list(),
+      bizStore.listCities(),
+      // Tolerated rather than awaited strictly: a Supabase project set up
+      // before biz_categories existed should still load its businesses, just
+      // with the built-in category list.
+      bizStore.listCategories().catch(() => [] as Category[]),
+      bizStore.listSweeps(),
+    ])
+      .then(([rows, cities, categories, sweeps]) => {
         if (cancelled) return;
         setBusinesses(rows);
         setAllCities(cities);
+        setCustomCategories(categories);
         setSweepRows(sweeps);
       })
       .catch((e: Error) => {
@@ -167,11 +197,50 @@ export function BizProvider({ children }: { children: React.ReactNode }) {
     allCitiesRef.current = allCities;
   }, [allCities]);
 
-  const addCity = useCallback(async (city: City) => {
+  /**
+   * Adding a city the grid already has - typed again, or retired earlier and
+   * typed back in - reactivates it instead of writing a second row over the
+   * top, which is what the id being a slug of the name would otherwise do.
+   */
+  const addCity = useCallback(
+    async (input: { name: string; region: string; dial: string }) => {
+      const name = input.name.trim();
+      const id = citySlug(name);
+      const existing = allCitiesRef.current.find((c) => c.id === id);
+      const city: City = {
+        id,
+        name,
+        region: input.region.trim(),
+        dial: input.dial.replace(/\D/g, ""),
+        // Off the end of the list, not off its length: retiring a city and
+        // adding another would otherwise hand out a sort that is already taken.
+        sort:
+          existing?.sort ??
+          allCitiesRef.current.reduce((max, c) => Math.max(max, c.sort), 0) + 1,
+        active: true,
+      };
+      const previous = allCitiesRef.current;
+      setAllCities((prev) => [...prev.filter((c) => c.id !== id), city]);
+      try {
+        return await bizStore.addCity(city);
+      } catch (e) {
+        setAllCities(previous);
+        setError((e as Error).message);
+        throw e;
+      }
+    },
+    []
+  );
+
+  const setCityActive = useCallback(async (id: string, active: boolean) => {
     const previous = allCitiesRef.current;
-    setAllCities((prev) => [...prev.filter((c) => c.id !== city.id), city]);
+    const city = previous.find((c) => c.id === id);
+    if (!city) return;
+    setAllCities((prev) => prev.map((c) => (c.id === id ? { ...c, active } : c)));
     try {
-      await bizStore.addCity(city);
+      // The whole city, so a row the store has never seen gets written rather
+      // than a no-op update that reports success and changes nothing.
+      await bizStore.setCityActive(city, active);
     } catch (e) {
       setAllCities(previous);
       setError((e as Error).message);
@@ -179,13 +248,92 @@ export function BizProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const setCityActive = useCallback(async (id: string, active: boolean) => {
+  const removeCity = useCallback(async (id: string) => {
     const previous = allCitiesRef.current;
-    setAllCities((prev) => prev.map((c) => (c.id === id ? { ...c, active } : c)));
+    setAllCities((prev) => prev.filter((c) => c.id !== id));
     try {
-      await bizStore.setCityActive(id, active);
+      await bizStore.removeCity(id);
     } catch (e) {
       setAllCities(previous);
+      setError((e as Error).message);
+      throw e;
+    }
+  }, []);
+
+  // Same ref trick again, for the same reason.
+  const customCategoriesRef = useRef<Category[]>(customCategories);
+  useEffect(() => {
+    customCategoriesRef.current = customCategories;
+  }, [customCategories]);
+
+  const allCategories = useMemo(
+    () => mergeCategories(customCategories).sort((a, b) => a.sort - b.sort),
+    [customCategories]
+  );
+
+  // The three places that resolve a category id with no provider to read from
+  // get told about the added ones as soon as they load.
+  useEffect(() => {
+    registerCategories(allCategories);
+  }, [allCategories]);
+
+  const allCategoriesRef = useRef<Category[]>(allCategories);
+  useEffect(() => {
+    allCategoriesRef.current = allCategories;
+  }, [allCategories]);
+
+  /**
+   * Writes a row for a category. Built-in ones have no row until something
+   * about them changes - retiring one writes an override, and deleting that
+   * override is what restores it.
+   */
+  const saveCategory = useCallback(async (category: Category) => {
+    const previous = customCategoriesRef.current;
+    setCustomCategories((prev) => [
+      ...prev.filter((c) => c.id !== category.id),
+      category,
+    ]);
+    try {
+      return await bizStore.saveCategory(category);
+    } catch (e) {
+      setCustomCategories(previous);
+      setError((e as Error).message);
+      throw e;
+    }
+  }, []);
+
+  const addCategory = useCallback(
+    async (input: { label: string; group: string }) => {
+      const id = citySlug(input.label);
+      const existing = allCategoriesRef.current.find((c) => c.id === id);
+      const sort =
+        existing?.sort ??
+        allCategoriesRef.current.reduce((max, c) => Math.max(max, c.sort), 0) + 1;
+      const category = existing
+        ? { ...existing, group: input.group.trim() || existing.group, active: true }
+        : makeCategory(input.label, input.group, sort);
+      await saveCategory(category);
+      return category;
+    },
+    [saveCategory]
+  );
+
+  const setCategoryActive = useCallback(
+    async (id: string, active: boolean) => {
+      const category = allCategoriesRef.current.find((c) => c.id === id);
+      if (!category) return;
+      await saveCategory({ ...category, active });
+    },
+    [saveCategory]
+  );
+
+  const removeCategory = useCallback(async (id: string) => {
+    const previous = customCategoriesRef.current;
+    setCustomCategories((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await bizStore.removeCategory(id);
+    } catch (e) {
+      setCustomCategories(previous);
       setError((e as Error).message);
       throw e;
     }
@@ -237,6 +385,28 @@ export function BizProvider({ children }: { children: React.ReactNode }) {
     [allCities]
   );
   const cityById = useCallback((id: string) => cityIndex.get(id), [cityIndex]);
+
+  const categories = useMemo(
+    () => allCategories.filter((c) => c.active),
+    [allCategories]
+  );
+
+  const categoryIndex = useMemo(
+    () => new Map(allCategories.map((c) => [c.id, c])),
+    [allCategories]
+  );
+  const categoryById = useCallback(
+    (id: string) => categoryIndex.get(id),
+    [categoryIndex]
+  );
+
+  // Built-in groups first and in their declared order, then any that an added
+  // category invented - so the grid's familiar blocks don't reshuffle.
+  const categoryGroups = useMemo(() => {
+    const seen = new Set(BUILTIN_CATEGORY_GROUPS);
+    const extra = categories.map((c) => c.group).filter((g) => !seen.has(g));
+    return [...BUILTIN_CATEGORY_GROUPS, ...new Set(extra)];
+  }, [categories]);
 
   const sweeps = useMemo(
     () => new Map(sweepRows.map((s) => [cellKey(s.category, s.city), s])),
@@ -296,6 +466,14 @@ export function BizProvider({ children }: { children: React.ReactNode }) {
       cityById,
       addCity,
       setCityActive,
+      removeCity,
+      categories,
+      allCategories,
+      categoryById,
+      addCategory,
+      setCategoryActive,
+      removeCategory,
+      categoryGroups,
       sweeps,
       markSwept,
       clearSweep,
@@ -319,6 +497,14 @@ export function BizProvider({ children }: { children: React.ReactNode }) {
       cityById,
       addCity,
       setCityActive,
+      removeCity,
+      categories,
+      allCategories,
+      categoryById,
+      addCategory,
+      setCategoryActive,
+      removeCategory,
+      categoryGroups,
       sweeps,
       markSwept,
       clearSweep,
