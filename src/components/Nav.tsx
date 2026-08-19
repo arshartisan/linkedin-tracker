@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useData } from "./DataProvider";
-import { useBiz } from "./BizProvider";
 import { LogoLockup, LogoMark } from "./Logo";
 import { SignOutButton } from "./SignOutButton";
 import { dayKey } from "@/lib/date";
@@ -23,20 +22,10 @@ import {
 } from "@/components/ui/sidebar";
 
 /*
-  Two pipelines, two groups. LinkedIn is one-to-one outreach to people; Local is
-  a sweep of businesses in a handful of cities. They share nothing but the
-  person doing them, which is why they are separate lists rather than one list
-  with a filter on top - and why Team, which counts both, sits under both.
+  One pipeline: one-to-one LinkedIn outreach to people. Team sits apart from it
+  because it counts everyone's work rather than being another screen of yours.
 */
-type IconName =
-  | "today"
-  | "history"
-  | "queue"
-  | "leads"
-  | "grid"
-  | "list"
-  | "stats"
-  | "swap";
+type IconName = "today" | "history" | "queue" | "leads" | "stats";
 
 type NavLink = { href: string; label: string; icon: IconName };
 
@@ -45,13 +34,6 @@ const LINKEDIN: NavLink[] = [
   { href: "/history", label: "History", icon: "history" },
   { href: "/queue", label: "Queue", icon: "queue" },
   { href: "/leads", label: "Leads", icon: "leads" },
-];
-
-const LOCAL: NavLink[] = [
-  { href: "/local", label: "Prospect", icon: "grid" },
-  { href: "/local/queue", label: "Queue", icon: "queue" },
-  { href: "/local/pipeline", label: "Pipeline", icon: "list" },
-  { href: "/local/leads", label: "Leads", icon: "leads" },
 ];
 
 const TEAM: NavLink = { href: "/stats", label: "Team", icon: "stats" };
@@ -94,32 +76,6 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
           <path d="m20 20-3.6-3.6" />
         </svg>
       );
-    // The sweep grid, drawn as one: cells to fill in.
-    case "grid":
-      return (
-        <svg {...common}>
-          <rect x="4" y="4" width="6.5" height="6.5" rx="2" />
-          <rect x="13.5" y="4" width="6.5" height="6.5" rx="2" />
-          <rect x="4" y="13.5" width="6.5" height="6.5" rx="2" />
-          <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2" />
-        </svg>
-      );
-    case "list":
-      return (
-        <svg {...common}>
-          <path d="M9 6h11M9 12h11M9 18h11" />
-          <circle cx="4.5" cy="6" r="1" />
-          <circle cx="4.5" cy="12" r="1" />
-          <circle cx="4.5" cy="18" r="1" />
-        </svg>
-      );
-    case "swap":
-      return (
-        <svg {...common}>
-          <path d="M4 8h13m0 0-3.5-3.5M17 8l-3.5 3.5" />
-          <path d="M20 16H7m0 0 3.5-3.5M7 16l3.5 3.5" />
-        </svg>
-      );
     default:
       return (
         <svg {...common}>
@@ -132,28 +88,20 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
 export function Nav() {
   const pathname = usePathname();
   const { me, mine, queue, goal, loading } = useData();
-  const { queue: bizQueue } = useBiz();
   const today = dayKey();
   const sentToday = mine.filter((c) => c.sent_on === today).length;
   const hit = sentToday >= goal;
   const pct = goal > 0 ? Math.min(1, sentToday / goal) : 0;
 
-  const inLocal = pathname.startsWith("/local");
-
   /*
-    Only the two queues carry a count - a badge on everything is a badge on
-    nothing. On the LinkedIn side only the openers count: accepts waiting on a
-    first message are the work that goes cold, and follow-ups can wait a day.
-    On the Local side the same logic makes it research plus anything due, since
-    an un-researched business is the one nobody has started.
+    Only the queue carries a count - a badge on everything is a badge on
+    nothing. Only the openers count: accepts waiting on a first message are the
+    work that goes cold, and follow-ups can wait a day.
   */
   const pitches = queue.due.filter((d) => d.action.kind === "pitch").length;
-  const localToDo = bizQueue.research.length + bizQueue.due.length;
 
   function badge(link: NavLink): number | null {
-    if (link.href === "/queue") return pitches > 0 ? pitches : null;
-    if (link.href === "/local/queue") return localToDo > 0 ? localToDo : null;
-    return null;
+    return link.href === "/queue" && pitches > 0 ? pitches : null;
   }
 
   const menu = (links: NavLink[]) => (
@@ -197,15 +145,7 @@ export function Nav() {
     </SidebarMenu>
   );
 
-  /*
-    Mobile carries one section at a time. Nine tabs across a phone would be
-    unreadable, so the bar shows whichever section you are in and ends with a
-    switch to the other - the two are worked in separate sittings anyway.
-  */
-  const mobileLinks: NavLink[] = inLocal ? LOCAL : [...LINKEDIN, TEAM];
-  const swap: NavLink = inLocal
-    ? { href: "/", label: "LinkedIn", icon: "swap" }
-    : { href: "/local", label: "Local", icon: "swap" };
+  const mobileLinks: NavLink[] = [...LINKEDIN, TEAM];
 
   return (
     <>
@@ -238,14 +178,7 @@ export function Nav() {
             <SidebarGroupContent>{menu(LINKEDIN)}</SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
-            <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
-              Local
-            </SidebarGroupLabel>
-            <SidebarGroupContent>{menu(LOCAL)}</SidebarGroupContent>
-          </SidebarGroup>
-
-          {/* Team counts both pipelines, so it sits under both rather than in one. */}
+          {/* Team counts everyone, so it sits apart from your own screens. */}
           <SidebarGroup className="mt-auto py-1 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
               Shared
@@ -316,21 +249,6 @@ export function Nav() {
             </Link>
           );
         })}
-
-        {/* The way out of this section, and the only tab that isn't a screen. */}
-        <Link
-          href={swap.href}
-          className="relative flex flex-1 flex-col items-center gap-1 border-l border-line-soft py-2.5 text-[10px] font-semibold text-muted"
-        >
-          <Icon name={swap.icon} className="h-5 w-5" />
-          {swap.label}
-          {(inLocal ? pitches : localToDo) > 0 && (
-            <span
-              className="absolute top-2 right-[26%] size-1.5 rounded-full bg-brand"
-              aria-label="Work waiting in the other section"
-            />
-          )}
-        </Link>
       </nav>
     </>
   );

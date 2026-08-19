@@ -102,13 +102,12 @@
 
   /*
     ── Type ────────────────────────────────────────────────────────────────
-    `ui-rounded` is the generic that resolves to SF Pro Rounded on Apple
-    platforms, so Mac and iOS get the real face. Nunito loads underneath it for
-    everyone else - SF Pro Rounded cannot legally be served as a webfont.
+    Manrope is served by the app, so it leads the stack and every platform
+    renders the same face. The system generics behind it only ever show while
+    the webfont is swapping in, or if it fails to load at all.
   */
-  --stack-rounded:
-    ui-rounded, "SF Pro Rounded", "SF Pro Display", -apple-system,
-    var(--font-rounded), system-ui, sans-serif;
+  --stack-sans:
+    var(--font-manrope), ui-sans-serif, -apple-system, system-ui, sans-serif;
   --stack-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
 
   /*
@@ -162,9 +161,9 @@
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
 
-  /* Everything is set in the rounded face; mono is for figures and URLs. */
-  --font-display: var(--stack-rounded);
-  --font-sans: var(--stack-rounded);
+  /* Everything is set in Manrope; mono is for figures and URLs. */
+  --font-display: var(--stack-sans);
+  --font-sans: var(--stack-sans);
   --font-mono: var(--stack-mono);
 
   --radius-card: var(--r-card);
@@ -246,7 +245,7 @@ html {
 body {
   background: var(--ink);
   color: var(--text);
-  font-family: var(--stack-rounded);
+  font-family: var(--stack-sans);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

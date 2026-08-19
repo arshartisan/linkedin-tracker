@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
-import { Nunito, JetBrains_Mono } from "next/font/google";
+import { Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 /*
-  The UI is set in SF Pro Rounded, which is why the stack in globals.css leads
-  with the `ui-rounded` generic - on Apple platforms that resolves to the real
-  thing, at the optical sizes Apple ships it in.
-
-  It cannot be self-hosted: Apple licenses SF for use on Apple platforms, not
-  for redistribution as a webfont. So Nunito loads underneath it as the
-  cross-platform rounded face - geometric, generous counters, the same soft
-  temperament - and Windows and Android get a rounded UI rather than falling
-  back to something grotesque.
+  The UI is set in Manrope, and it is served rather than borrowed from the OS -
+  every platform gets the same face, at the same weights, instead of Apple
+  rendering one thing and Windows another. Semi-condensed and open-countered,
+  it holds the small label sizes the app leans on without the figures crowding.
 */
-const rounded = Nunito({
-  variable: "--font-rounded",
+const sans = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
@@ -55,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${rounded.variable} ${mono.variable} h-full`}
+      className={`${sans.variable} ${mono.variable} h-full`}
     >
       <body className="min-h-full">{children}</body>
     </html>

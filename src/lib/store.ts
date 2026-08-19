@@ -19,9 +19,8 @@ import {
 import { dayKey } from "./date";
 import { normaliseUrl } from "./linkedin";
 
-// The client, the credential check and the id helper moved to ./supabase when
-// the local-business section arrived and needed the same three. Re-exported
-// here so existing imports from "@/lib/store" keep working.
+// The client, the credential check and the id helper live in ./supabase.
+// Re-exported here so existing imports from "@/lib/store" keep working.
 export { hasSupabase, storeMode };
 export type { StoreMode };
 

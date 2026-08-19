@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 /**
  * The one Supabase client, shared by both sections of the app. Two `createClient`
  * calls would mean two connection pools and two realtime sockets for the same
- * project, so the LinkedIn store and the local-business store go through here.
+ * project, so every store goes through here.
  */
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
