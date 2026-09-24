@@ -10,7 +10,7 @@
 
 /*
   Reach - outreach tracker. Neutral graphite panels, hairline structure, one
-  violet signal colour: near-neutral greys a hair apart, pill controls lit by
+  lime signal colour: near-neutral greys a hair apart, pill controls lit by
   an inset top highlight, and a single saturated primary for the one action
   per screen that matters.
 
@@ -31,8 +31,8 @@
   and every card reads as a stack of tiles.
 
   ── Colour ────────────────────────────────────────────────────────────────
-  One accent, violet, so intensity carries meaning on its own: dim violet is
-  work in progress, full-strength violet is a target met. The page has exactly
+  One accent, the brand lime, so intensity carries meaning on its own: dim lime
+  is work in progress, full-strength lime is a target met. The page has exactly
   one thing that glows and it is always the score.
 */
 :root {
@@ -51,18 +51,20 @@
   --muted: #8a8a8a;
 
   /*
-    Two violets. `primary-fill` is the saturated fill that only ever sits
-    behind white type - the one filled button per screen. `brand` is the same
-    hue lifted until it reads as text and as a chart line on graphite; `dim` is
-    it burnt down, which is what "not there yet" looks like. `soft` and `edge`
-    are the tinted well and hairline for violet type on its own panel.
+    The logo lime, and the steps around it. `primary-fill` is the lime as a
+    button face, always under dark type - it is bright enough that white on it
+    would vanish. `dim` is the same hue burnt down to ~70%, which is what "not
+    there yet" looks like. `soft` and `edge` are the tinted well and hairline
+    that let lime type sit on its own panel; `tint` is the pale lime for type
+    on that panel.
   */
-  --primary-fill: #4124fb;
-  --primary-fill-hover: #4b30ff;
-  --brand: #8a7cff;
-  --brand-dim: #7a6fd6;
-  --brand-soft: #231f3a;
-  --brand-edge: #4b437b;
+  --primary-fill: #d7fa06;
+  --primary-fill-hover: #e2ff3d;
+  --brand: #d7fa06;
+  --brand-dim: #9bb50b;
+  --brand-soft: #2b3405;
+  --brand-edge: #4a5a08;
+  --brand-tint: #e6f98a;
 
   --rose: #f97373;
   --rose-soft: #3e1d1e;
@@ -102,7 +104,7 @@
 
   /*
     The primary button: a soft drop, a near-black ring, a glossy highlight
-    across the top and shade pooling at the bottom, so the violet reads as a
+    across the top and shade pooling at the bottom, so the lime reads as a
     physical key rather than a flat swatch.
   */
   --sh-primary:
@@ -140,7 +142,7 @@
   --popover: var(--surface-3);
   --popover-foreground: var(--text);
   --primary: var(--primary-fill);
-  --primary-foreground: var(--text);
+  --primary-foreground: var(--ink);
   --secondary: #1e1e1e;
   --secondary-foreground: var(--text);
   --muted-foreground: var(--muted);
@@ -176,6 +178,7 @@
   --color-brand-dim: var(--brand-dim);
   --color-brand-soft: var(--brand-soft);
   --color-brand-edge: var(--brand-edge);
+  --color-brand-tint: var(--brand-tint);
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
   --color-primary-hover: var(--primary-fill-hover);

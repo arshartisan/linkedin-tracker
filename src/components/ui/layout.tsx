@@ -197,9 +197,9 @@ export function Stat({
 // ---------------------------------------------------------------------------
 
 /**
- * The one solid call to action - the violet key from `Button`, one size up so
+ * The one solid call to action - the lime key from `Button`, one size up so
  * it can anchor a form. Disabled it drops to the neutral control rather than a
- * faded violet, so "not yet" never reads as a weak yes.
+ * faded lime, so "not yet" never reads as a weak yes.
  */
 export function PrimaryButton({
   className,
@@ -284,7 +284,7 @@ export function Chip({
 }) {
   const tones = {
     muted: "border-[#363636] bg-surface-2 text-[#cfcfcf]",
-    brand: "border-brand-edge bg-brand-soft text-[#b7aee9]",
+    brand: "border-brand-edge bg-brand-soft text-brand-tint",
     rose: "border-[#4c2324] bg-rose-soft text-[#febfc6]",
   };
   return (
@@ -354,7 +354,7 @@ export function Delta({
       className={cn(
         "tabular inline-flex h-5 items-center gap-1 rounded-full border px-1.5 text-[11px] font-medium leading-none",
         up
-          ? "border-brand-edge bg-brand-soft text-[#b7aee9]"
+          ? "border-brand-edge bg-brand-soft text-brand-tint"
           : "border-[#4c2324] bg-rose-soft text-[#febfc6]",
         className
       )}

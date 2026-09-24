@@ -33,7 +33,7 @@ export function TopBar() {
         <div className="flex h-[30px] items-center gap-1.5 rounded-full bg-secondary py-[5px] pr-[9px] pl-[5px] shadow-raised">
           <span
             aria-hidden
-            className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-[#b7aee9] outline-1 -outline-offset-1 outline-white/10"
+            className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-brand-tint outline-1 -outline-offset-1 outline-white/10"
           >
             {me.name.charAt(0)}
           </span>
