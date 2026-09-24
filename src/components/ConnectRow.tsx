@@ -65,12 +65,22 @@ export function ConnectRow({
   const exhausted = showAction && !action && isStale(connect);
 
   async function saveDetails() {
-    setEditing(false);
     const nextTags = parseTags(tags);
     const changed =
       note.trim() !== connect.note ||
       nextTags.join(",") !== connect.tags.join(",");
     if (changed) await update(connect.id, { note: note.trim(), tags: nextTags });
+  }
+
+  /**
+   * The editor closes when focus leaves it, not when either field blurs -
+   * closing on a field blur unmounts the panel as you move from note to tags,
+   * so the second field can never be reached.
+   */
+  function leaveEditor(e: React.FocusEvent<HTMLDivElement>) {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    setEditing(false);
+    void saveDetails();
   }
 
   return (
@@ -232,18 +242,19 @@ export function ConnectRow({
       )}
 
       {editing && (
-        <div className="mt-3 grid gap-2 border-t border-line-soft pt-3 sm:grid-cols-[1fr_minmax(0,220px)]">
+        <div
+          onBlur={leaveEditor}
+          className="mt-3 grid gap-2 border-t border-line-soft pt-3 sm:grid-cols-[1fr_minmax(0,220px)]"
+        >
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            onBlur={saveDetails}
             placeholder="Note - what you said, or what to follow up on"
             className={FIELD}
           />
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            onBlur={saveDetails}
             placeholder="Tags, comma separated"
             className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`}
           />
