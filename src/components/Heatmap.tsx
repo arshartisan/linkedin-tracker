@@ -13,6 +13,16 @@ const PITCH = CELL + GAP;
  * the goal reaches full strength - so a wall of solid lime means a wall of met
  * targets, and a day that beat the goal is the only thing that glows.
  */
+/**
+ * The Monday the grid opens on: `weeks` columns back from the Monday of the
+ * week we're in, so the last column is the current week and today always has a
+ * cell. Counting a flat `weeks * 7` days back instead lands the final column on
+ * the *previous* week, which hides today and everything logged since Sunday.
+ */
+export function heatmapStart(weeks: number, today: string = dayKey()): string {
+  return weekStart(shiftDayKey(today, -(weeks - 1) * 7));
+}
+
 export function Heatmap({
   counts,
   goal,
@@ -23,7 +33,7 @@ export function Heatmap({
   weeks?: number;
 }) {
   const today = dayKey();
-  const start = weekStart(shiftDayKey(today, -(weeks * 7 - 1)));
+  const start = heatmapStart(weeks, today);
 
   const columns: string[][] = [];
   let cursor = start;

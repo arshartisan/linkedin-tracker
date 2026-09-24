@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useData } from "@/components/DataProvider";
-import { Heatmap } from "@/components/Heatmap";
+import { Heatmap, heatmapStart } from "@/components/Heatmap";
 import { TrendChart } from "@/components/TrendChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -30,6 +30,9 @@ import {
   totalsThisMonth,
   totalsThisWeek,
 } from "@/lib/stats";
+
+/** Kept beside the caption below, which has to name the same window. */
+const HEATMAP_WEEKS = 26;
 
 const RANGES = [
   { days: 14, label: "14d" },
@@ -422,7 +425,7 @@ export default function StatsPage() {
               Six months
             </h2>
             <p className="mt-0.5 text-xs text-muted">
-              Every day since {formatShort(shiftDayKey(today, -181))}.
+              Every day since {formatShort(heatmapStart(HEATMAP_WEEKS, today))}.
             </p>
           </div>
 
@@ -437,7 +440,7 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <Heatmap counts={counts} goal={goal} />
+        <Heatmap counts={counts} goal={goal} weeks={HEATMAP_WEEKS} />
       </Card>
     </Page>
   );
