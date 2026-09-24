@@ -48,7 +48,7 @@ export default function LeadsPage() {
       <Card className="mb-5 p-5 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
           <div className="tabular flex items-baseline gap-2.5">
-            <span className="font-display text-[56px] leading-none font-extrabold text-brand sm:text-[68px]">
+            <span className="font-display text-[56px] leading-none font-semibold text-brand sm:text-[68px]">
               {leads.length}
             </span>
             <span className="text-sm text-muted">

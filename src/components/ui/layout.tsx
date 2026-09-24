@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * The layout language, as parts.
@@ -48,7 +49,7 @@ export function PageHeader({
     <header className="mb-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-display text-[28px] leading-tight font-extrabold sm:text-[32px]">
+          <h1 className="font-display text-[24px] leading-tight font-semibold tracking-[-0.02em] sm:text-[28px]">
             {title}
           </h1>
           {lead && <p className="mt-1 text-sm text-muted">{lead}</p>}
@@ -179,7 +180,7 @@ export function Stat({
     <div className={cn("min-w-0", className)}>
       <div
         className={cn(
-          "tabular font-display leading-none font-extrabold",
+          "tabular font-display leading-none font-semibold",
           size === "lg" ? "text-[32px]" : "text-2xl",
           tones[tone]
         )}
@@ -195,10 +196,11 @@ export function Stat({
 // Controls
 // ---------------------------------------------------------------------------
 
-const PILL =
-  "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition-all disabled:cursor-not-allowed";
-
-/** The one solid call to action. Lime, because that is what the app's yes looks like. */
+/**
+ * The one solid call to action - the violet key from `Button`, one size up so
+ * it can anchor a form. Disabled it drops to the neutral control rather than a
+ * faded violet, so "not yet" never reads as a weak yes.
+ */
 export function PrimaryButton({
   className,
   ...props
@@ -207,8 +209,8 @@ export function PrimaryButton({
     <button
       {...props}
       className={cn(
-        PILL,
-        "bg-brand px-5 py-2.5 text-sm text-ink hover:opacity-90 disabled:bg-surface-2 disabled:text-muted disabled:opacity-100",
+        buttonVariants({ size: "lg" }),
+        "disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted disabled:opacity-100 disabled:shadow-raised",
         className
       )}
     />
@@ -237,7 +239,10 @@ export function Segmented<T extends string | number>({
     <div
       role="group"
       aria-label={label}
-      className={cn("inline-flex shrink-0 rounded-full bg-well p-1", className)}
+      className={cn(
+        "inline-flex shrink-0 gap-0.5 rounded-full bg-well p-[3px] shadow-[inset_0_0_0_1px_var(--line-soft)]",
+        className
+      )}
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -248,7 +253,7 @@ export function Segmented<T extends string | number>({
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "tabular rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-all",
+              "tabular h-[26px] rounded-full px-3 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-out-strong",
               selected
                 ? "bg-surface-2 text-text shadow-raised"
                 : "text-muted hover:text-text"
@@ -278,14 +283,14 @@ export function Chip({
   className?: string;
 }) {
   const tones = {
-    muted: "bg-surface-2 text-muted",
-    brand: "bg-brand-soft text-brand",
-    rose: "bg-rose-soft text-rose",
+    muted: "border-[#363636] bg-surface-2 text-[#cfcfcf]",
+    brand: "border-brand-edge bg-brand-soft text-[#b7aee9]",
+    rose: "border-[#4c2324] bg-rose-soft text-[#febfc6]",
   };
   return (
     <span
       className={cn(
-        "inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium",
+        "inline-flex h-[22px] min-w-0 items-center gap-1.5 rounded-full border px-2 text-[12px] leading-none",
         tones[tone],
         className
       )}
@@ -298,7 +303,7 @@ export function Chip({
 
 /** The shared input shape. Recessed, like everything else inside a card. */
 export const FIELD =
-  "w-full rounded-control border border-line-soft bg-well px-3.5 py-2.5 text-sm text-text placeholder:text-muted/60 focus:border-brand-edge focus:outline-none transition-colors";
+  "w-full rounded-control border border-line-soft bg-well px-3.5 py-2.5 text-sm text-text placeholder:text-muted/60 focus:border-line focus:outline-none transition-[border-color] duration-150 ease-out-strong";
 
 // ---------------------------------------------------------------------------
 // States
@@ -320,7 +325,7 @@ export function EmptyState({
         className
       )}
     >
-      <p className="font-display text-lg font-bold">{title}</p>
+      <p className="font-display text-lg font-semibold">{title}</p>
       {children && (
         <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">{children}</p>
       )}
@@ -347,8 +352,10 @@ export function Delta({
   return (
     <span
       className={cn(
-        "tabular inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold",
-        up ? "bg-brand-soft text-brand" : "bg-rose-soft text-rose",
+        "tabular inline-flex h-5 items-center gap-1 rounded-full border px-1.5 text-[11px] font-medium leading-none",
+        up
+          ? "border-brand-edge bg-brand-soft text-[#b7aee9]"
+          : "border-[#4c2324] bg-rose-soft text-[#febfc6]",
         className
       )}
     >

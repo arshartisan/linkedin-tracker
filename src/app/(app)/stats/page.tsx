@@ -76,7 +76,7 @@ function Stat({
   return (
     <Card className="px-4 py-3.5">
       <Label>{label}</Label>
-      <div className={`tabular mt-1.5 font-display text-2xl font-extrabold ${TONE[tone]}`}>
+      <div className={`tabular mt-1.5 font-display text-2xl font-semibold ${TONE[tone]}`}>
         {value}
       </div>
       {detail && <div className="mt-0.5 text-xs text-muted">{detail}</div>}
@@ -238,7 +238,7 @@ export default function StatsPage() {
       <Card className="p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-bold">
+            <h2 className="font-display text-lg font-semibold">
               Momentum
             </h2>
             <p className="mt-0.5 text-xs text-muted">
@@ -266,7 +266,7 @@ export default function StatsPage() {
           <div>
             <Label>Sent in {range} days</Label>
             <div className="mt-1.5 flex items-baseline gap-2.5">
-              <span className="tabular font-display text-3xl font-bold">
+              <span className="tabular font-display text-3xl font-semibold">
                 {period.current}
               </span>
               <Delta change={period.change} />
@@ -277,7 +277,7 @@ export default function StatsPage() {
             <div>
               <Label>Per day</Label>
               <div
-                className={`tabular mt-1.5 font-display text-xl font-bold ${
+                className={`tabular mt-1.5 font-display text-xl font-semibold ${
                   rangeAverage >= goal ? "text-brand" : "text-text"
                 }`}
               >
@@ -286,7 +286,7 @@ export default function StatsPage() {
             </div>
             <div>
               <Label>On target</Label>
-              <div className="tabular mt-1.5 font-display text-xl font-extrabold">
+              <div className="tabular mt-1.5 font-display text-xl font-semibold">
                 {onTarget}
                 <span className="text-xs font-semibold text-muted"> / {range}</span>
               </div>
@@ -340,7 +340,7 @@ export default function StatsPage() {
 
       <Card className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4">
-          <h2 className="font-display text-lg font-bold">
+          <h2 className="font-display text-lg font-semibold">
             Side by side
           </h2>
           <p className="mt-0.5 text-xs text-muted">
@@ -421,7 +421,7 @@ export default function StatsPage() {
       <Card className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-bold">
+            <h2 className="font-display text-lg font-semibold">
               Six months
             </h2>
             <p className="mt-0.5 text-xs text-muted">

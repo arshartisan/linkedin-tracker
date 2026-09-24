@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { Manrope, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 /*
-  The UI is set in Manrope, and it is served rather than borrowed from the OS -
-  every platform gets the same face, at the same weights, instead of Apple
-  rendering one thing and Windows another. Semi-condensed and open-countered,
-  it holds the small label sizes the app leans on without the figures crowding.
+  The UI is set in Inter, loaded as the variable font - no weight list, so the
+  whole 100-900 axis ships as one file and any weight the app asks for renders
+  exactly rather than snapping to the nearest static cut. Served, not borrowed
+  from the OS, so every platform gets the same face.
 */
-const sans = Manrope({
-  variable: "--font-manrope",
+const sans = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -34,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0a0c11",
+  themeColor: "#161616",
 };
 
 /*

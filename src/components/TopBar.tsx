@@ -20,8 +20,8 @@ export function TopBar() {
   const { me } = useData();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line-soft bg-ink/85 px-4 backdrop-blur-xl sm:px-7">
-      <SidebarTrigger className="hidden size-9 shrink-0 rounded-full text-muted hover:bg-surface hover:text-text md:flex" />
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line-soft bg-ink/85 px-4 backdrop-blur-xl sm:px-6">
+      <SidebarTrigger className="hidden size-[30px] shrink-0 rounded-full bg-secondary text-secondary-foreground shadow-raised hover:bg-surface-2 hover:text-text md:flex" />
       <LogoLockup className="h-7 w-auto md:hidden" />
 
       <div className="ml-auto flex items-center gap-2">
@@ -30,18 +30,18 @@ export function TopBar() {
           lettered disc is honest about that where a generic silhouette would
           just look like a picture that failed to load.
         */}
-        <div className="flex items-center gap-2.5 rounded-full bg-surface py-1 pr-3 pl-1 shadow-raised">
+        <div className="flex h-[30px] items-center gap-1.5 rounded-full bg-secondary py-[5px] pr-[9px] pl-[5px] shadow-raised">
           <span
             aria-hidden
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-extrabold text-ink"
+            className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-[#b7aee9] outline-1 -outline-offset-1 outline-white/10"
           >
             {me.name.charAt(0)}
           </span>
-          <span className="hidden text-[13px] font-semibold sm:block">{me.name}</span>
+          <span className="hidden text-[12px] leading-none sm:block">{me.name}</span>
         </div>
 
         <SignOutButton
-          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line-soft text-muted transition-colors hover:border-line hover:text-rose disabled:opacity-50"
+          className="flex size-[30px] shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground shadow-raised transition-[background-color,color,scale] duration-150 ease-out-strong hover:bg-surface-2 hover:text-rose active:scale-[0.96] disabled:opacity-50"
         />
       </div>
     </header>

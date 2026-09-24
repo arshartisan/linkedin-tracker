@@ -48,7 +48,7 @@ export function Funnel({
                 <span className="text-[13px] font-medium">{step.label}</span>
                 <span className="tabular flex items-baseline gap-2 text-xs">
                   <span
-                    className={`font-bold ${last ? "text-brand" : "text-text"}`}
+                    className={`font-semibold ${last ? "text-brand" : "text-text"}`}
                   >
                     {step.value}
                   </span>

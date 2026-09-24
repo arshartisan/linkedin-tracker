@@ -87,7 +87,7 @@ export default function TodayPage() {
             <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
               <div className="tabular flex items-baseline gap-2.5">
                 <span
-                  className={`font-display text-[60px] leading-none font-extrabold sm:text-[72px] ${
+                  className={`font-display text-[60px] leading-none font-semibold sm:text-[72px] ${
                     hit ? "text-brand" : "text-text"
                   }`}
                 >
@@ -218,7 +218,7 @@ export default function TodayPage() {
                 href="/queue"
                 className="well well-interactive flex items-center gap-3 px-4 py-3.5"
               >
-                <span className="tabular font-display text-2xl font-extrabold text-brand">
+                <span className="tabular font-display text-2xl font-semibold text-brand">
                   {pitches}
                 </span>
                 <span className="min-w-0 flex-1 text-[13px] text-muted">

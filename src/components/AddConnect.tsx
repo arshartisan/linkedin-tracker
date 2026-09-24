@@ -102,7 +102,7 @@ export function AddConnect() {
           <PrimaryButton
             type="submit"
             disabled={!valid || blocked || raced || saving}
-            className="shrink-0 px-6 py-3.5"
+            className="h-11 shrink-0 px-6"
           >
             {saving ? "Logging…" : "Log connect"}
           </PrimaryButton>

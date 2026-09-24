@@ -9,7 +9,10 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Reach - outreach tracker, dark instrument panel with one signal colour.
+  Reach - outreach tracker. Neutral graphite panels, hairline structure, one
+  violet signal colour: near-neutral greys a hair apart, pill controls lit by
+  an inset top highlight, and a single saturated primary for the one action
+  per screen that matters.
 
   ── Surfaces ──────────────────────────────────────────────────────────────
   The layout is built from cards that sit *above* the page and wells that sit
@@ -28,49 +31,54 @@
   and every card reads as a stack of tiles.
 
   ── Colour ────────────────────────────────────────────────────────────────
-  One accent, the brand lime, so intensity carries meaning on its own: dim lime
-  is work in progress, full-strength lime is a target met. The page has exactly
+  One accent, violet, so intensity carries meaning on its own: dim violet is
+  work in progress, full-strength violet is a target met. The page has exactly
   one thing that glows and it is always the score.
 */
 :root {
-  --ink: #0a0c11; /* page */
-  --surface: #161a22; /* cards, rails */
-  --well: #10131a; /* recessed rows inside a card */
-  --surface-2: #1e232d; /* chips, hover, the selected segment */
-  --surface-3: #252b37; /* floating: menus, tooltips, sheets */
-  --line: #262d3a; /* a visible edge */
-  --line-soft: #1a1f28; /* a hairline between siblings */
-  --text: #eef1f6;
+  --ink: #161616; /* page */
+  --surface: #1b1c1e; /* cards, rails */
+  --well: #171819; /* recessed rows inside a card */
+  --surface-2: #2a2a2a; /* chips, hover, the selected segment */
+  --surface-3: #1e1e1e; /* floating: menus, tooltips, sheets */
+  --line: #393939; /* a visible edge */
+  --line-soft: #232323; /* a hairline between siblings */
+  --text: #f9fbff;
   /*
-    Nudged up from #8791a3, which cleared 4.5:1 on every surface except the
-    floating one - dropdown labels landed at 4.47. This clears AA on all five.
+    A true neutral grey. One step lighter than #7f7f7f, which lands just under
+    4.5:1 on the card tone - this clears AA on every surface.
   */
-  --muted: #8b95a7;
+  --muted: #8a8a8a;
 
   /*
-    The logo lime, and the three steps below it. `dim` is the same hue burnt
-    down to ~70% over the page - it stays legible as text where a translucent
-    lime would sink into the background, and it is what "not there yet" looks
-    like. `soft` and `edge` are the tinted well and hairline that let lime type
-    sit on its own panel without a second hue entering the palette.
+    Two violets. `primary-fill` is the saturated fill that only ever sits
+    behind white type - the one filled button per screen. `brand` is the same
+    hue lifted until it reads as text and as a chart line on graphite; `dim` is
+    it burnt down, which is what "not there yet" looks like. `soft` and `edge`
+    are the tinted well and hairline for violet type on its own panel.
   */
-  --brand: #d7fa06;
-  --brand-dim: #9bb50b;
-  --brand-soft: #2b3405;
-  --brand-edge: #4a5a08;
+  --primary-fill: #4124fb;
+  --primary-fill-hover: #4b30ff;
+  --brand: #8a7cff;
+  --brand-dim: #7a6fd6;
+  --brand-soft: #231f3a;
+  --brand-edge: #4b437b;
 
-  --rose: #ff6b6b;
-  --rose-soft: #3a1d1f;
+  --rose: #f97373;
+  --rose-soft: #3e1d1e;
+
+  /* Fast off the mark, long settle - every state change in the app uses it. */
+  --ease-out-strong: cubic-bezier(0.25, 1, 0.5, 1);
 
   /*
     ── Radii ───────────────────────────────────────────────────────────────
-    Generous and consistent. A card is a soft rectangle, a row inside it is a
-    slightly tighter one, and anything that reads as a control is a full pill.
-    Three steps, no improvising per component.
+    Tighter and concentric: a well sits 6px inside a card, so its radius is
+    the card's minus that inset. Nav rows take the control radius; buttons and
+    chips are full pills. Three steps, no improvising per component.
   */
-  --r-card: 24px;
-  --r-well: 16px;
-  --r-control: 12px;
+  --r-card: 16px;
+  --r-well: 10px;
+  --r-control: 8px;
 
   /*
     ── Elevation ───────────────────────────────────────────────────────────
@@ -80,34 +88,44 @@
     but a lit top edge reads as a physical lift immediately.
   */
   --sh-card:
-    0 1px 2px 0 rgb(0 0 0 / 0.5), 0 8px 24px -8px rgb(0 0 0 / 0.55),
-    inset 0 1px 0 0 rgb(255 255 255 / 0.045);
-
-  /* The selected segment of a control, or a nav row - a smaller lift. */
-  --sh-raised:
-    0 1px 2px 0 rgb(0 0 0 / 0.45), 0 4px 10px -4px rgb(0 0 0 / 0.4),
-    inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+    0 0 0 1px rgb(0 0 0 / 0.35), 0 8px 24px -12px rgb(0 0 0 / 0.5),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.04);
 
   /*
-    Anything that floats above the page gets a real drop shadow plus a 1px
-    inner highlight. The highlight is what separates a menu from the card
-    behind it when both are within a few percent of black.
+    The control recipe - a dark 1px ring outside, a lit top edge and a faint
+    white ring inside. Every secondary button, chip and selected nav row wears
+    it.
   */
-  --sh-float:
-    0 18px 44px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.6),
-    inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+  --sh-raised:
+    0 0 0 1px rgb(0 0 0 / 0.4), inset 0 1px 0 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06);
+
+  /*
+    The primary button: a soft drop, a near-black ring, a glossy highlight
+    across the top and shade pooling at the bottom, so the violet reads as a
+    physical key rather than a flat swatch.
+  */
+  --sh-primary:
+    0 4px 4px 0 rgb(42 42 42 / 0.32), 0 0 0 1px #0e0e0e,
+    inset 0 4px 6px 0 rgb(255 255 255 / 0.2),
+    inset 0 0 0 1px rgb(255 255 255 / 0.15),
+    inset 0 -8px 14px 0 rgb(0 0 0 / 0.15);
+
+  /* Anything that floats above the page. */
+  --sh-float: 0 16px 40px 0 rgb(0 0 0 / 0.5), 0 0 0 1px #0e0e0e;
 
   /* Reserved for lit brand marks - the tally, a met target, the chart's head. */
   --shadow-brand: 0 0 14px -2px var(--brand);
 
   /*
     ── Type ────────────────────────────────────────────────────────────────
-    Manrope is served by the app, so it leads the stack and every platform
-    renders the same face. The system generics behind it only ever show while
-    the webfont is swapping in, or if it fails to load at all.
+    Inter Variable is served by the app, so it leads the stack and every
+    platform renders the same face. The system generics behind it only ever
+    show while the webfont is swapping in, or if it fails to load at all.
   */
   --stack-sans:
-    var(--font-manrope), ui-sans-serif, -apple-system, system-ui, sans-serif;
+    var(--font-inter), "Inter Variable", ui-sans-serif, -apple-system,
+    system-ui, sans-serif;
   --stack-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
 
   /*
@@ -121,9 +139,9 @@
   --card-foreground: var(--text);
   --popover: var(--surface-3);
   --popover-foreground: var(--text);
-  --primary: var(--brand);
-  --primary-foreground: var(--ink);
-  --secondary: var(--surface-2);
+  --primary: var(--primary-fill);
+  --primary-foreground: var(--text);
+  --secondary: #1e1e1e;
   --secondary-foreground: var(--text);
   --muted-foreground: var(--muted);
   --accent: var(--surface-2);
@@ -132,16 +150,16 @@
   --destructive-foreground: var(--ink);
   --border: var(--line);
   --input: var(--line-soft);
-  --ring: var(--brand);
+  --ring: #676767;
 
-  --sidebar: var(--surface);
+  --sidebar: #171717;
   --sidebar-foreground: var(--text);
-  --sidebar-primary: var(--brand);
-  --sidebar-primary-foreground: var(--ink);
+  --sidebar-primary: var(--surface-2);
+  --sidebar-primary-foreground: var(--text);
   --sidebar-accent: var(--surface-2);
   --sidebar-accent-foreground: var(--text);
-  --sidebar-border: var(--line);
-  --sidebar-ring: var(--brand);
+  --sidebar-border: var(--line-soft);
+  --sidebar-ring: #676767;
 }
 
 @theme inline {
@@ -160,8 +178,11 @@
   --color-brand-edge: var(--brand-edge);
   --color-rose: var(--rose);
   --color-rose-soft: var(--rose-soft);
+  --color-primary-hover: var(--primary-fill-hover);
 
-  /* Everything is set in Manrope; mono is for figures and URLs. */
+  --ease-out-strong: var(--ease-out-strong);
+
+  /* Everything is set in Inter; mono is for figures and URLs. */
   --font-display: var(--stack-sans);
   --font-sans: var(--stack-sans);
   --font-mono: var(--stack-mono);
@@ -173,6 +194,7 @@
   --shadow-card: var(--sh-card);
   --shadow-raised: var(--sh-raised);
   --shadow-float: var(--sh-float);
+  --shadow-primary: var(--sh-primary);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -227,9 +249,8 @@
   }
 
   /*
-    A rounded face carries a touch more optical weight than a grotesque at the
-    same size, so headings sit a hair tighter than the default and body copy
-    gets a slightly looser line to keep the softness from reading as crowding.
+    Inter is drawn for text sizes; at heading sizes its default spacing opens
+    up, so headings are pulled a hair tighter to hold together as words.
   */
   h1,
   h2,
@@ -279,9 +300,9 @@ body {
 
   /* A well you can act on: it lifts toward the card tone on hover. */
   .well-interactive {
-    transition:
-      background-color 160ms ease,
-      border-color 160ms ease;
+    transition-property: background-color, border-color;
+    transition-duration: 150ms;
+    transition-timing-function: var(--ease-out-strong);
   }
 
   .well-interactive:hover {
@@ -292,15 +313,14 @@ body {
 
 /*
   The small uppercase caption - section headings, stat labels, nav group
-  headers. It used to be set in mono; in the rounded face at a wide tracking it
-  keeps the same quiet, systematic role without the typewriter texture that was
-  fighting the soft geometry everywhere else.
+  headers. Medium weight at a wide tracking - quiet and systematic, set well
+  below the content it names.
 */
 @layer components {
   .label {
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.09em;
+    font-weight: 500;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
     line-height: 1.4;
@@ -331,7 +351,7 @@ body {
     lets the highlight climb one more step, as `@theme inline` compiles
     `bg-accent` straight down to `var(--accent)`.
   */
-  --accent: #2f3644;
+  --accent: #2a2a2a;
 }
 
 /*
@@ -354,7 +374,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid rgb(103 103 103 / 0.8);
   outline-offset: 2px;
   border-radius: 4px;
 }

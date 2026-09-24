@@ -81,7 +81,7 @@ export default function QueuePage() {
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
           <div className="tabular flex items-baseline gap-2.5">
             <span
-              className={`font-display text-[56px] leading-none font-extrabold sm:text-[68px] ${
+              className={`font-display text-[56px] leading-none font-semibold sm:text-[68px] ${
                 dueCount === 0 ? "text-brand" : "text-text"
               }`}
             >
@@ -100,7 +100,7 @@ export default function QueuePage() {
               return (
                 <Well key={kind} className="min-w-[104px] px-3.5 py-2.5">
                   <div
-                    className={`tabular font-display text-xl leading-none font-extrabold ${
+                    className={`tabular font-display text-xl leading-none font-semibold ${
                       n > 0 ? "text-text" : "text-muted/40"
                     }`}
                   >

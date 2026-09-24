@@ -27,7 +27,7 @@ export function StagePicker({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Pipeline stage: ${STAGE_LABEL[value]}`}
-        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-2 pl-3 text-[11px] font-bold transition-opacity outline-none hover:opacity-90 ${STAGE_TONE[value]}`}
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full py-1.5 pr-2 pl-3 text-[11px] font-semibold transition-opacity outline-none hover:opacity-90 ${STAGE_TONE[value]}`}
       >
         {STAGE_LABEL[value]}
         <ChevronDownIcon className="size-3 opacity-70" aria-hidden />

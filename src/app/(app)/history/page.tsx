@@ -213,7 +213,7 @@ export default function HistoryPage() {
                 <section key={day}>
                   <div className="mb-3 flex items-center gap-4">
                     <div className="min-w-0">
-                      <h2 className="truncate font-display text-sm font-bold">
+                      <h2 className="truncate font-display text-sm font-semibold">
                         {relativeDay(day) ?? formatLong(day)}
                       </h2>
                       <p className="tabular text-[11px] text-muted">

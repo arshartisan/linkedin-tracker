@@ -122,12 +122,12 @@ export function Nav() {
               isActive={active}
               tooltip={link.label}
               /*
-                The active row is a card lifted out of the rail - the same
-                move the content area makes, so the nav reads as part of one
-                system. It is the only lit thing in the sidebar, which is why
-                it needs no colour beyond the icon to be found.
+                Inactive rows are bare text that brightens on hover. The active
+                row picks up the control recipe - a raised grey key with a lit
+                top edge - so it is the only lifted thing in the rail and needs
+                no colour to be found.
               */
-              className="h-10 gap-3 rounded-control px-3 text-[13px] font-semibold text-muted transition-all hover:bg-surface/70 hover:text-text data-[active=true]:bg-surface data-[active=true]:text-text data-[active=true]:shadow-raised data-[active=true]:[&_svg]:text-brand"
+              className="h-8 gap-2 rounded-control px-2 text-[14px] font-medium text-sidebar-foreground transition-[background-color,color,box-shadow] duration-150 ease-out-strong hover:bg-transparent hover:text-text data-[active=true]:bg-sidebar-primary data-[active=true]:font-medium data-[active=true]:text-text data-[active=true]:shadow-raised [&>svg]:size-4"
             >
               <Link href={link.href} aria-current={active ? "page" : undefined}>
                 <Icon name={link.icon} />
@@ -135,7 +135,7 @@ export function Nav() {
               </Link>
             </SidebarMenuButton>
             {count !== null && (
-              <SidebarMenuBadge className="tabular rounded-full bg-brand px-1.5 text-[10px] font-bold text-ink peer-data-[size=default]/menu-button:top-2.5 peer-data-[active=true]/menu-button:text-ink peer-hover/menu-button:text-ink">
+              <SidebarMenuBadge className="tabular h-4 min-w-6 rounded-full border-[0.5px] border-[#414141] bg-surface-2 px-1 text-[12px] leading-none font-normal text-[#cfcfcf] shadow-[0_0_0_0.5px_#0e0e0e] peer-data-[size=default]/menu-button:top-2 peer-data-[active=true]/menu-button:text-[#cfcfcf] peer-hover/menu-button:text-[#cfcfcf]">
                 {count}
               </SidebarMenuBadge>
             )}
@@ -157,7 +157,7 @@ export function Nav() {
       */}
       <Sidebar
         collapsible="icon"
-        className="border-line-soft **:data-[sidebar=sidebar]:bg-ink"
+        className="border-sidebar-border **:data-[sidebar=sidebar]:bg-sidebar"
       >
         <SidebarHeader className="px-3 py-5 group-data-[collapsible=icon]:px-0">
           <Link
@@ -172,7 +172,7 @@ export function Nav() {
 
         <SidebarContent className="px-2 group-data-[collapsible=icon]:px-0">
           <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
-            <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
+            <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               LinkedIn
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu(LINKEDIN)}</SidebarGroupContent>
@@ -180,7 +180,7 @@ export function Nav() {
 
           {/* Team counts everyone, so it sits apart from your own screens. */}
           <SidebarGroup className="mt-auto py-1 group-data-[collapsible=icon]:px-0">
-            <SidebarGroupLabel className="label px-3 text-[10px] text-muted/55">
+            <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               Shared
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu([TEAM])}</SidebarGroupContent>
@@ -192,12 +192,12 @@ export function Nav() {
           <div className="card px-3.5 py-3">
             <div className="flex items-center justify-between gap-2">
               <span className="label text-[10px]">{me.name} · Today</span>
-              <SignOutButton className="-mr-1 shrink-0 rounded-full p-1 text-muted transition-colors hover:text-rose disabled:opacity-50" />
+              <SignOutButton className="-mr-1 shrink-0 rounded-full p-1 text-muted transition-colors duration-150 hover:bg-white/6 hover:text-rose disabled:opacity-50" />
             </div>
 
             <div className="tabular mt-2 flex items-baseline gap-1.5">
               <span
-                className={`font-display text-[26px] leading-none font-extrabold ${
+                className={`font-display text-[26px] leading-none font-semibold ${
                   hit ? "text-brand" : "text-text"
                 }`}
               >
@@ -213,7 +213,7 @@ export function Nav() {
             */}
             <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-well">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${
+                className={`h-full rounded-full transition-[width] duration-500 ease-out-strong ${
                   hit ? "bg-brand" : "bg-brand/45"
                 }`}
                 style={{ width: `${Math.max(pct * 100, sentToday > 0 ? 4 : 0)}%` }}
@@ -226,7 +226,7 @@ export function Nav() {
       </Sidebar>
 
       {/* Mobile tab bar - sits over content that scrolls under it. */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line-soft bg-ink/85 backdrop-blur-xl md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-sidebar-border bg-sidebar/90 backdrop-blur-xl md:hidden">
         {mobileLinks.map((link) => {
           const active = pathname === link.href;
           const count = badge(link);
@@ -235,14 +235,14 @@ export function Nav() {
               key={link.href}
               href={link.href}
               aria-current={active ? "page" : undefined}
-              className={`relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold ${
-                active ? "text-brand" : "text-muted"
+              className={`relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium ${
+                active ? "text-text" : "text-sidebar-foreground"
               }`}
             >
               <Icon name={link.icon} className="h-5 w-5" />
               {link.label}
               {count !== null && (
-                <span className="tabular absolute top-1 right-[22%] min-w-3.75 rounded-full bg-brand px-1 text-center text-[9px] leading-3.75 font-bold text-ink">
+                <span className="tabular absolute top-1 right-[22%] min-w-3.75 rounded-full bg-primary px-1 text-center text-[9px] leading-3.75 font-semibold text-primary-foreground">
                   {count}
                 </span>
               )}

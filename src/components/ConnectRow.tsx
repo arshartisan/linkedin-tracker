@@ -151,7 +151,7 @@ export function ConnectRow({
           <DropdownMenu onOpenChange={(open) => !open && setConfirmDelete(false)}>
             <DropdownMenuTrigger
               aria-label="Connect actions"
-              className="flex size-8 items-center justify-center rounded-full text-muted transition-colors outline-none hover:bg-surface-2 hover:text-text data-[state=open]:bg-surface-2 data-[state=open]:text-text"
+              className="flex size-[30px] items-center justify-center rounded-full bg-secondary text-secondary-foreground shadow-raised transition-[background-color,color,scale] duration-150 ease-out-strong outline-none hover:bg-surface-2 active:scale-[0.96] data-[state=open]:bg-surface-2"
             >
               <MoreHorizontalIcon className="size-4" aria-hidden />
             </DropdownMenuTrigger>
@@ -198,7 +198,7 @@ export function ConnectRow({
         <div className="well mt-3 flex flex-wrap items-center gap-2 px-3.5 py-2.5">
           <span className="text-xs text-muted">{action.label}</span>
           <span
-            className={`tabular text-[10px] font-bold tracking-wide uppercase ${
+            className={`tabular text-[10px] font-semibold tracking-wide uppercase ${
               timing(action).late ? "text-rose" : "text-muted/70"
             }`}
           >
@@ -210,7 +210,7 @@ export function ConnectRow({
               <button
                 type="button"
                 onClick={() => setStage(connect, "closed")}
-                className="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-rose"
+                className="inline-flex h-[26px] items-center rounded-full px-[9px] text-[12px] font-medium leading-none text-muted transition-[background-color,color,scale] duration-150 ease-out-strong hover:bg-white/6 hover:text-rose active:scale-[0.96]"
               >
                 Not a fit
               </button>
@@ -218,7 +218,7 @@ export function ConnectRow({
             <button
               type="button"
               onClick={() => complete(connect, action)}
-              className="rounded-full bg-brand px-3.5 py-1.5 text-[11px] font-bold text-ink transition-opacity hover:opacity-90"
+              className="inline-flex h-[26px] items-center rounded-full bg-primary px-[9px] text-[12px] font-medium leading-none text-primary-foreground shadow-primary transition-[background-color,scale] duration-150 ease-out-strong hover:bg-primary-hover active:scale-[0.96]"
             >
               {action.cta}
             </button>
@@ -234,7 +234,7 @@ export function ConnectRow({
           <button
             type="button"
             onClick={() => setStage(connect, "closed")}
-            className="ml-auto rounded-full bg-surface-2 px-3.5 py-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-rose"
+            className="ml-auto inline-flex h-[26px] items-center rounded-full bg-secondary px-[9px] text-[12px] font-medium leading-none text-secondary-foreground shadow-raised transition-[background-color,color,scale] duration-150 ease-out-strong hover:bg-surface-2 hover:text-rose active:scale-[0.96]"
           >
             Close it out
           </button>

@@ -161,7 +161,7 @@ export function TrendChart({
             <div className="tabular font-mono text-[10px] whitespace-nowrap text-muted">
               {formatShort(activePoint.day)}
             </div>
-            <div className="tabular font-display text-sm font-bold whitespace-nowrap">
+            <div className="tabular font-display text-sm font-semibold whitespace-nowrap">
               <span
                 className={
                   activePoint.count >= goal ? "text-brand" : "text-text"
