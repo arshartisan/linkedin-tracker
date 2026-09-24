@@ -130,7 +130,7 @@ export default function LoginPage() {
             </InputOTP>
           </div>
 
-          <PrimaryButton type="submit" disabled={busy || !valid} className="mt-4 h-11 w-full">
+          <PrimaryButton type="submit" disabled={busy || !valid} className="mt-4 w-full">
             {busy ? "Checking…" : "Continue"}
           </PrimaryButton>
 

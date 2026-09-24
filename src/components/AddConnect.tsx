@@ -102,8 +102,19 @@ export function AddConnect() {
           <PrimaryButton
             type="submit"
             disabled={!valid || blocked || raced || saving}
-            className="h-11 shrink-0 px-6"
+            className="shrink-0 sm:self-center"
           >
+            <svg
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M6 2.5v7M2.5 6h7" />
+            </svg>
             {saving ? "Logging…" : "Log connect"}
           </PrimaryButton>
         </div>

@@ -197,9 +197,8 @@ export function Stat({
 // ---------------------------------------------------------------------------
 
 /**
- * The one solid call to action - the lime key from `Button`, one size up so
- * it can anchor a form. Disabled it drops to the neutral control rather than a
- * faded lime, so "not yet" never reads as a weak yes.
+ * The one solid call to action - the lime key from `Button` at its default
+ * compact size: 9px all round, 12px medium type, a 12px icon.
  */
 export function PrimaryButton({
   className,
@@ -209,8 +208,7 @@ export function PrimaryButton({
     <button
       {...props}
       className={cn(
-        buttonVariants({ size: "lg" }),
-        "disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted disabled:opacity-100 disabled:shadow-raised",
+        buttonVariants(),
         className
       )}
     />
