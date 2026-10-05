@@ -63,7 +63,7 @@ type Ctx = {
    * Earlier connect to the same profile, by *anyone*. Team-wide on purpose:
    * the whole point of sharing the tracker is not approaching someone twice.
    */
-  findDuplicate: (url: string) => Connect | null;
+  findDuplicate: (url: string, kind?: "profile" | "upwork") => Connect | null;
   mode: typeof storeMode;
 };
 
@@ -209,13 +209,25 @@ export function DataProvider({
     }
     return map;
   }, [connects]);
+  const byUpworkUrl = useMemo(() => {
+    const map = new Map<string, Connect>();
+    for (let i = connects.length - 1; i >= 0; i--) {
+      const url = connects[i].upwork_url.trim().toLowerCase().replace(/\/+$/, "");
+      if (url) map.set(url, connects[i]);
+    }
+    return map;
+  }, [connects]);
 
   const findDuplicate = useCallback(
-    (url: string) => {
+    (url: string, kind = "profile") => {
+      if (kind === "upwork") {
+        const key = url.trim().toLowerCase().replace(/\/+$/, "");
+        return key ? byUpworkUrl.get(key) ?? null : null;
+      }
       const slug = profileSlug(url);
       return slug ? bySlug.get(slug) ?? null : null;
     },
-    [bySlug]
+    [bySlug, byUpworkUrl]
   );
 
   const value = useMemo<Ctx>(

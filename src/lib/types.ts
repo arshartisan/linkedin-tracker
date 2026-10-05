@@ -40,12 +40,26 @@ export type User = {
 
 export const DEFAULT_GOAL = 30;
 
+export type OutreachChannel = "upwork_connects" | "linkedin_message" | "direct_email";
+
+export const OUTREACH_CHANNEL_LABEL: Record<OutreachChannel, string> = {
+  upwork_connects: "Upwork connects",
+  linkedin_message: "LinkedIn message",
+  direct_email: "Direct email",
+};
+
 export type Connect = {
   id: string;
   /** Local calendar day the connect was sent, as YYYY-MM-DD. */
   sent_on: string;
   created_at: string;
   profile_url: string;
+  upwork_url: string;
+  project_title: string;
+  project_description: string;
+  client_reviews: string;
+  email: string;
+  outreach_channels: OutreachChannel[];
   /** Who sent the invite. Rows predating multi-user hydrate as "arsh". */
   owner: UserId;
   name: string;
@@ -65,8 +79,14 @@ export type Connect = {
 
 export type NewConnect = {
   profile_url: string;
+  upwork_url: string;
   name: string;
   owner: UserId;
+  project_title?: string;
+  project_description?: string;
+  client_reviews?: string;
+  email?: string;
+  outreach_channels?: OutreachChannel[];
   note?: string;
   tags?: string[];
   sent_on?: string;
@@ -139,6 +159,19 @@ export function hydrate(row: Partial<Connect> & Record<string, unknown>): Connec
     sent_on: String(row.sent_on ?? ""),
     created_at: String(row.created_at ?? ""),
     profile_url: String(row.profile_url ?? ""),
+    upwork_url: String(row.upwork_url ?? ""),
+    project_title: String(row.project_title ?? ""),
+    project_description: String(row.project_description ?? ""),
+    client_reviews: String(row.client_reviews ?? ""),
+    email: String(row.email ?? ""),
+    outreach_channels: Array.isArray(row.outreach_channels)
+      ? row.outreach_channels.filter(
+          (channel): channel is OutreachChannel =>
+            channel === "upwork_connects" ||
+            channel === "linkedin_message" ||
+            channel === "direct_email"
+        )
+      : [],
     // Everything logged before multi-user was Arsh's - the same assumption the
     // SQL backfill makes, repeated here so localStorage rows migrate too.
     owner: row.owner && USER_IDS.includes(row.owner) ? row.owner : "arsh",

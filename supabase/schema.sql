@@ -24,6 +24,12 @@ create table if not exists public.connects (
   created_at    timestamptz not null default now(),
   sent_on       date not null default current_date,
   profile_url   text not null,
+  upwork_url    text not null default '',
+  project_title text not null default '',
+  project_description text not null default '',
+  client_reviews text not null default '',
+  email         text not null default '',
+  outreach_channels text[] not null default '{}',
   -- Who sent this invite. Every row predating multi-user is backfilled to
   -- 'arsh', which is also why that is the default - see the migration below.
   owner         text not null default 'arsh' references public.users(id),
@@ -88,6 +94,13 @@ alter table public.connects
   add constraint connects_stage_check
   check (stage in ('pending','accepted','messaged','replied','lead','closed'));
 
+alter table public.connects add column if not exists upwork_url text not null default '';
+alter table public.connects add column if not exists project_title text not null default '';
+alter table public.connects add column if not exists project_description text not null default '';
+alter table public.connects add column if not exists client_reviews text not null default '';
+alter table public.connects add column if not exists email text not null default '';
+alter table public.connects add column if not exists outreach_channels text[] not null default '{}';
+
 -- Migration to multi-user. No-ops on a fresh install (the columns already exist).
 --
 -- Everything logged before this point was sent by Arsh, so `default 'arsh'` on
@@ -130,6 +143,9 @@ create index if not exists connects_owner_sent_on_idx on public.connects (owner,
 create unique index if not exists connects_profile_slug_key
   on public.connects (profile_slug)
   where profile_slug is not null;
+create unique index if not exists connects_upwork_url_key
+  on public.connects (lower(trim(upwork_url)))
+  where upwork_url <> '';
 
 alter table public.connects enable row level security;
 alter table public.users enable row level security;

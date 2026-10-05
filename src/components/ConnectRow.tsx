@@ -18,9 +18,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FIELD } from "@/components/ui/layout";
 import { formatShort, formatTime } from "@/lib/date";
-import { parseTags, profileSlug } from "@/lib/linkedin";
+import { normaliseUrl, parseTags, profileSlug } from "@/lib/linkedin";
 import { isStale, MAX_FOLLOWUPS, nextAction, type Action } from "@/lib/pipeline";
 import type { Connect } from "@/lib/types";
+import { OUTREACH_CHANNEL_LABEL } from "@/lib/types";
 
 /** "2 days late" reads as pressure; "in 2 days" reads as a plan. */
 function timing(action: Action): { text: string; late: boolean } {
@@ -54,6 +55,14 @@ export function ConnectRow({
 }) {
   const { update, remove, setStage, complete } = useData();
   const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(connect.name);
+  const [upworkUrl, setUpworkUrl] = useState(connect.upwork_url);
+  const [profileUrl, setProfileUrl] = useState(connect.profile_url);
+  const [email, setEmail] = useState(connect.email);
+  const [projectTitle, setProjectTitle] = useState(connect.project_title);
+  const [projectDescription, setProjectDescription] = useState(connect.project_description);
+  const [clientReviews, setClientReviews] = useState(connect.client_reviews);
+  const [channels, setChannels] = useState(connect.outreach_channels);
   const [note, setNote] = useState(connect.note);
   const [tags, setTags] = useState(connect.tags.join(", "));
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -66,10 +75,33 @@ export function ConnectRow({
 
   async function saveDetails() {
     const nextTags = parseTags(tags);
+    const nextProfileUrl = normaliseUrl(profileUrl);
+    const nextChannels = [...new Set(channels)];
     const changed =
+      name.trim() !== connect.name ||
+      upworkUrl.trim() !== connect.upwork_url ||
+      nextProfileUrl !== connect.profile_url ||
+      email.trim() !== connect.email ||
+      projectTitle.trim() !== connect.project_title ||
+      projectDescription.trim() !== connect.project_description ||
+      clientReviews.trim() !== connect.client_reviews ||
+      nextChannels.join(",") !== connect.outreach_channels.join(",") ||
       note.trim() !== connect.note ||
       nextTags.join(",") !== connect.tags.join(",");
-    if (changed) await update(connect.id, { note: note.trim(), tags: nextTags });
+    if (changed) {
+      await update(connect.id, {
+        name: name.trim(),
+        upwork_url: upworkUrl.trim(),
+        profile_url: nextProfileUrl,
+        email: email.trim(),
+        project_title: projectTitle.trim(),
+        project_description: projectDescription.trim(),
+        client_reviews: clientReviews.trim(),
+        outreach_channels: nextChannels,
+        note: note.trim(),
+        tags: nextTags,
+      });
+    }
   }
 
   /**
@@ -104,6 +136,33 @@ export function ConnectRow({
               </span>
             )}
           </div>
+
+          {connect.project_title && (
+            <p className="mt-2 text-sm font-medium text-text">{connect.project_title}</p>
+          )}
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+            {connect.upwork_url && (
+              <a href={connect.upwork_url} target="_blank" rel="noopener noreferrer" className="font-mono hover:text-brand">
+                Upwork job ↗
+              </a>
+            )}
+            {connect.profile_url && (
+              <a href={connect.profile_url} target="_blank" rel="noopener noreferrer" className="font-mono hover:text-brand">
+                LinkedIn ↗
+              </a>
+            )}
+            {connect.email && <span>{connect.email}</span>}
+          </div>
+
+          {connect.outreach_channels.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {connect.outreach_channels.map((channel) => (
+                <span key={channel} className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[10px] font-semibold text-brand-dim">
+                  {OUTREACH_CHANNEL_LABEL[channel]}
+                </span>
+              ))}
+            </div>
+          )}
 
           <a
             href={connect.profile_url}
@@ -244,19 +303,42 @@ export function ConnectRow({
       {editing && (
         <div
           onBlur={leaveEditor}
-          className="mt-3 grid gap-2 border-t border-line-soft pt-3 sm:grid-cols-[1fr_minmax(0,220px)]"
+          className="mt-3 grid gap-2 border-t border-line-soft pt-3 sm:grid-cols-2"
         >
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Client name" className={FIELD} />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email found" className={FIELD} />
+          <input value={upworkUrl} onChange={(e) => setUpworkUrl(e.target.value)} placeholder="Upwork job link" className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
+          <input value={profileUrl} onChange={(e) => setProfileUrl(e.target.value)} placeholder="LinkedIn profile link" className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
+          <input value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} placeholder="Project title" className={FIELD} />
+          <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
+          <textarea value={projectDescription} onChange={(e) => setProjectDescription(e.target.value)} placeholder="Project description" className={`${FIELD} min-h-20`} />
+          <textarea value={clientReviews} onChange={(e) => setClientReviews(e.target.value)} placeholder="Past client reviews" className={`${FIELD} min-h-20`} />
+          <div className="flex flex-wrap gap-3 sm:col-span-2">
+            {Object.entries(OUTREACH_CHANNEL_LABEL).map(([channel, label]) => {
+              const value = channel as keyof typeof OUTREACH_CHANNEL_LABEL;
+              return (
+                <label key={channel} className="flex items-center gap-2 text-xs text-muted">
+                  <input
+                    type="checkbox"
+                    checked={channels.includes(value)}
+                    onChange={(e) =>
+                      setChannels((current) =>
+                        e.target.checked
+                          ? [...current, value]
+                          : current.filter((item) => item !== value)
+                      )
+                    }
+                  />
+                  {label}
+                </label>
+              );
+            })}
+          </div>
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Note - what you said, or what to follow up on"
             className={FIELD}
-          />
-          <input
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="Tags, comma separated"
-            className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`}
           />
         </div>
       )}

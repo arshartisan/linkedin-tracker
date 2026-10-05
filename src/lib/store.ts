@@ -66,6 +66,12 @@ function buildRow(input: NewConnect): Connect {
     sent_on: input.sent_on ?? dayKey(now),
     created_at: now.toISOString(),
     profile_url: normaliseUrl(input.profile_url),
+    upwork_url: input.upwork_url.trim(),
+    project_title: input.project_title?.trim() ?? "",
+    project_description: input.project_description?.trim() ?? "",
+    client_reviews: input.client_reviews?.trim() ?? "",
+    email: input.email?.trim() ?? "",
+    outreach_channels: input.outreach_channels ?? [],
     owner: input.owner,
     name: input.name.trim(),
     stage: "pending",
@@ -86,12 +92,19 @@ function buildRow(input: NewConnect): Connect {
  * generic error string.
  */
 export const DUPLICATE_MESSAGE =
-  "Someone on the team has already connected with this profile.";
+  "Someone on the team has already logged this Upwork job or client.";
 
 export type ConnectPatch = Partial<
   Pick<
     Connect,
     | "name"
+    | "profile_url"
+    | "upwork_url"
+    | "project_title"
+    | "project_description"
+    | "client_reviews"
+    | "email"
+    | "outreach_channels"
     | "stage"
     | "note"
     | "tags"
@@ -125,8 +138,8 @@ export const store = {
     }
     const { data, error } = await supabase().from(TABLE).insert(row).select().single();
     if (error) {
-      // 23505 is the unique index on profile_slug: someone on the team logged
-      // this person between the form's check and this insert. Say so plainly
+      // 23505 is one of the duplicate guards: someone on the team logged
+      // this job or person between the form's check and this insert. Say so plainly
       // rather than leaking a constraint name.
       if (error.code === "23505") throw new Error(DUPLICATE_MESSAGE);
       throw new Error(error.message);

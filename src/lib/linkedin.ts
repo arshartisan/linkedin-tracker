@@ -11,6 +11,10 @@ export function isLinkedInUrl(input: string): boolean {
   return PROFILE_RE.test(input.trim());
 }
 
+export function isUpworkUrl(input: string): boolean {
+  return /^https?:\/\/(?:www\.)?upwork\.com\/.+/i.test(input.trim());
+}
+
 /** Stable key for one person: their profile slug, lowercased. */
 export function profileSlug(input: string): string | null {
   const match = input.trim().match(PROFILE_RE);

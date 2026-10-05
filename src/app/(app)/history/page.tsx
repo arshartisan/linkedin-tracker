@@ -85,7 +85,11 @@ export default function HistoryPage() {
       if (!q) return true;
       return (
         c.name.toLowerCase().includes(q) ||
+        c.upwork_url.toLowerCase().includes(q) ||
         c.profile_url.toLowerCase().includes(q) ||
+        c.project_title.toLowerCase().includes(q) ||
+        c.project_description.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
         c.note.toLowerCase().includes(q) ||
         c.tags.some((t) => t.includes(q))
       );

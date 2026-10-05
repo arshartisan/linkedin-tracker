@@ -7,6 +7,12 @@ Two migrations live in `schema.sql`, both guarded and both safe to re-run:
 2. **[Pipeline](#migrating-to-the-pipeline-schema)** — the earlier `status` →
    `stage` upgrade, kept here for reference.
 
+The current schema also adds the Upwork job and outreach fields
+(`upwork_url`, project research, `email` and `outreach_channels`). Existing
+rows receive empty values and continue to work. Run the complete
+`supabase/schema.sql` file once before deploying this version; the new unique
+Upwork index will fail only if duplicate non-empty job URLs already exist.
+
 ---
 
 # Migrating to multi-user

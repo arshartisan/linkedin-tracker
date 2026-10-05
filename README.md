@@ -2,19 +2,28 @@
 
 An outreach tracker for a small team.
 
-**LinkedIn** is one-to-one: paste a profile link the moment you send the invite;
-the tally shows whether you're going to hit your number today, and nobody on the
-team connects with the same person twice.
+**Upwork jobs** are the source record: paste the job link, save the client
+research copied from the posting, then add the discovered LinkedIn profile,
+email and every outreach channel used. The team can see the full contact trail,
+and nobody logs the same job or client twice.
 
 Sign in with your mobile number. Three people share the pipeline.
 
-## LinkedIn
+## Upwork and outreach tracking
 
-- **Today** — big count against your daily target, a tally that fills as you
-  log, and fast entry: paste a profile URL and the name is derived from it.
+- **Job record** — each new row starts with an Upwork job URL and can include
+  the project title, description, client reviews, client name, LinkedIn URL and
+  discovered email.
+- **Outreach history** — check any combination of Upwork connects, LinkedIn
+  message and direct email so the next person knows exactly how the client was
+  approached.
 - **Duplicate guard** — a hard stop if *anyone* on the team has already logged
-  that profile, naming who has them and when. Backed by a unique index, so it
-  holds even when two people paste the same link at once.
+  that Upwork job or LinkedIn profile, naming who has it and when. Backed by
+  unique indexes, so it still holds when two people submit at once.
+- **History search** — search job links, client research, names, emails, notes
+  and tags before starting a new approach.
+- **Today** — the daily tally remains available for outreach work recorded in
+  the pipeline.
 - **Pipeline** — move each connect along Pending → Accepted → Messaged →
   Replied → Lead, with follow-ups falling due automatically.
 - **History** — your connects grouped by day, searchable by name, link, note or
