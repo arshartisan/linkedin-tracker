@@ -8,7 +8,7 @@ import { formatShort, relativeDay } from "@/lib/date";
 import { DUPLICATE_MESSAGE } from "@/lib/store";
 import { OUTREACH_CHANNEL_LABEL, type OutreachChannel, USER_LABEL } from "@/lib/types";
 
-export function AddConnect() {
+export function AddUpwork() {
   const { me, add, findDuplicate } = useData();
   const [upworkUrl, setUpworkUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -162,6 +162,82 @@ export function AddConnect() {
             <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
           </div>
         )}
+      </form>
+    </Card>
+  );
+}
+
+export function AddConnect() {
+  const { me, add, findDuplicate } = useData();
+  const [url, setUrl] = useState("");
+  const [name, setName] = useState("");
+  const [note, setNote] = useState("");
+  const [tags, setTags] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const valid = isLinkedInUrl(url.trim());
+  const duplicate = useMemo(
+    () => (valid ? findDuplicate(url.trim(), "profile") : null),
+    [findDuplicate, url, valid]
+  );
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!valid) {
+      setError("That doesn't look like a LinkedIn profile link.");
+      return;
+    }
+    if (duplicate) {
+      setError(DUPLICATE_MESSAGE);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await add({
+        profile_url: url.trim(),
+        upwork_url: "",
+        name: name.trim() || nameFromUrl(url.trim()),
+        note,
+        tags: parseTags(tags),
+      });
+      setUrl("");
+      setName("");
+      setNote("");
+      setTags("");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card as="div" className="p-4 sm:p-5">
+      <form onSubmit={submit}>
+        <div className="flex flex-col gap-2.5 sm:flex-row">
+          <input
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setError(null);
+            }}
+            placeholder="Paste the LinkedIn profile link"
+            aria-label="LinkedIn profile link"
+            className={`${FIELD} min-w-0 flex-1 py-3.5 font-mono text-[13px] placeholder:font-sans placeholder:text-sm`}
+          />
+          <PrimaryButton type="submit" disabled={!valid || Boolean(duplicate) || saving} className="shrink-0 sm:self-center">
+            <span aria-hidden>+</span>
+            {saving ? "Logging…" : "Log connect"}
+          </PrimaryButton>
+        </div>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (optional)" className={`${FIELD} flex-1`} />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note" className={`${FIELD} flex-1`} />
+          <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" className={`${FIELD} flex-1 font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
+        </div>
+        {duplicate && <p className="mt-2 text-xs text-rose">{duplicate.owner === me.id ? "You already logged this LinkedIn profile." : `${USER_LABEL[duplicate.owner]} already logged this LinkedIn profile.`}</p>}
+        {error && !duplicate && <p className="mt-2 text-xs text-rose">{error}</p>}
       </form>
     </Card>
   );

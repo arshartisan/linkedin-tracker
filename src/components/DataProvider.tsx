@@ -188,7 +188,10 @@ export function DataProvider({
 
   const today = dayKey();
   // Built from `mine`: nobody should see a teammate's follow-ups in their queue.
-  const queue = useMemo(() => buildQueue(mine, today), [mine, today]);
+  const queue = useMemo(
+    () => buildQueue(mine.filter((connect) => !connect.upwork_url), today),
+    [mine, today]
+  );
 
   const goals = useMemo(
     () =>

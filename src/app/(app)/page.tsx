@@ -39,10 +39,11 @@ export default function TodayPage() {
   const today = dayKey();
 
   const todays = useMemo(
-    () => mine.filter((c) => c.sent_on === today),
+    () => mine.filter((c) => !c.upwork_url && c.sent_on === today),
     [mine, today]
   );
-  const counts = useMemo(() => countsByDay(mine), [mine]);
+  const linkedinMine = useMemo(() => mine.filter((connect) => !connect.upwork_url), [mine]);
+  const counts = useMemo(() => countsByDay(linkedinMine), [linkedinMine]);
   const streak = currentStreak(counts, goal);
 
   const sent = todays.length;

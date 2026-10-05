@@ -81,6 +81,7 @@ export default function HistoryPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return mine.filter((c) => {
+      if (c.upwork_url) return false;
       if (filter !== "all" && c.stage !== filter) return false;
       if (!q) return true;
       return (
