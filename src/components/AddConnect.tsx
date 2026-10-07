@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useData } from "./DataProvider";
 import { Card, FIELD, PrimaryButton } from "@/components/ui/layout";
+import { Checkbox } from "@/components/ui/checkbox";
 import { isLinkedInUrl, isUpworkUrl, nameFromUrl, parseTags } from "@/lib/linkedin";
 import { formatShort, relativeDay } from "@/lib/date";
 import { DUPLICATE_MESSAGE } from "@/lib/store";
@@ -157,8 +158,17 @@ export function AddUpwork() {
               <p className="mb-2 text-xs font-semibold text-muted">Approach sent through</p>
               <div className="flex flex-wrap gap-3">
                 {(Object.keys(OUTREACH_CHANNEL_LABEL) as OutreachChannel[]).map((channel) => (
-                  <label key={channel} className="flex items-center gap-2 text-xs text-muted">
-                    <input type="checkbox" checked={channels.includes(channel)} onChange={(e) => setChannels((current) => e.target.checked ? [...current, channel] : current.filter((item) => item !== channel))} />
+                  <label key={channel} className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+                    <Checkbox
+                      checked={channels.includes(channel)}
+                      onCheckedChange={(checked) =>
+                        setChannels((current) =>
+                          checked
+                            ? [...current, channel]
+                            : current.filter((item) => item !== channel)
+                        )
+                      }
+                    />
                     {OUTREACH_CHANNEL_LABEL[channel]}
                   </label>
                 ))}
@@ -342,13 +352,12 @@ export function AddCompany() {
             <div className="flex flex-wrap gap-3">
               {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map(
                 (channel) => (
-                  <label key={channel} className="flex items-center gap-2 text-xs text-muted">
-                    <input
-                      type="checkbox"
+                  <label key={channel} className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+                    <Checkbox
                       checked={channels.includes(channel)}
-                      onChange={(e) =>
+                      onCheckedChange={(checked) =>
                         setChannels((current) =>
-                          e.target.checked
+                          checked
                             ? [...current, channel]
                             : current.filter((item) => item !== channel)
                         )

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * Clears the session cookie and sends you back to the door. Used twice: in the
@@ -33,7 +34,9 @@ export function SignOutButton({
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon-sm"
       type="button"
       onClick={signOut}
       disabled={busy}
@@ -43,6 +46,6 @@ export function SignOutButton({
     >
       <LogOut className="size-3.5" aria-hidden />
       {children}
-    </button>
+    </Button>
   );
 }

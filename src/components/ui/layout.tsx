@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 /**
  * The layout language, as parts.
@@ -205,12 +205,9 @@ export function PrimaryButton({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button
+    <Button
       {...props}
-      className={cn(
-        buttonVariants(),
-        className
-      )}
+      className={className}
     />
   );
 }

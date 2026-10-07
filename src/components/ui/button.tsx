@@ -12,12 +12,12 @@ import { cn } from "@/lib/utils"
   switches that off where the motion would distract.
 */
 const buttonVariants = cva(
-  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-full font-medium leading-none outline-none select-none transition-[background-color,color,box-shadow,scale] duration-150 ease-out-strong focus-visible:ring-2 focus-visible:ring-ring/60 disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-2 aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+  "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full font-medium leading-none outline-none select-none transition-[background-color,color,box-shadow,scale] duration-150 ease-out-strong focus-visible:ring-2 focus-visible:ring-ring/60 disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-2 aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 [&>*]:relative",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-primary hover:bg-primary-hover",
+          "bg-primary text-primary-foreground shadow-primary before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-1/2 before:bg-white/20 before:opacity-70 before:content-[''] hover:bg-primary-hover",
         destructive:
           "bg-rose-soft text-rose shadow-raised hover:bg-[#4c2324]",
         outline:

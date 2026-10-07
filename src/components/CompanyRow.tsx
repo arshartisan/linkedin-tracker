@@ -4,6 +4,8 @@ import { useState } from "react";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 import { useData } from "./DataProvider";
 import { FIELD } from "@/components/ui/layout";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatTime } from "@/lib/date";
 import {
   COMPANY_OUTREACH_CHANNEL_LABEL,
@@ -104,13 +106,12 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
             <div className="flex flex-wrap gap-3">
               {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map(
                 (channel) => (
-                  <label key={channel} className="flex items-center gap-2 text-xs text-muted">
-                    <input
-                      type="checkbox"
+                  <label key={channel} className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+                    <Checkbox
                       checked={channels.includes(channel)}
-                      onChange={(e) =>
+                      onCheckedChange={(checked) =>
                         setChannels((current) =>
-                          e.target.checked
+                          checked
                             ? [...current, channel]
                             : current.filter((item) => item !== channel)
                         )
@@ -123,21 +124,25 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
             </div>
           </div>
           <div className="flex gap-2 sm:col-span-2">
-            <button
+            <Button
+              variant="default"
+              size="sm"
               type="button"
               onClick={() => void save()}
               disabled={!name.trim() || saving}
               className="rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-ink disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               type="button"
               onClick={() => setEditing(false)}
               className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted hover:text-text"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -174,17 +179,17 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
             {company.note && <p className="mt-2 text-xs text-muted">{company.note}</p>}
           </div>
           <div className="flex items-center gap-1">
-            <button type="button" onClick={() => setEditing(true)} aria-label={`Edit ${company.company_name}`} className="rounded-full p-2 text-muted hover:bg-surface-2 hover:text-text">
+            <Button type="button" variant="ghost" size="icon-sm" onClick={() => setEditing(true)} aria-label={`Edit ${company.company_name}`} className="text-muted hover:bg-surface-2 hover:text-text">
               <PencilIcon className="size-4" />
-            </button>
+            </Button>
             {confirmDelete ? (
-              <button type="button" onClick={() => void remove()} disabled={saving} className="rounded-full px-2 py-1 text-xs font-semibold text-rose hover:bg-rose-soft">
+              <Button type="button" variant="ghost" size="xs" onClick={() => void remove()} disabled={saving} className="text-rose hover:bg-rose-soft">
                 Delete
-              </button>
+              </Button>
             ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)} aria-label={`Delete ${company.company_name}`} className="rounded-full p-2 text-muted hover:bg-rose-soft hover:text-rose">
+              <Button type="button" variant="ghost" size="icon-sm" onClick={() => setConfirmDelete(true)} aria-label={`Delete ${company.company_name}`} className="text-muted hover:bg-rose-soft hover:text-rose">
                 <Trash2Icon className="size-4" />
-              </button>
+              </Button>
             )}
           </div>
         </div>

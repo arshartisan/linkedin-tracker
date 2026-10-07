@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FIELD } from "@/components/ui/layout";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatShort, formatTime } from "@/lib/date";
 import { normaliseUrl, parseTags, profileSlug } from "@/lib/linkedin";
 import { isStale, MAX_FOLLOWUPS, nextAction, type Action } from "@/lib/pipeline";
@@ -266,21 +268,24 @@ export function ConnectRow({
 
           <div className="ml-auto flex items-center gap-2">
             {action.kind === "qualify" && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 type="button"
                 onClick={() => setStage(connect, "closed")}
                 className="inline-flex h-[26px] items-center rounded-full px-[9px] text-[12px] font-medium leading-none text-muted transition-[background-color,color,scale] duration-150 ease-out-strong hover:bg-white/6 hover:text-rose active:scale-[0.96]"
               >
                 Not a fit
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              size="sm"
               type="button"
               onClick={() => complete(connect, action)}
               className="inline-flex h-[26px] items-center rounded-full bg-primary px-[9px] text-[12px] font-medium leading-none text-primary-foreground shadow-primary transition-[background-color,scale] duration-150 ease-out-strong hover:bg-primary-hover active:scale-[0.96]"
             >
               {action.cta}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -290,13 +295,15 @@ export function ConnectRow({
           <span className="text-xs text-muted">
             No reply after {MAX_FOLLOWUPS} follow-ups.
           </span>
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             type="button"
             onClick={() => setStage(connect, "closed")}
             className="ml-auto inline-flex h-[26px] items-center rounded-full bg-secondary px-[9px] text-[12px] font-medium leading-none text-secondary-foreground shadow-raised transition-[background-color,color,scale] duration-150 ease-out-strong hover:bg-surface-2 hover:text-rose active:scale-[0.96]"
           >
             Close it out
-          </button>
+          </Button>
         </div>
       )}
 
@@ -317,13 +324,12 @@ export function ConnectRow({
             {Object.entries(OUTREACH_CHANNEL_LABEL).map(([channel, label]) => {
               const value = channel as keyof typeof OUTREACH_CHANNEL_LABEL;
               return (
-                <label key={channel} className="flex items-center gap-2 text-xs text-muted">
-                  <input
-                    type="checkbox"
+                <label key={channel} className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+                  <Checkbox
                     checked={channels.includes(value)}
-                    onChange={(e) =>
+                    onCheckedChange={(checked) =>
                       setChannels((current) =>
-                        e.target.checked
+                        checked
                           ? [...current, value]
                           : current.filter((item) => item !== value)
                       )
