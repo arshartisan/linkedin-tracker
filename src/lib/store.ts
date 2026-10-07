@@ -113,6 +113,7 @@ function buildCompany(input: NewCompany): Company {
     created_at: new Date().toISOString(),
     company_name: input.company_name.trim(),
     email: input.email?.trim() ?? "",
+    website_url: input.website_url?.trim() ?? "",
     linkedin_url: input.linkedin_url?.trim() ?? "",
     outreach_channels: input.outreach_channels ?? [],
     owner: input.owner,
@@ -230,7 +231,12 @@ export const store = {
 
   async updateCompany(
     id: string,
-    patch: Partial<Pick<Company, "company_name" | "email" | "linkedin_url" | "outreach_channels" | "note">>
+    patch: Partial<
+      Pick<
+        Company,
+        "company_name" | "email" | "website_url" | "linkedin_url" | "outreach_channels" | "note"
+      >
+    >
   ): Promise<void> {
     if (!hasSupabase) {
       writeLocalCompanies(

@@ -110,6 +110,7 @@ export type Company = {
   created_at: string;
   company_name: string;
   email: string;
+  website_url: string;
   linkedin_url: string;
   outreach_channels: CompanyOutreachChannel[];
   owner: UserId;
@@ -119,6 +120,7 @@ export type Company = {
 export type NewCompany = {
   company_name: string;
   email?: string;
+  website_url?: string;
   linkedin_url?: string;
   outreach_channels?: CompanyOutreachChannel[];
   note?: string;
@@ -227,6 +229,7 @@ export function hydrateCompany(row: Partial<Company> & Record<string, unknown>):
     created_at: String(row.created_at ?? ""),
     company_name: String(row.company_name ?? ""),
     email: String(row.email ?? ""),
+    website_url: String(row.website_url ?? ""),
     linkedin_url: String(row.linkedin_url ?? ""),
     outreach_channels: Array.isArray(row.outreach_channels)
       ? row.outreach_channels.filter(

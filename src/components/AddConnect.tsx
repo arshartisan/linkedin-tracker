@@ -254,6 +254,7 @@ export function AddCompany() {
   const { addCompany } = useData();
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [channels, setChannels] = useState<CompanyOutreachChannel[]>([]);
   const [note, setNote] = useState("");
@@ -263,6 +264,7 @@ export function AddCompany() {
   function reset() {
     setCompanyName("");
     setEmail("");
+    setWebsiteUrl("");
     setLinkedinUrl("");
     setChannels([]);
     setNote("");
@@ -280,6 +282,7 @@ export function AddCompany() {
       await addCompany({
         company_name: companyName,
         email,
+        website_url: websiteUrl,
         linkedin_url: linkedinUrl,
         outreach_channels: channels,
         note,
@@ -295,7 +298,7 @@ export function AddCompany() {
   return (
     <Card as="div" className="p-4 sm:p-5">
       <form onSubmit={submit}>
-        <div className="grid gap-2.5 sm:grid-cols-[1.1fr_1fr_1.2fr_auto]">
+        <div className="grid gap-2.5 sm:grid-cols-[1.1fr_1fr_1.2fr_1.2fr_auto]">
           <input
             value={companyName}
             onChange={(e) => {
@@ -305,6 +308,13 @@ export function AddCompany() {
             placeholder="Company name"
             aria-label="Company name"
             className={FIELD}
+          />
+          <input
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder="Company website"
+            aria-label="Company website"
+            className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`}
           />
           <input
             value={email}

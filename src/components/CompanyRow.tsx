@@ -16,6 +16,7 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(company.company_name);
   const [email, setEmail] = useState(company.email);
+  const [websiteUrl, setWebsiteUrl] = useState(company.website_url);
   const [linkedinUrl, setLinkedinUrl] = useState(company.linkedin_url);
   const [channels, setChannels] = useState(company.outreach_channels);
   const [note, setNote] = useState(company.note);
@@ -27,6 +28,7 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
     const patch = {
       company_name: name.trim(),
       email: email.trim(),
+      website_url: websiteUrl.trim(),
       linkedin_url: linkedinUrl.trim(),
       outreach_channels: nextChannels,
       note: note.trim(),
@@ -34,6 +36,7 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
     if (
       patch.company_name === company.company_name &&
       patch.email === company.email &&
+      patch.website_url === company.website_url &&
       patch.linkedin_url === company.linkedin_url &&
       patch.note === company.note &&
       nextChannels.join(",") === company.outreach_channels.join(",")
@@ -71,6 +74,12 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
             placeholder="Company name"
             className={FIELD}
             autoFocus
+          />
+          <input
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            placeholder="Company website"
+            className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`}
           />
           <input
             value={email}
@@ -142,6 +151,11 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
             </div>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
               {company.email && <a href={`mailto:${company.email}`} className="hover:text-brand">{company.email}</a>}
+              {company.website_url && (
+                <a href={company.website_url} target="_blank" rel="noopener noreferrer" className="font-mono hover:text-brand">
+                  Website ↗
+                </a>
+              )}
               {company.linkedin_url && (
                 <a href={company.linkedin_url} target="_blank" rel="noopener noreferrer" className="font-mono hover:text-brand">
                   LinkedIn company ↗

@@ -57,7 +57,12 @@ type Ctx = {
   addCompany: (input: Omit<NewCompany, "owner">) => Promise<Company>;
   updateCompany: (
     id: string,
-    patch: Partial<Pick<Company, "company_name" | "email" | "linkedin_url" | "outreach_channels" | "note">>
+    patch: Partial<
+      Pick<
+        Company,
+        "company_name" | "email" | "website_url" | "linkedin_url" | "outreach_channels" | "note"
+      >
+    >
   ) => Promise<void>;
   removeCompany: (id: string) => Promise<void>;
   update: (id: string, patch: ConnectPatch) => Promise<void>;
@@ -166,7 +171,10 @@ export function DataProvider({
     async (
       id: string,
       patch: Partial<
-        Pick<Company, "company_name" | "email" | "linkedin_url" | "outreach_channels" | "note">
+        Pick<
+          Company,
+          "company_name" | "email" | "website_url" | "linkedin_url" | "outreach_channels" | "note"
+        >
       >
     ) => {
       const previous = companies.find((company) => company.id === id);

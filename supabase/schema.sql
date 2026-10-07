@@ -61,11 +61,15 @@ create table if not exists public.companies (
   created_at        timestamptz not null default now(),
   company_name      text not null,
   email             text not null default '',
+  website_url       text not null default '',
   linkedin_url      text not null default '',
   outreach_channels text[] not null default '{}',
   owner             text not null default 'arsh' references public.users(id),
   note              text not null default ''
 );
+
+alter table public.companies
+  add column if not exists website_url text not null default '';
 
 -- Migration from the original three-status table. No-ops on a fresh install.
 do $$
