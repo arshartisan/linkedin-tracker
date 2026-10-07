@@ -15,6 +15,8 @@ import {
   USER_IDS,
   USER_LABEL,
   type Connect,
+  type Company,
+  type NewCompany,
   type NewConnect,
   type Stage,
   type User,
@@ -40,6 +42,7 @@ type Ctx = {
    * check read this - the personal screens read `mine`.
    */
   connects: Connect[];
+  companies: Company[];
   /** The signed-in person's connects. This is what Today/History/Queue/Leads show. */
   mine: Connect[];
   loading: boolean;
@@ -51,6 +54,12 @@ type Ctx = {
   users: User[];
   setGoal: (n: number) => Promise<void>;
   add: (input: Omit<NewConnect, "owner">) => Promise<Connect>;
+  addCompany: (input: Omit<NewCompany, "owner">) => Promise<Company>;
+  updateCompany: (
+    id: string,
+    patch: Partial<Pick<Company, "company_name" | "email" | "linkedin_url" | "outreach_channels" | "note">>
+  ) => Promise<void>;
+  removeCompany: (id: string) => Promise<void>;
   update: (id: string, patch: ConnectPatch) => Promise<void>;
   remove: (id: string) => Promise<void>;
   /** Move someone along the pipeline, stamping the milestone day. */
@@ -83,6 +92,7 @@ export function DataProvider({
   children: React.ReactNode;
 }) {
   const [connects, setConnects] = useState<Connect[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [users, setUsers] = useState<User[]>(FALLBACK_USERS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,10 +107,11 @@ export function DataProvider({
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([store.list(), store.listUsers()])
-      .then(([rows, roster]) => {
+    Promise.all([store.list(), store.listCompanies(), store.listUsers()])
+      .then(([rows, companyRows, roster]) => {
         if (cancelled) return;
         setConnects(rows);
+        setCompanies(companyRows);
         setUsers(roster);
       })
       .catch((e: Error) => {
@@ -140,6 +151,56 @@ export function DataProvider({
       return row;
     },
     [me.id]
+  );
+
+  const addCompany = useCallback(
+    async (input: Omit<NewCompany, "owner">) => {
+      const row = await store.addCompany({ ...input, owner: me.id });
+      setCompanies((prev) => [row, ...prev]);
+      return row;
+    },
+    [me.id]
+  );
+
+  const updateCompany = useCallback(
+    async (
+      id: string,
+      patch: Partial<
+        Pick<Company, "company_name" | "email" | "linkedin_url" | "outreach_channels" | "note">
+      >
+    ) => {
+      const previous = companies.find((company) => company.id === id);
+      setCompanies((prev) =>
+        prev.map((company) => (company.id === id ? { ...company, ...patch } : company))
+      );
+      try {
+        await store.updateCompany(id, patch);
+      } catch (e) {
+        if (previous) {
+          setCompanies((prev) =>
+            prev.map((company) => (company.id === id ? previous : company))
+          );
+        }
+        setError((e as Error).message);
+        throw e;
+      }
+    },
+    [companies]
+  );
+
+  const removeCompany = useCallback(
+    async (id: string) => {
+      const snapshot = companies;
+      setCompanies((prev) => prev.filter((company) => company.id !== id));
+      try {
+        await store.removeCompany(id);
+      } catch (e) {
+        setCompanies(snapshot);
+        setError((e as Error).message);
+        throw e;
+      }
+    },
+    [companies]
   );
 
   const update = useCallback(async (id: string, patch: ConnectPatch) => {
@@ -237,6 +298,7 @@ export function DataProvider({
     () => ({
       me,
       connects,
+      companies,
       mine,
       loading,
       error,
@@ -245,6 +307,9 @@ export function DataProvider({
       users,
       setGoal,
       add,
+      addCompany,
+      updateCompany,
+      removeCompany,
       update,
       remove,
       setStage,
@@ -256,6 +321,7 @@ export function DataProvider({
     [
       me,
       connects,
+      companies,
       mine,
       loading,
       error,
@@ -264,6 +330,9 @@ export function DataProvider({
       users,
       setGoal,
       add,
+      addCompany,
+      updateCompany,
+      removeCompany,
       update,
       remove,
       setStage,

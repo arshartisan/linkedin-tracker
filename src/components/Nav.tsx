@@ -25,7 +25,7 @@ import {
   One pipeline: one-to-one LinkedIn outreach to people. Team sits apart from it
   because it counts everyone's work rather than being another screen of yours.
 */
-type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork";
+type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies";
 
 type NavLink = { href: string; label: string; icon: IconName };
 
@@ -38,6 +38,7 @@ const LINKEDIN: NavLink[] = [
 
 const UPWORK: NavLink[] = [
   { href: "/upwork", label: "Jobs", icon: "upwork" },
+  { href: "/companies", label: "Companies", icon: "companies" },
 ];
 
 const TEAM: NavLink = { href: "/stats", label: "Team", icon: "stats" };
@@ -85,6 +86,13 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
         <svg {...common}>
           <path d="M5 5h14v14H5z" />
           <path d="M8 9h8M8 13h5M8 17h3" />
+        </svg>
+      );
+    case "companies":
+      return (
+        <svg {...common}>
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <path d="M8 9h8M8 13h8M8 17h5" />
         </svg>
       );
     default:

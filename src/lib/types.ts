@@ -48,6 +48,19 @@ export const OUTREACH_CHANNEL_LABEL: Record<OutreachChannel, string> = {
   direct_email: "Direct email",
 };
 
+export type CompanyOutreachChannel =
+  | "direct_email"
+  | "linkedin_message"
+  | "whatsapp"
+  | "messenger";
+
+export const COMPANY_OUTREACH_CHANNEL_LABEL: Record<CompanyOutreachChannel, string> = {
+  direct_email: "Email",
+  linkedin_message: "LinkedIn DM",
+  whatsapp: "WhatsApp",
+  messenger: "Messenger",
+};
+
 export type Connect = {
   id: string;
   /** Local calendar day the connect was sent, as YYYY-MM-DD. */
@@ -90,6 +103,26 @@ export type NewConnect = {
   note?: string;
   tags?: string[];
   sent_on?: string;
+};
+
+export type Company = {
+  id: string;
+  created_at: string;
+  company_name: string;
+  email: string;
+  linkedin_url: string;
+  outreach_channels: CompanyOutreachChannel[];
+  owner: UserId;
+  note: string;
+};
+
+export type NewCompany = {
+  company_name: string;
+  email?: string;
+  linkedin_url?: string;
+  outreach_channels?: CompanyOutreachChannel[];
+  note?: string;
+  owner: UserId;
 };
 
 export const STAGES: Stage[] = [
@@ -185,5 +218,26 @@ export function hydrate(row: Partial<Connect> & Record<string, unknown>): Connec
     lead_on: row.lead_on ?? null,
     last_touch_on: row.last_touch_on ?? null,
     followups: typeof row.followups === "number" ? row.followups : 0,
+  };
+}
+
+export function hydrateCompany(row: Partial<Company> & Record<string, unknown>): Company {
+  return {
+    id: String(row.id ?? ""),
+    created_at: String(row.created_at ?? ""),
+    company_name: String(row.company_name ?? ""),
+    email: String(row.email ?? ""),
+    linkedin_url: String(row.linkedin_url ?? ""),
+    outreach_channels: Array.isArray(row.outreach_channels)
+      ? row.outreach_channels.filter(
+          (channel): channel is CompanyOutreachChannel =>
+            channel === "direct_email" ||
+            channel === "linkedin_message" ||
+            channel === "whatsapp" ||
+            channel === "messenger"
+        )
+      : [],
+    owner: row.owner && USER_IDS.includes(row.owner) ? row.owner : "arsh",
+    note: String(row.note ?? ""),
   };
 }

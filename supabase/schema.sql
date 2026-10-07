@@ -54,6 +54,19 @@ create table if not exists public.connects (
   followups     smallint not null default 0 check (followups between 0 and 2)
 );
 
+-- Companies have their own lightweight outreach record rather than being
+-- mixed into the person/job pipeline above.
+create table if not exists public.companies (
+  id                uuid primary key default gen_random_uuid(),
+  created_at        timestamptz not null default now(),
+  company_name      text not null,
+  email             text not null default '',
+  linkedin_url      text not null default '',
+  outreach_channels text[] not null default '{}',
+  owner             text not null default 'arsh' references public.users(id),
+  note              text not null default ''
+);
+
 -- Migration from the original three-status table. No-ops on a fresh install.
 do $$
 begin
@@ -132,6 +145,8 @@ create index if not exists connects_open_stage_idx
   where stage in ('accepted', 'messaged', 'replied');
 -- Every personal screen reads "my rows, newest first".
 create index if not exists connects_owner_sent_on_idx on public.connects (owner, sent_on desc);
+create index if not exists companies_owner_created_at_idx
+  on public.companies (owner, created_at desc);
 
 -- The duplicate guard. Global, not per-owner: the whole point is that if Abdul
 -- has already connected with someone, Rishad must not connect with them again.
@@ -148,6 +163,7 @@ create unique index if not exists connects_upwork_url_key
   where upwork_url <> '';
 
 alter table public.connects enable row level security;
+alter table public.companies enable row level security;
 alter table public.users enable row level security;
 
 -- Sign-in is a phone-number gate in the Next.js layer (a signed cookie checked
@@ -160,6 +176,14 @@ alter table public.users enable row level security;
 drop policy if exists "anon full access" on public.connects;
 create policy "anon full access"
   on public.connects
+  for all
+  to anon
+  using (true)
+  with check (true);
+
+drop policy if exists "anon full access" on public.companies;
+create policy "anon full access"
+  on public.companies
   for all
   to anon
   using (true)

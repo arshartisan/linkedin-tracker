@@ -6,7 +6,13 @@ import { Card, FIELD, PrimaryButton } from "@/components/ui/layout";
 import { isLinkedInUrl, isUpworkUrl, nameFromUrl, parseTags } from "@/lib/linkedin";
 import { formatShort, relativeDay } from "@/lib/date";
 import { DUPLICATE_MESSAGE } from "@/lib/store";
-import { OUTREACH_CHANNEL_LABEL, type OutreachChannel, USER_LABEL } from "@/lib/types";
+import {
+  COMPANY_OUTREACH_CHANNEL_LABEL,
+  OUTREACH_CHANNEL_LABEL,
+  type CompanyOutreachChannel,
+  type OutreachChannel,
+  USER_LABEL,
+} from "@/lib/types";
 
 export function AddUpwork() {
   const { me, add, findDuplicate } = useData();
@@ -187,6 +193,7 @@ export function AddConnect() {
       setError("That doesn't look like a LinkedIn profile link.");
       return;
     }
+
     if (duplicate) {
       setError(DUPLICATE_MESSAGE);
       return;
@@ -238,6 +245,120 @@ export function AddConnect() {
         </div>
         {duplicate && <p className="mt-2 text-xs text-rose">{duplicate.owner === me.id ? "You already logged this LinkedIn profile." : `${USER_LABEL[duplicate.owner]} already logged this LinkedIn profile.`}</p>}
         {error && !duplicate && <p className="mt-2 text-xs text-rose">{error}</p>}
+      </form>
+    </Card>
+  );
+}
+
+export function AddCompany() {
+  const { addCompany } = useData();
+  const [companyName, setCompanyName] = useState("");
+  const [email, setEmail] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [channels, setChannels] = useState<CompanyOutreachChannel[]>([]);
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function reset() {
+    setCompanyName("");
+    setEmail("");
+    setLinkedinUrl("");
+    setChannels([]);
+    setNote("");
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!companyName.trim()) {
+      setError("Add a company name.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await addCompany({
+        company_name: companyName,
+        email,
+        linkedin_url: linkedinUrl,
+        outreach_channels: channels,
+        note,
+      });
+      reset();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card as="div" className="p-4 sm:p-5">
+      <form onSubmit={submit}>
+        <div className="grid gap-2.5 sm:grid-cols-[1.1fr_1fr_1.2fr_auto]">
+          <input
+            value={companyName}
+            onChange={(e) => {
+              setCompanyName(e.target.value);
+              setError(null);
+            }}
+            placeholder="Company name"
+            aria-label="Company name"
+            className={FIELD}
+          />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Emails"
+            aria-label="Company emails"
+            className={FIELD}
+          />
+          <input
+            value={linkedinUrl}
+            onChange={(e) => setLinkedinUrl(e.target.value)}
+            placeholder="LinkedIn company profile"
+            aria-label="LinkedIn company profile"
+            className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`}
+          />
+          <PrimaryButton type="submit" disabled={!companyName.trim() || saving}>
+            <span aria-hidden>+</span>
+            {saving ? "Logging…" : "Log company"}
+          </PrimaryButton>
+        </div>
+
+        <div className="mt-3 grid gap-2.5 sm:grid-cols-[1fr_1fr]">
+          <div>
+            <p className="mb-2 text-xs font-semibold text-muted">Reached through</p>
+            <div className="flex flex-wrap gap-3">
+              {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map(
+                (channel) => (
+                  <label key={channel} className="flex items-center gap-2 text-xs text-muted">
+                    <input
+                      type="checkbox"
+                      checked={channels.includes(channel)}
+                      onChange={(e) =>
+                        setChannels((current) =>
+                          e.target.checked
+                            ? [...current, channel]
+                            : current.filter((item) => item !== channel)
+                        )
+                      }
+                    />
+                    {COMPANY_OUTREACH_CHANNEL_LABEL[channel]}
+                  </label>
+                )
+              )}
+            </div>
+          </div>
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note"
+            aria-label="Company note"
+            className={FIELD}
+          />
+        </div>
+        {error && <p className="mt-2 text-xs text-rose">{error}</p>}
       </form>
     </Card>
   );

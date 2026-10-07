@@ -1,0 +1,180 @@
+"use client";
+
+import { useState } from "react";
+import { PencilIcon, Trash2Icon } from "lucide-react";
+import { useData } from "./DataProvider";
+import { FIELD } from "@/components/ui/layout";
+import { formatTime } from "@/lib/date";
+import {
+  COMPANY_OUTREACH_CHANNEL_LABEL,
+  type Company,
+  type CompanyOutreachChannel,
+} from "@/lib/types";
+
+export function CompanyRow({ company, index = 0 }: { company: Company; index?: number }) {
+  const { updateCompany, removeCompany } = useData();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(company.company_name);
+  const [email, setEmail] = useState(company.email);
+  const [linkedinUrl, setLinkedinUrl] = useState(company.linkedin_url);
+  const [channels, setChannels] = useState(company.outreach_channels);
+  const [note, setNote] = useState(company.note);
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  async function save() {
+    const nextChannels = [...new Set(channels)];
+    const patch = {
+      company_name: name.trim(),
+      email: email.trim(),
+      linkedin_url: linkedinUrl.trim(),
+      outreach_channels: nextChannels,
+      note: note.trim(),
+    };
+    if (
+      patch.company_name === company.company_name &&
+      patch.email === company.email &&
+      patch.linkedin_url === company.linkedin_url &&
+      patch.note === company.note &&
+      nextChannels.join(",") === company.outreach_channels.join(",")
+    ) {
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateCompany(company.id, patch);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove() {
+    setSaving(true);
+    try {
+      await removeCompany(company.id);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <li
+      className="row-in rounded-well border border-line-soft bg-surface px-4 py-3.5 transition-colors hover:border-line"
+      style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}
+    >
+      {editing ? (
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Company name"
+            className={FIELD}
+            autoFocus
+          />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Emails"
+            className={FIELD}
+          />
+          <input
+            value={linkedinUrl}
+            onChange={(e) => setLinkedinUrl(e.target.value)}
+            placeholder="LinkedIn company profile"
+            className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`}
+          />
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note"
+            className={FIELD}
+          />
+          <div className="sm:col-span-2">
+            <p className="mb-2 text-xs font-semibold text-muted">Reached through</p>
+            <div className="flex flex-wrap gap-3">
+              {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map(
+                (channel) => (
+                  <label key={channel} className="flex items-center gap-2 text-xs text-muted">
+                    <input
+                      type="checkbox"
+                      checked={channels.includes(channel)}
+                      onChange={(e) =>
+                        setChannels((current) =>
+                          e.target.checked
+                            ? [...current, channel]
+                            : current.filter((item) => item !== channel)
+                        )
+                      }
+                    />
+                    {COMPANY_OUTREACH_CHANNEL_LABEL[channel]}
+                  </label>
+                )
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 sm:col-span-2">
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={!name.trim() || saving}
+              className="rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-ink disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted hover:text-text"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate font-semibold">{company.company_name || "Unnamed company"}</span>
+              <span className="tabular shrink-0 text-[11px] text-muted">
+                {formatTime(company.created_at)}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+              {company.email && <a href={`mailto:${company.email}`} className="hover:text-brand">{company.email}</a>}
+              {company.linkedin_url && (
+                <a href={company.linkedin_url} target="_blank" rel="noopener noreferrer" className="font-mono hover:text-brand">
+                  LinkedIn company ↗
+                </a>
+              )}
+            </div>
+            {company.outreach_channels.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {company.outreach_channels.map((channel) => (
+                  <span key={channel} className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[10px] font-semibold text-brand-dim">
+                    {COMPANY_OUTREACH_CHANNEL_LABEL[channel]}
+                  </span>
+                ))}
+              </div>
+            )}
+            {company.note && <p className="mt-2 text-xs text-muted">{company.note}</p>}
+          </div>
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={() => setEditing(true)} aria-label={`Edit ${company.company_name}`} className="rounded-full p-2 text-muted hover:bg-surface-2 hover:text-text">
+              <PencilIcon className="size-4" />
+            </button>
+            {confirmDelete ? (
+              <button type="button" onClick={() => void remove()} disabled={saving} className="rounded-full px-2 py-1 text-xs font-semibold text-rose hover:bg-rose-soft">
+                Delete
+              </button>
+            ) : (
+              <button type="button" onClick={() => setConfirmDelete(true)} aria-label={`Delete ${company.company_name}`} className="rounded-full p-2 text-muted hover:bg-rose-soft hover:text-rose">
+                <Trash2Icon className="size-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}

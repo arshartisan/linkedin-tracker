@@ -7,10 +7,13 @@ import {
 } from "./supabase";
 import {
   DEFAULT_GOAL,
+  hydrateCompany,
   USER_IDS,
   USER_LABEL,
   hydrate,
   type Connect,
+  type Company,
+  type NewCompany,
   type NewConnect,
   type Stage,
   type User,
@@ -28,6 +31,8 @@ const TABLE = "connects";
 const USERS_TABLE = "users";
 const LOCAL_KEY = "reach.connects.v1";
 const LOCAL_USERS_KEY = "reach.users.v1";
+const COMPANIES_TABLE = "companies";
+const LOCAL_COMPANIES_KEY = "reach.companies.v1";
 
 function readLocal(): Connect[] {
   if (typeof window === "undefined") return [];
@@ -41,6 +46,22 @@ function readLocal(): Connect[] {
 
 function writeLocal(rows: Connect[]) {
   window.localStorage.setItem(LOCAL_KEY, JSON.stringify(rows));
+}
+
+function readLocalCompanies(): Company[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(LOCAL_COMPANIES_KEY);
+    return raw
+      ? (JSON.parse(raw) as unknown[]).map((r) => hydrateCompany(r as never))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalCompanies(rows: Company[]) {
+  window.localStorage.setItem(LOCAL_COMPANIES_KEY, JSON.stringify(rows));
 }
 
 function readLocalUsers(): User[] {
@@ -83,6 +104,19 @@ function buildRow(input: NewConnect): Connect {
     lead_on: null,
     last_touch_on: null,
     followups: 0,
+  };
+}
+
+function buildCompany(input: NewCompany): Company {
+  return {
+    id: newId(),
+    created_at: new Date().toISOString(),
+    company_name: input.company_name.trim(),
+    email: input.email?.trim() ?? "",
+    linkedin_url: input.linkedin_url?.trim() ?? "",
+    outreach_channels: input.outreach_channels ?? [],
+    owner: input.owner,
+    note: input.note?.trim() ?? "",
   };
 }
 
@@ -165,6 +199,60 @@ export const store = {
     if (error) throw new Error(error.message);
   },
 
+  async listCompanies(): Promise<Company[]> {
+    if (!hasSupabase) {
+      return readLocalCompanies().sort((a, b) =>
+        b.created_at.localeCompare(a.created_at)
+      );
+    }
+    const { data, error } = await supabase()
+      .from(COMPANIES_TABLE)
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((row) => hydrateCompany(row as never));
+  },
+
+  async addCompany(input: NewCompany): Promise<Company> {
+    const row = buildCompany(input);
+    if (!hasSupabase) {
+      writeLocalCompanies([row, ...readLocalCompanies()]);
+      return row;
+    }
+    const { data, error } = await supabase()
+      .from(COMPANIES_TABLE)
+      .insert(row)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return hydrateCompany(data as never);
+  },
+
+  async updateCompany(
+    id: string,
+    patch: Partial<Pick<Company, "company_name" | "email" | "linkedin_url" | "outreach_channels" | "note">>
+  ): Promise<void> {
+    if (!hasSupabase) {
+      writeLocalCompanies(
+        readLocalCompanies().map((company) =>
+          company.id === id ? { ...company, ...patch } : company
+        )
+      );
+      return;
+    }
+    const { error } = await supabase().from(COMPANIES_TABLE).update(patch).eq("id", id);
+    if (error) throw new Error(error.message);
+  },
+
+  async removeCompany(id: string): Promise<void> {
+    if (!hasSupabase) {
+      writeLocalCompanies(readLocalCompanies().filter((company) => company.id !== id));
+      return;
+    }
+    const { error } = await supabase().from(COMPANIES_TABLE).delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  },
+
   /**
    * The three team members and their daily targets. Always returns all three in
    * display order, filling in anyone the table is missing, so the UI never has
@@ -202,4 +290,4 @@ export const store = {
   },
 };
 
-export type { Connect, NewConnect, Stage, User, UserId };
+export type { Company, Connect, NewCompany, NewConnect, Stage, User, UserId };
