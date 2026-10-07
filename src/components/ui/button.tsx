@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 
 /*
   Every button is a pill. The filled ones carry the two control recipes from
-  globals.css - `shadow-primary` for the one lime key per screen,
+  globals.css - `shadow-primary` for the purple action per screen,
   `shadow-raised` for everything else - so the depth lives in the shadow and no
   button needs a border. A press scales to 0.96 for tactile feedback; `static`
   switches that off where the motion would distract.
@@ -17,7 +17,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-primary before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-1/2 before:bg-white/20 before:opacity-70 before:content-[''] hover:bg-primary-hover",
+          "bg-primary text-primary-foreground shadow-primary hover:bg-primary-hover",
         destructive:
           "bg-rose-soft text-rose shadow-raised hover:bg-[#4c2324]",
         outline:
@@ -28,7 +28,7 @@ const buttonVariants = cva(
         link: "text-brand underline-offset-4 hover:underline",
       },
       size: {
-        default: "p-[9px] text-[12px] [&_svg:not([class*='size-'])]:size-3",
+        default: "h-8 px-3 text-[12px] [&_svg:not([class*='size-'])]:size-3.5",
         xs: "h-6 px-2 text-[11px] has-[>svg]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-[26px] px-[9px] text-[12px] has-[>svg]:pl-2 [&_svg:not([class*='size-'])]:size-3",
         lg: "h-9 px-4 text-[14px] has-[>svg]:pl-3.5",

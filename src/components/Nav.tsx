@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useData } from "./DataProvider";
-import { LogoLockup, LogoMark } from "./Logo";
+import { LogoMark } from "./Logo";
 import { SignOutButton } from "./SignOutButton";
 import { dayKey } from "@/lib/date";
 import {
@@ -106,7 +106,7 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
 
 export function Nav() {
   const pathname = usePathname();
-  const { me, mine, queue, goal, loading } = useData();
+  const { me, mine, companies, queue, goal, loading } = useData();
   const today = dayKey();
   const sentToday = mine.filter((c) => c.sent_on === today).length;
   const hit = sentToday >= goal;
@@ -120,6 +120,8 @@ export function Nav() {
   const pitches = queue.due.filter((d) => d.action.kind === "pitch").length;
 
   function badge(link: NavLink): number | null {
+    if (link.href === "/companies") return companies.filter((company) => company.owner === me.id).length;
+    if (link.href === "/leads") return mine.filter((connect) => connect.stage === "lead").length;
     return link.href === "/queue" && pitches > 0 ? pitches : null;
   }
 
@@ -130,7 +132,7 @@ export function Nav() {
       cross axis, so it has to be centred explicitly or the icons sit off to one
       side of the rail.
     */
-    <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
+    <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
       {links.map((link) => {
         const active = pathname === link.href;
         const count = badge(link);
@@ -146,7 +148,7 @@ export function Nav() {
                 top edge - so it is the only lifted thing in the rail and needs
                 no colour to be found.
               */
-              className="h-8 gap-2 rounded-control px-2 text-[14px] font-medium text-sidebar-foreground transition-[background-color,color,box-shadow] duration-150 ease-out-strong hover:bg-transparent hover:text-text data-[active=true]:bg-sidebar-primary data-[active=true]:font-medium data-[active=true]:text-text data-[active=true]:shadow-raised [&>svg]:size-4"
+              className="h-8 gap-2 rounded-control px-2 text-[13px] font-normal text-sidebar-foreground transition-[background-color,color,box-shadow] duration-150 ease-out-strong hover:bg-sidebar-accent hover:text-text data-[active=true]:bg-sidebar-primary data-[active=true]:font-medium data-[active=true]:text-text data-[active=true]:shadow-raised [&>svg]:size-3.5"
             >
               <Link href={link.href} aria-current={active ? "page" : undefined}>
                 <Icon name={link.icon} />
@@ -178,26 +180,28 @@ export function Nav() {
         collapsible="icon"
         className="border-sidebar-border **:data-[sidebar=sidebar]:bg-sidebar"
       >
-        <SidebarHeader className="px-3 py-5 group-data-[collapsible=icon]:px-0">
+        <SidebarHeader className="h-[65px] justify-center border-b border-sidebar-border bg-[#181818] px-4 group-data-[collapsible=icon]:px-0">
           <Link
             href="/"
             className="flex min-w-0 items-center gap-2.5 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           >
-            {/* The lockup carries the wordmark; collapsed, only the plate fits. */}
-            <LogoLockup className="h-7 w-auto group-data-[collapsible=icon]:hidden" />
-            <LogoMark className="hidden size-8 shrink-0 rounded-[9px] group-data-[collapsible=icon]:block" />
+            <LogoMark className="size-8 shrink-0" />
+            <span className="flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
+              <span className="text-sm font-medium text-text">Reach</span>
+              <span className="text-[11px] text-muted">Outreach workspace</span>
+            </span>
           </Link>
         </SidebarHeader>
 
-        <SidebarContent className="px-2 group-data-[collapsible=icon]:px-0">
-          <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
+        <SidebarContent className="gap-0 group-data-[collapsible=icon]:px-0">
+          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               LinkedIn
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu(LINKEDIN)}</SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className="py-1 group-data-[collapsible=icon]:px-0">
+          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               Upwork
             </SidebarGroupLabel>
@@ -205,7 +209,7 @@ export function Nav() {
           </SidebarGroup>
 
           {/* Team counts everyone, so it sits apart from your own screens. */}
-          <SidebarGroup className="mt-auto py-1 group-data-[collapsible=icon]:px-0">
+          <SidebarGroup className="px-3 py-3 group-data-[collapsible=icon]:px-0">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               Shared
             </SidebarGroupLabel>
@@ -214,8 +218,8 @@ export function Nav() {
         </SidebarContent>
 
         {/* Collapsed to icons there is no room for the tally, so it steps aside. */}
-        <SidebarFooter className="p-3 group-data-[collapsible=icon]:hidden">
-          <div className="card px-3.5 py-3">
+        <SidebarFooter className="border-t border-sidebar-border bg-[#181818] p-4 group-data-[collapsible=icon]:hidden">
+          <div>
             <div className="flex items-center justify-between gap-2">
               <span className="label text-[10px]">{me.name} · Today</span>
               <SignOutButton className="-mr-1 shrink-0 rounded-full p-1 text-muted transition-colors duration-150 hover:bg-white/6 hover:text-rose disabled:opacity-50" />

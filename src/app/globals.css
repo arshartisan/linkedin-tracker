@@ -1,140 +1,49 @@
 @import "tailwindcss";
 
-/*
-  The app is dark-only and never sets `.dark`, so this pins Tailwind's `dark:`
-  variant to a class that is never present. Without it `dark:` would fall back
-  to `prefers-color-scheme`, and shadcn's dark-only tweaks would flicker in or
-  out depending on the visitor's OS setting.
-*/
 @custom-variant dark (&:is(.dark *));
 
-/*
-  Reach - outreach tracker. Neutral graphite panels, hairline structure, one
-  lime signal colour: near-neutral greys a hair apart, pill controls lit by
-  an inset top highlight, and a single saturated primary for the one action
-  per screen that matters.
-
-  ── Surfaces ──────────────────────────────────────────────────────────────
-  The layout is built from cards that sit *above* the page and wells that sit
-  *inside* those cards. That is the whole structural idea: a panel lifts off
-  the background, and the rows within it recess back into the panel, so nesting
-  reads as depth rather than as more boxes.
-
-      ink      the page, the floor everything sits on
-      surface  a card - lifted off the page, edge lit along the top
-      well     a row or block *inside* a card - recessed back down
-      raised   a chip, hover state, or the selected segment of a control
-      float    menus, tooltips, sheets - above everything
-
-  Note `well` is darker than `surface`. On a light UI a recessed panel is grey
-  on white; the dark equivalent has to go down, not up, or the nesting inverts
-  and every card reads as a stack of tiles.
-
-  ── Colour ────────────────────────────────────────────────────────────────
-  One accent, the brand lime, so intensity carries meaning on its own: dim lime
-  is work in progress, full-strength lime is a target met. The page has exactly
-  one thing that glows and it is always the score.
-*/
 :root {
-  --ink: #161616; /* page */
-  --surface: #1b1c1e; /* cards, rails */
-  --well: #171819; /* recessed rows inside a card */
-  --surface-2: #2a2a2a; /* chips, hover, the selected segment */
-  --surface-3: #1e1e1e; /* floating: menus, tooltips, sheets */
-  --line: #393939; /* a visible edge */
-  --line-soft: #232323; /* a hairline between siblings */
+  --ink: #161616;
+  --surface: #1b1d20;
+  --well: #181818;
+  --surface-2: #2a2a2a;
+  --surface-3: #1e1e1e;
+  --line: #393939;
+  --line-soft: #232323;
   --text: #f9fbff;
-  /*
-    A true neutral grey. One step lighter than #7f7f7f, which lands just under
-    4.5:1 on the card tone - this clears AA on every surface.
-  */
+
   --muted: #8a8a8a;
 
-  /*
-    The logo lime, and the steps around it. `primary-fill` is the lime as a
-    button face, always under dark type - it is bright enough that white on it
-    would vanish. `dim` is the same hue burnt down to ~70%, which is what "not
-    there yet" looks like. `soft` and `edge` are the tinted well and hairline
-    that let lime type sit on its own panel; `tint` is the pale lime for type
-    on that panel.
-  */
-  --primary-fill: #d7fa06;
-  --primary-fill-hover: #e2ff3d;
-  --brand: #d7fa06;
-  --brand-dim: #9bb50b;
-  --brand-soft: #2b3405;
-  --brand-edge: #4a5a08;
-  --brand-tint: #e6f98a;
+  --primary-fill: #4124fb;
+  --primary-fill-hover: #563dff;
+  --brand: #b7aee9;
+  --brand-dim: #a99bdf;
+  --brand-soft: #231f3a;
+  --brand-edge: #4b437b;
+  --brand-tint: #d8d2fa;
 
   --rose: #f97373;
   --rose-soft: #3e1d1e;
 
-  /* Fast off the mark, long settle - every state change in the app uses it. */
   --ease-out-strong: cubic-bezier(0.25, 1, 0.5, 1);
 
-  /*
-    ── Radii ───────────────────────────────────────────────────────────────
-    Tighter and concentric: a well sits 6px inside a card, so its radius is
-    the card's minus that inset. Nav rows take the control radius; buttons and
-    chips are full pills. Three steps, no improvising per component.
-  */
-  --r-card: 16px;
-  --r-well: 10px;
-  --r-control: 8px;
+  --r-card: 8px;
+  --r-well: 6px;
+  --r-control: 6px;
 
-  /*
-    ── Elevation ───────────────────────────────────────────────────────────
-    A card is separated from the page by a soft drop shadow plus a 1px inner
-    highlight along its top edge. At this black level the highlight is doing
-    most of the work - the shadow alone is nearly invisible against near-black,
-    but a lit top edge reads as a physical lift immediately.
-  */
-  --sh-card:
-    0 0 0 1px rgb(0 0 0 / 0.35), 0 8px 24px -12px rgb(0 0 0 / 0.5),
-    inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+  --sh-card: none;
 
-  /*
-    The control recipe - a dark 1px ring outside, a lit top edge and a faint
-    white ring inside. Every secondary button, chip and selected nav row wears
-    it.
-  */
-  --sh-raised:
-    0 0 0 1px rgb(0 0 0 / 0.4), inset 0 1px 0 0 rgb(255 255 255 / 0.1),
-    inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --sh-raised: 0 0 0 1px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.06);
 
-  /*
-    The primary button: a soft drop, a near-black ring, a glossy highlight
-    across the top and shade pooling at the bottom, so the lime reads as a
-    physical key rather than a flat swatch.
-  */
-  --sh-primary:
-    0 4px 4px 0 rgb(42 42 42 / 0.32), 0 0 0 1px #0e0e0e,
-    inset 0 4px 6px 0 rgb(255 255 255 / 0.2),
-    inset 0 0 0 1px rgb(255 255 255 / 0.15),
-    inset 0 -8px 14px 0 rgb(0 0 0 / 0.15);
+  --sh-primary: 0 2px 4px rgb(0 0 0 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.12);
 
-  /* Anything that floats above the page. */
   --sh-float: 0 16px 40px 0 rgb(0 0 0 / 0.5), 0 0 0 1px #0e0e0e;
 
-  /* Reserved for lit brand marks - the tally, a met target, the chart's head. */
-  --shadow-brand: 0 0 14px -2px var(--brand);
+  --shadow-brand: none;
 
-  /*
-    ── Type ────────────────────────────────────────────────────────────────
-    Inter Variable is served by the app, so it leads the stack and every
-    platform renders the same face. The system generics behind it only ever
-    show while the webfont is swapping in, or if it fails to load at all.
-  */
-  --stack-sans:
-    var(--font-inter), "Inter Variable", ui-sans-serif, -apple-system,
-    system-ui, sans-serif;
-  --stack-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+  --stack-sans: var(--font-geist), "Geist", ui-sans-serif, system-ui, sans-serif;
+  --stack-mono: var(--stack-sans);
 
-  /*
-    shadcn/ui speaks in semantic tokens (background, popover, accent…). The app
-    is dark-only, so rather than shipping a second palette these just alias the
-    Reach one - a shadcn primitive dropped anywhere already looks native.
-  */
   --background: var(--ink);
   --foreground: var(--text);
   --card: var(--surface);
@@ -142,7 +51,7 @@
   --popover: var(--surface-3);
   --popover-foreground: var(--text);
   --primary: var(--primary-fill);
-  --primary-foreground: var(--ink);
+  --primary-foreground: var(--text);
   --secondary: #1e1e1e;
   --secondary-foreground: var(--text);
   --muted-foreground: var(--muted);
@@ -155,10 +64,10 @@
   --ring: #676767;
 
   --sidebar: #171717;
-  --sidebar-foreground: var(--text);
+  --sidebar-foreground: var(--muted);
   --sidebar-primary: var(--surface-2);
   --sidebar-primary-foreground: var(--text);
-  --sidebar-accent: var(--surface-2);
+  --sidebar-accent: #1e1e1e;
   --sidebar-accent-foreground: var(--text);
   --sidebar-border: var(--line-soft);
   --sidebar-ring: #676767;
@@ -185,7 +94,6 @@
 
   --ease-out-strong: var(--ease-out-strong);
 
-  /* Everything is set in Inter; mono is for figures and URLs. */
   --font-display: var(--stack-sans);
   --font-sans: var(--stack-sans);
   --font-mono: var(--stack-mono);
@@ -229,36 +137,21 @@
 }
 
 @layer base {
-  /*
-    Tailwind v4 defaults a bare `border` to `currentColor`. shadcn's primitives
-    lean on that bare class, so on near-white text they drew a white outline -
-    which is what the dropdowns were doing. Pin the default to the palette;
-    explicit utilities like `border-line` still win, being a later layer.
-  */
+
   * {
     border-color: var(--border);
   }
 
-  /*
-    Tailwind v4's preflight drops the browser's `cursor: pointer` on buttons,
-    so every bare `<button>` in the app read as un-clickable. Restore it here
-    rather than sprinkling `cursor-pointer` on each one - disabled controls
-    keep the not-allowed cursor they set explicitly.
-  */
   button:not(:disabled),
   [role="button"]:not(:disabled),
   label[for] {
     cursor: pointer;
   }
 
-  /*
-    Inter is drawn for text sizes; at heading sizes its default spacing opens
-    up, so headings are pulled a hair tighter to hold together as words.
-  */
   h1,
   h2,
   h3 {
-    letter-spacing: -0.018em;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -275,18 +168,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/*
-  ── Structural utilities ───────────────────────────────────────────────────
-  The three surfaces, as classes, so a card is one word rather than five
-  utilities repeated across forty files - and so changing what "a card" means
-  is one edit here rather than a find-and-replace.
-*/
-/*
-  These live in `components` rather than unlayered so that a utility passed
-  alongside them still wins - `<Card className="bg-rose-soft/25">` has to be
-  able to retint one card without a fight. Unlayered rules beat every @layer,
-  which would make these classes impossible to override at the call site.
-*/
 @layer components {
   .card {
     background: var(--surface);
@@ -301,7 +182,6 @@ body {
     border-radius: var(--r-well);
   }
 
-  /* A well you can act on: it lifts toward the card tone on hover. */
   .well-interactive {
     transition-property: background-color, border-color;
     transition-duration: 150ms;
@@ -314,33 +194,20 @@ body {
   }
 }
 
-/*
-  The small uppercase caption - section headings, stat labels, nav group
-  headers. Medium weight at a wide tracking - quiet and systematic, set well
-  below the content it names.
-*/
 @layer components {
   .label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0;
     color: var(--muted);
     line-height: 1.4;
   }
 }
 
-/* Numerals should never jitter as counts change. */
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/*
-  Every floating shadcn surface, lifted off the page as one. Keyed on the
-  `data-slot` markers the primitives already emit, so re-running `shadcn add`
-  can't quietly drop the treatment. The sheet is deliberately absent - it is a
-  full-height panel, not a floating one, and keeps its own `bg-sidebar`.
-*/
 [data-slot="dropdown-menu-content"],
 [data-slot="dropdown-menu-sub-content"],
 [data-slot="tooltip-content"] {
@@ -348,20 +215,10 @@ body {
   border-color: var(--line);
   box-shadow: var(--sh-float);
   border-radius: var(--r-well);
-  /*
-    `bg-accent` is the row hover, and surface-2 sits *below* the panel it would
-    be painted on. Rebinding the token here - rather than chasing the utility -
-    lets the highlight climb one more step, as `@theme inline` compiles
-    `bg-accent` straight down to `var(--accent)`.
-  */
+
   --accent: #2a2a2a;
 }
 
-/*
-  shadcn ships an inverted (near-white) tooltip. At this black level that reads
-  as a flashbulb, so it joins the other floating surfaces - which means taking
-  the arrow and the text colour with it.
-*/
 [data-slot="tooltip-content"] {
   color: var(--text);
 }
@@ -382,7 +239,6 @@ body {
   border-radius: 4px;
 }
 
-/* Thin scrollbars so long lists don't grow a heavy grey column. */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
@@ -418,11 +274,6 @@ body {
   animation: row-in 220ms ease-out both;
 }
 
-/*
-  The trend line draws itself left to right on mount. `pathLength="1"` is set on
-  the path, so the dash figures are in path-length units and stay correct no
-  matter how wide the chart renders.
-*/
 @keyframes draw-line {
   from {
     stroke-dashoffset: 1;
@@ -450,7 +301,6 @@ body {
   animation: fade-in 700ms ease-out 250ms both;
 }
 
-/* The fake caret shadcn's input-otp slot draws in the active cell. */
 @keyframes caret-blink {
   0%,
   70%,

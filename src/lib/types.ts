@@ -163,10 +163,10 @@ export const STAGE_SHORT: Record<Stage, string> = {
  */
 export const STAGE_TONE: Record<Stage, string> = {
   pending: "bg-surface-2 text-muted",
-  accepted: "bg-surface-2 text-brand-dim",
-  messaged: "bg-brand-soft text-brand-dim",
-  replied: "bg-brand-soft text-brand",
-  lead: "bg-brand text-ink",
+  accepted: "border border-[#23354c] bg-[#1d2b3e] text-[#bfdbfe]",
+  messaged: "border border-brand-edge bg-brand-soft text-brand-tint",
+  replied: "border border-[#6c4830] bg-[#31221b] text-[#fed7aa]",
+  lead: "border border-[#275137] bg-[#1f3a2d] text-[#b1ebc5]",
   closed: "bg-rose-soft text-rose",
 };
 

@@ -1,29 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 
-/*
-  The UI is set in Inter, loaded as the variable font - no weight list, so the
-  whole 100-900 axis ships as one file and any weight the app asks for renders
-  exactly rather than snapping to the nearest static cut. Served, not borrowed
-  from the OS, so every platform gets the same face.
-*/
-const sans = Inter({
-  variable: "--font-inter",
+const sans = Geist({
+  variable: "--font-geist",
   subsets: ["latin"],
-  display: "swap",
-});
-
-/*
-  Mono earns its place on one job now: figures that must not jitter as they
-  change, and URLs. Everything that used to be set in it - the small uppercase
-  captions especially - moved to the rounded face, which is most of what makes
-  the new look calmer than the old one.
-*/
-const mono = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
   display: "swap",
 });
 
@@ -49,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${mono.variable} h-full`}
+      className={`${sans.variable} h-full`}
     >
       <body className="min-h-full">{children}</body>
     </html>

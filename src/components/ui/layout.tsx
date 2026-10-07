@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 /**
  * The layout language, as parts.
  *
- * Every screen is built from the same four things: a page, cards lifted off it,
- * wells recessed into those cards, and pill-shaped controls. Keeping them here
+ * Every screen is built from the same four things: a page, bordered panels,
+ * grouped fields, and compact controls. Keeping them here
  * rather than as repeated utility strings is what stops the fifth screen from
  * quietly inventing a sixth radius.
  */
@@ -22,7 +22,7 @@ export function Page({
   className?: string;
 }) {
   return (
-    <div className={cn("mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-7 sm:py-8", className)}>
+    <div className={cn("mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 sm:py-6", className)}>
       {children}
     </div>
   );
@@ -46,13 +46,13 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="mb-6">
+    <header className="mb-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-display text-[24px] leading-tight font-semibold tracking-[-0.02em] sm:text-[28px]">
+          <h1 className="font-display text-xl leading-tight font-medium tracking-[-0.01em]">
             {title}
           </h1>
-          {lead && <p className="mt-1 text-sm text-muted">{lead}</p>}
+          {lead && <p className="mt-1.5 text-[13px] text-muted">{lead}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -197,8 +197,7 @@ export function Stat({
 // ---------------------------------------------------------------------------
 
 /**
- * The one solid call to action - the lime key from `Button` at its default
- * compact size: 9px all round, 12px medium type, a 12px icon.
+ * The solid purple call to action, with compact CRM sizing.
  */
 export function PrimaryButton({
   className,
@@ -235,7 +234,7 @@ export function Segmented<T extends string | number>({
       role="group"
       aria-label={label}
       className={cn(
-        "inline-flex shrink-0 gap-0.5 rounded-full bg-well p-[3px] shadow-[inset_0_0_0_1px_var(--line-soft)]",
+        "inline-flex shrink-0 gap-0.5 rounded-control bg-well p-[3px] shadow-[inset_0_0_0_1px_var(--line-soft)]",
         className
       )}
     >
@@ -248,7 +247,7 @@ export function Segmented<T extends string | number>({
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "tabular h-[26px] rounded-full px-3 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-out-strong",
+              "tabular h-[26px] rounded-control px-3 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-out-strong",
               selected
                 ? "bg-surface-2 text-text shadow-raised"
                 : "text-muted hover:text-text"
