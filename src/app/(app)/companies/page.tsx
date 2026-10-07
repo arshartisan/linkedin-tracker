@@ -1,12 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Building2Icon, PlusIcon, SearchIcon } from "lucide-react";
+import { ArrowDownUpIcon, Building2Icon, ChevronDownIcon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { AddCompany } from "@/components/AddConnect";
 import { CompanyRow } from "@/components/CompanyRow";
 import { useData } from "@/components/DataProvider";
-import { EmptyState, Page, PageHeader, Chip, FIELD } from "@/components/ui/layout";
+import { EmptyState, Page, PageHeader, Chip } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { COMPANY_OUTREACH_CHANNEL_LABEL, type CompanyOutreachChannel } from "@/lib/types";
 
 export default function CompaniesPage() {
@@ -37,19 +47,51 @@ export default function CompaniesPage() {
       <div className="flex flex-col gap-4">
         {adding && <div id="add-company"><AddCompany /></div>}
         <section className="overflow-hidden rounded-card border border-line-soft" aria-label="Tracked companies">
-          <div className="flex flex-wrap items-center gap-2 border-b border-line-soft p-3">
-            <div className="relative min-w-40 flex-1 sm:max-w-72">
+          <div className="flex flex-col gap-3 border-b border-line-soft p-3 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72 sm:shrink-0">
               <SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted" />
-              <input aria-label="Search companies" placeholder="Search companies…" value={search} onChange={(event) => setSearch(event.target.value)} className={`${FIELD} h-8 py-0 pl-8 text-xs`} />
+              <Input aria-label="Search companies" placeholder="Search companies…" value={search} onChange={(event) => setSearch(event.target.value)} className="h-9 rounded-control border-line-soft bg-well pl-8 text-xs md:text-xs" />
             </div>
-            <select aria-label="Filter by outreach channel" value={channel} onChange={(event) => setChannel(event.target.value as CompanyOutreachChannel | "all")} className={`${FIELD} h-8 w-auto py-0 text-xs`}>
-              <option value="all">All channels</option>
-              {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map((value) => <option key={value} value={value}>{COMPANY_OUTREACH_CHANNEL_LABEL[value]}</option>)}
-            </select>
-            <select aria-label="Sort companies" value={sort} onChange={(event) => setSort(event.target.value)} className={`${FIELD} h-8 w-auto py-0 text-xs sm:ml-auto`}>
-              <option value="newest">Newest first</option>
-              <option value="name">Name A–Z</option>
-            </select>
+            <div className="flex flex-wrap items-center gap-2 sm:flex-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" type="button" static aria-label={`Filter by outreach channel: ${channel === "all" ? "All channels" : COMPANY_OUTREACH_CHANNEL_LABEL[channel]}`} className="h-9 rounded-control border border-line-soft px-3 shadow-none">
+                    <FilterIcon aria-hidden />
+                    {channel === "all" ? "All channels" : COMPANY_OUTREACH_CHANNEL_LABEL[channel]}
+                    <ChevronDownIcon aria-hidden className="ml-1 text-muted" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuLabel className="text-xs text-muted">Outreach channel</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup value={channel} onValueChange={(value) => setChannel(value as CompanyOutreachChannel | "all")}>
+                    <DropdownMenuRadioItem value="all" className="text-xs">All channels</DropdownMenuRadioItem>
+                    {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map((value) => (
+                      <DropdownMenuRadioItem key={value} value={value} className="text-xs">{COMPANY_OUTREACH_CHANNEL_LABEL[value]}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="sm:ml-auto">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" type="button" static aria-label={`Sort companies: ${sort === "newest" ? "Newest first" : "Name A–Z"}`} className="h-9 rounded-control border border-line-soft px-3 shadow-none">
+                      <ArrowDownUpIcon aria-hidden />
+                      {sort === "newest" ? "Newest first" : "Name A–Z"}
+                      <ChevronDownIcon aria-hidden className="ml-1 text-muted" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuLabel className="text-xs text-muted">Sort companies</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup value={sort} onValueChange={setSort}>
+                      <DropdownMenuRadioItem value="newest" className="text-xs">Newest first</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="name" className="text-xs">Name A–Z</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </div>
           {loading ? (
             <p role="status" className="p-6 text-sm text-muted">Loading companies…</p>

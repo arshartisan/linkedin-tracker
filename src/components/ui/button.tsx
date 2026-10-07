@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 
 /*
   Every button is a pill. The filled ones carry the two control recipes from
-  globals.css - `shadow-primary` for the purple action per screen,
+  globals.css - `shadow-primary` for the yellow action per screen,
   `shadow-raised` for everything else - so the depth lives in the shadow and no
   button needs a border. A press scales to 0.96 for tactile feedback; `static`
   switches that off where the motion would distract.

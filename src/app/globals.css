@@ -14,13 +14,13 @@
 
   --muted: #8a8a8a;
 
-  --primary-fill: #4124fb;
-  --primary-fill-hover: #563dff;
-  --brand: #b7aee9;
-  --brand-dim: #a99bdf;
-  --brand-soft: #231f3a;
-  --brand-edge: #4b437b;
-  --brand-tint: #d8d2fa;
+  --primary-fill: #d7fa06;
+  --primary-fill-hover: #e2ff3d;
+  --brand: #d7fa06;
+  --brand-dim: #9bb50b;
+  --brand-soft: #2b3405;
+  --brand-edge: #4a5a08;
+  --brand-tint: #e6f98a;
 
   --rose: #f97373;
   --rose-soft: #3e1d1e;
@@ -51,7 +51,7 @@
   --popover: var(--surface-3);
   --popover-foreground: var(--text);
   --primary: var(--primary-fill);
-  --primary-foreground: var(--text);
+  --primary-foreground: var(--ink);
   --secondary: #1e1e1e;
   --secondary-foreground: var(--text);
   --muted-foreground: var(--muted);

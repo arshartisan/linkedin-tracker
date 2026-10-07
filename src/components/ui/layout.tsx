@@ -197,7 +197,7 @@ export function Stat({
 // ---------------------------------------------------------------------------
 
 /**
- * The solid purple call to action, with compact CRM sizing.
+ * The solid yellow call to action, with compact CRM sizing.
  */
 export function PrimaryButton({
   className,
