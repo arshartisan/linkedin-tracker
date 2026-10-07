@@ -4,11 +4,11 @@ import { useMemo, useRef, useState } from "react";
 import { useData } from "./DataProvider";
 import { Card, FIELD, PrimaryButton } from "@/components/ui/layout";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CompanyOutreachChannels } from "./CompanyOutreachChannels";
 import { isLinkedInUrl, isUpworkUrl, nameFromUrl, parseTags } from "@/lib/linkedin";
 import { formatShort, relativeDay } from "@/lib/date";
 import { DUPLICATE_MESSAGE } from "@/lib/store";
 import {
-  COMPANY_OUTREACH_CHANNEL_LABEL,
   OUTREACH_CHANNEL_LABEL,
   type CompanyOutreachChannel,
   type OutreachChannel,
@@ -346,29 +346,8 @@ export function AddCompany() {
           </PrimaryButton>
         </div>
 
-        <div className="mt-3 grid gap-2.5 sm:grid-cols-[1fr_1fr]">
-          <div>
-            <p className="mb-2 text-xs font-semibold text-muted">Reached through</p>
-            <div className="flex flex-wrap gap-3">
-              {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map(
-                (channel) => (
-                  <label key={channel} className="flex cursor-pointer items-center gap-2 text-xs text-muted">
-                    <Checkbox
-                      checked={channels.includes(channel)}
-                      onCheckedChange={(checked) =>
-                        setChannels((current) =>
-                          checked
-                            ? [...current, channel]
-                            : current.filter((item) => item !== channel)
-                        )
-                      }
-                    />
-                    {COMPANY_OUTREACH_CHANNEL_LABEL[channel]}
-                  </label>
-                )
-              )}
-            </div>
-          </div>
+        <div className="mt-3 grid gap-2.5">
+          <CompanyOutreachChannels value={channels} onChange={setChannels} />
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}

@@ -5,12 +5,11 @@ import { PencilIcon, Trash2Icon } from "lucide-react";
 import { useData } from "./DataProvider";
 import { FIELD } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CompanyOutreachChannels } from "./CompanyOutreachChannels";
 import { formatTime } from "@/lib/date";
 import {
   COMPANY_OUTREACH_CHANNEL_LABEL,
   type Company,
-  type CompanyOutreachChannel,
 } from "@/lib/types";
 
 export function CompanyRow({ company, index = 0 }: { company: Company; index?: number }) {
@@ -102,26 +101,7 @@ export function CompanyRow({ company, index = 0 }: { company: Company; index?: n
             className={FIELD}
           />
           <div className="sm:col-span-2">
-            <p className="mb-2 text-xs font-semibold text-muted">Reached through</p>
-            <div className="flex flex-wrap gap-3">
-              {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map(
-                (channel) => (
-                  <label key={channel} className="flex cursor-pointer items-center gap-2 text-xs text-muted">
-                    <Checkbox
-                      checked={channels.includes(channel)}
-                      onCheckedChange={(checked) =>
-                        setChannels((current) =>
-                          checked
-                            ? [...current, channel]
-                            : current.filter((item) => item !== channel)
-                        )
-                      }
-                    />
-                    {COMPANY_OUTREACH_CHANNEL_LABEL[channel]}
-                  </label>
-                )
-              )}
-            </div>
+            <CompanyOutreachChannels value={channels} onChange={setChannels} />
           </div>
           <div className="flex gap-2 sm:col-span-2">
             <Button
