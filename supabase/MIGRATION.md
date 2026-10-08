@@ -1,5 +1,52 @@
 # Migrations
 
+## Company duplicate prevention
+
+Company websites are unique across the team by domain (ignoring HTTP/HTTPS,
+`www`, default ports, paths, query strings and fragments). LinkedIn company
+URLs are also unique, ignoring protocol, `www`, query strings, trailing
+slashes and company page subpages. Records with neither URL use a unique
+company name, ignoring case and repeated spaces.
+
+The app checks these rules on add and identity edits, including local storage.
+Run the updated `schema.sql` in the Supabase SQL Editor to also protect
+simultaneous writes. Existing records are preserved; duplicate records must
+be resolved before the unique indexes can be created.
+
+After running the function definitions in `schema.sql`, find conflicts with:
+
+```sql
+select 'website' as kind, public.company_website_key(website_url) as key,
+       array_agg(id) as ids
+from public.companies
+where public.company_website_key(website_url) is not null
+group by 2 having count(*) > 1
+union all
+select 'linkedin', public.company_linkedin_key(linkedin_url), array_agg(id)
+from public.companies
+where public.company_linkedin_key(linkedin_url) is not null
+group by 2 having count(*) > 1
+union all
+select 'name without URL', regexp_replace(lower(trim(company_name)), '\s+', ' ', 'g'), array_agg(id)
+from public.companies
+where public.company_website_key(website_url) is null
+  and public.company_linkedin_key(linkedin_url) is null
+group by 2 having count(*) > 1;
+```
+
+For each conflict, combine useful contact details, outreach channels and notes
+into the record you keep, then remove the extra record using the app. Re-run
+`schema.sql` and verify all three company indexes exist:
+
+```sql
+select indexname from pg_indexes
+where schemaname = 'public' and tablename = 'companies'
+  and indexname in ('companies_website_key', 'companies_linkedin_key',
+                    'companies_name_without_url_key');
+```
+
+All three rows should be returned.
+
 Two migrations live in `schema.sql`, both guarded and both safe to re-run:
 
 1. **[Multi-user](#migrating-to-multi-user)** — the current one. Adds `users`,

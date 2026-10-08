@@ -21,6 +21,7 @@ import {
 } from "./types";
 import { dayKey } from "./date";
 import { normaliseUrl } from "./linkedin";
+import { COMPANY_DUPLICATE_MESSAGE, findCompanyDuplicate } from "./company";
 
 // The client, the credential check and the id helper live in ./supabase.
 // Re-exported here so existing imports from "@/lib/store" keep working.
@@ -216,8 +217,12 @@ export const store = {
 
   async addCompany(input: NewCompany): Promise<Company> {
     const row = buildCompany(input);
+    const existing = await store.listCompanies();
+    if (findCompanyDuplicate(existing, row)) throw new Error(COMPANY_DUPLICATE_MESSAGE);
     if (!hasSupabase) {
-      writeLocalCompanies([row, ...readLocalCompanies()]);
+      const rows = readLocalCompanies();
+      if (findCompanyDuplicate(rows, row)) throw new Error(COMPANY_DUPLICATE_MESSAGE);
+      writeLocalCompanies([row, ...rows]);
       return row;
     }
     const { data, error } = await supabase()
@@ -225,7 +230,7 @@ export const store = {
       .insert(row)
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(error.code === "23505" ? COMPANY_DUPLICATE_MESSAGE : error.message);
     return hydrateCompany(data as never);
   },
 
@@ -238,6 +243,19 @@ export const store = {
       >
     >
   ): Promise<void> {
+    // Only identity changes need checking: old duplicates can still have their
+    // outreach notes updated while the team resolves them.
+    if (patch.company_name !== undefined || patch.website_url !== undefined || patch.linkedin_url !== undefined) {
+      const rows = await store.listCompanies();
+      const current = rows.find((company) => company.id === id);
+      if (!current) throw new Error("Company no longer exists. Refresh and try again.");
+      const candidate = { ...current, ...patch };
+      const identityChanged = candidate.company_name !== current.company_name ||
+        candidate.website_url !== current.website_url || candidate.linkedin_url !== current.linkedin_url;
+      if (identityChanged && findCompanyDuplicate(rows, candidate, id)) {
+        throw new Error(COMPANY_DUPLICATE_MESSAGE);
+      }
+    }
     if (!hasSupabase) {
       writeLocalCompanies(
         readLocalCompanies().map((company) =>
@@ -247,7 +265,7 @@ export const store = {
       return;
     }
     const { error } = await supabase().from(COMPANIES_TABLE).update(patch).eq("id", id);
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(error.code === "23505" ? COMPANY_DUPLICATE_MESSAGE : error.message);
   },
 
   async removeCompany(id: string): Promise<void> {

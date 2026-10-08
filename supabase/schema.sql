@@ -71,6 +71,36 @@ create table if not exists public.companies (
 alter table public.companies
   add column if not exists website_url text not null default '';
 
+-- Company identity keys mirror src/lib/company.ts. Website identity is the
+-- domain, so /contact and /about still refer to the same company.
+create or replace function public.company_website_key(value text)
+returns text language sql immutable strict as $$
+  select nullif(regexp_replace(
+    split_part(split_part(split_part(
+      regexp_replace(regexp_replace(lower(trim(value)), '^https?://', ''), '^www\.', ''),
+      '/', 1), '?', 1), '#', 1), ':443$|:80$', ''), '');
+$$;
+
+create or replace function public.company_linkedin_key(value text)
+returns text language sql immutable strict as $$
+  select nullif(regexp_replace(regexp_replace(
+    split_part(split_part(
+      regexp_replace(regexp_replace(lower(trim(value)), '^https?://', ''), '^www\.', ''),
+      '?', 1), '#', 1), '/+$', ''),
+    '^(linkedin\.com/company/[^/]+)/.*$', '\1'), '');
+$$;
+
+-- Resolve existing duplicates before creating these indexes (MIGRATION.md).
+-- Global uniqueness protects concurrent inserts and edits across the team.
+create unique index if not exists companies_website_key
+  on public.companies (public.company_website_key(website_url));
+create unique index if not exists companies_linkedin_key
+  on public.companies (public.company_linkedin_key(linkedin_url));
+create unique index if not exists companies_name_without_url_key
+  on public.companies (regexp_replace(lower(trim(company_name)), '\s+', ' ', 'g'))
+  where public.company_website_key(website_url) is null
+    and public.company_linkedin_key(linkedin_url) is null;
+
 -- Migration from the original three-status table. No-ops on a fresh install.
 do $$
 begin
