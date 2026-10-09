@@ -19,6 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 /*
@@ -106,6 +107,8 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
 
 export function Nav() {
   const pathname = usePathname();
+  const { state, isMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const { me, mine, companies, queue, goal, loading } = useData();
   const today = dayKey();
   const sentToday = mine.filter((c) => c.sent_on === today).length;
@@ -126,18 +129,12 @@ export function Nav() {
   }
 
   const menu = (links: NavLink[]) => (
-    /*
-      Collapsed, shadcn pins each button to `size-8!` - a fixed 32px in a 48px
-      rail. A fixed-width child in a stretch column lands at the start of the
-      cross axis, so it has to be centred explicitly or the icons sit off to one
-      side of the rail.
-    */
-    <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
+    <SidebarMenu className="gap-0.5">
       {links.map((link) => {
         const active = pathname === link.href;
         const count = badge(link);
         return (
-          <SidebarMenuItem key={link.href}>
+          <SidebarMenuItem key={link.href} className="w-full">
             <SidebarMenuButton
               asChild
               isActive={active}
@@ -148,11 +145,11 @@ export function Nav() {
                 top edge - so it is the only lifted thing in the rail and needs
                 no colour to be found.
               */
-              className="h-8 gap-2 rounded-control px-2 text-[13px] font-normal text-sidebar-foreground transition-[background-color,color,box-shadow] duration-150 ease-out-strong hover:bg-sidebar-accent hover:text-text data-[active=true]:bg-sidebar-primary data-[active=true]:font-medium data-[active=true]:text-text data-[active=true]:shadow-raised [&>svg]:size-3.5"
+              className="h-8 gap-2 rounded-control px-2 text-[13px] font-normal text-sidebar-foreground transition-[width,height,padding,background-color,color,box-shadow] duration-300 ease-out-strong group-data-[collapsible=icon]:w-full! hover:bg-sidebar-accent hover:text-text data-[active=true]:bg-sidebar-primary data-[active=true]:font-medium data-[active=true]:text-text data-[active=true]:shadow-raised [&>svg]:size-3.5"
             >
               <Link href={link.href} aria-current={active ? "page" : undefined}>
                 <Icon name={link.icon} />
-                <span>{link.label}</span>
+                <span className="transition-opacity duration-300 group-data-[collapsible=icon]:opacity-0">{link.label}</span>
               </Link>
             </SidebarMenuButton>
             {count !== null && (
@@ -180,13 +177,13 @@ export function Nav() {
         collapsible="icon"
         className="border-sidebar-border **:data-[sidebar=sidebar]:bg-sidebar"
       >
-        <SidebarHeader className="h-[65px] justify-center border-b border-sidebar-border bg-[#181818] px-4 group-data-[collapsible=icon]:px-0">
+        <SidebarHeader className="h-[65px] justify-center border-b border-sidebar-border bg-[#181818] px-4 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-1">
           <Link
             href="/"
-            className="flex min-w-0 items-center gap-2.5 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+            className="flex min-w-0 items-center gap-2.5 overflow-hidden px-1"
           >
             <LogoMark className="size-8 shrink-0" />
-            <span className="flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
+            <span className="flex flex-col gap-0.5 whitespace-nowrap transition-opacity duration-300 group-data-[collapsible=icon]:opacity-0">
               <span className="text-sm font-medium text-text">Reach</span>
               <span className="text-[11px] text-muted">Outreach workspace</span>
             </span>
@@ -194,14 +191,14 @@ export function Nav() {
         </SidebarHeader>
 
         <SidebarContent className="gap-0 group-data-[collapsible=icon]:px-0">
-          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 group-data-[collapsible=icon]:px-0">
+          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-2">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               LinkedIn
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu(LINKEDIN)}</SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 group-data-[collapsible=icon]:px-0">
+          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-2">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               Upwork
             </SidebarGroupLabel>
@@ -209,7 +206,7 @@ export function Nav() {
           </SidebarGroup>
 
           {/* Team counts everyone, so it sits apart from your own screens. */}
-          <SidebarGroup className="px-3 py-3 group-data-[collapsible=icon]:px-0">
+          <SidebarGroup className="px-3 py-3 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-2">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               Shared
             </SidebarGroupLabel>
@@ -218,8 +215,8 @@ export function Nav() {
         </SidebarContent>
 
         {/* Collapsed to icons there is no room for the tally, so it steps aside. */}
-        <SidebarFooter className="border-t border-sidebar-border bg-[#181818] p-4 group-data-[collapsible=icon]:hidden">
-          <div>
+        <SidebarFooter inert={collapsed} aria-hidden={collapsed || undefined} className="grid grid-rows-[1fr] border-t border-sidebar-border bg-[#181818] p-4 transition-[grid-template-rows,padding,opacity] duration-300 ease-out-strong group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:grid-rows-[0fr] group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:opacity-0">
+          <div className="min-h-0 overflow-hidden whitespace-nowrap">
             <div className="flex items-center justify-between gap-2">
               <span className="label text-[10px]">{me.name} · Today</span>
               <SignOutButton className="-mr-1 shrink-0 rounded-full p-1 text-muted transition-colors duration-150 hover:bg-white/6 hover:text-rose disabled:opacity-50" />

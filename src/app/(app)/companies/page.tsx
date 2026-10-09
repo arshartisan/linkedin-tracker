@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDownUpIcon, Building2Icon, ChevronDownIcon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { ArrowDownUpIcon, Building2Icon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { AddCompany } from "@/components/AddConnect";
 import { CompanyRow } from "@/components/CompanyRow";
 import { useData } from "@/components/DataProvider";
@@ -17,15 +17,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import * as Select from "@/components/ui/select";
 import { COMPANY_OUTREACH_CHANNEL_LABEL, type CompanyOutreachChannel } from "@/lib/types";
 
 const PAGE_SIZE = 10;
@@ -75,43 +67,35 @@ export default function CompaniesPage() {
               <Input aria-label="Search companies" placeholder="Search companies…" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} className="h-9 rounded-control border-line-soft bg-well pl-8 text-xs md:text-xs" />
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:flex-1">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" type="button" static aria-label={`Filter by outreach channel: ${channel === "all" ? "All channels" : COMPANY_OUTREACH_CHANNEL_LABEL[channel]}`} className="h-9 rounded-control border border-line-soft px-3 shadow-none">
-                    <FilterIcon aria-hidden />
-                    {channel === "all" ? "All channels" : COMPANY_OUTREACH_CHANNEL_LABEL[channel]}
-                    <ChevronDownIcon aria-hidden className="ml-1 text-muted" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuLabel className="text-xs text-muted">Outreach channel</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuRadioGroup value={channel} onValueChange={(value) => { setChannel(value as CompanyOutreachChannel | "all"); setPage(1); }}>
-                    <DropdownMenuRadioItem value="all" className="text-xs">All channels</DropdownMenuRadioItem>
+              <Select.Root value={channel} onValueChange={(value) => { setChannel(value as CompanyOutreachChannel | "all"); setPage(1); }}>
+                <Select.Trigger aria-label="Filter by outreach channel">
+                  <FilterIcon aria-hidden className="size-3.5 shrink-0 text-muted" />
+                  <Select.Value />
+                </Select.Trigger>
+                <Select.Content align="start" className="min-w-48">
+                  <Select.Group>
+                    <Select.GroupLabel>Outreach channel</Select.GroupLabel>
+                    <Select.Item value="all">All channels</Select.Item>
                     {(Object.keys(COMPANY_OUTREACH_CHANNEL_LABEL) as CompanyOutreachChannel[]).map((value) => (
-                      <DropdownMenuRadioItem key={value} value={value} className="text-xs">{COMPANY_OUTREACH_CHANNEL_LABEL[value]}</DropdownMenuRadioItem>
+                      <Select.Item key={value} value={value}>{COMPANY_OUTREACH_CHANNEL_LABEL[value]}</Select.Item>
                     ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </Select.Group>
+                </Select.Content>
+              </Select.Root>
               <div className="sm:ml-auto">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" type="button" static aria-label={`Sort companies: ${sort === "newest" ? "Newest first" : "Name A–Z"}`} className="h-9 rounded-control border border-line-soft px-3 shadow-none">
-                      <ArrowDownUpIcon aria-hidden />
-                      {sort === "newest" ? "Newest first" : "Name A–Z"}
-                      <ChevronDownIcon aria-hidden className="ml-1 text-muted" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44">
-                    <DropdownMenuLabel className="text-xs text-muted">Sort companies</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup value={sort} onValueChange={(value) => { setSort(value); setPage(1); }}>
-                      <DropdownMenuRadioItem value="newest" className="text-xs">Newest first</DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="name" className="text-xs">Name A–Z</DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Select.Root value={sort} onValueChange={(value) => { setSort(value); setPage(1); }}>
+                  <Select.Trigger aria-label="Sort companies">
+                    <ArrowDownUpIcon aria-hidden className="size-3.5 shrink-0 text-muted" />
+                    <Select.Value />
+                  </Select.Trigger>
+                  <Select.Content align="end" className="min-w-44">
+                    <Select.Group>
+                      <Select.GroupLabel>Sort companies</Select.GroupLabel>
+                      <Select.Item value="newest">Newest first</Select.Item>
+                      <Select.Item value="name">Name A–Z</Select.Item>
+                    </Select.Group>
+                  </Select.Content>
+                </Select.Root>
               </div>
             </div>
           </div>
