@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BriefcaseBusinessIcon, Building2Icon } from "lucide-react";
 import { useData } from "./DataProvider";
 import { LogoMark } from "./Logo";
 import { SignOutButton } from "./SignOutButton";
@@ -86,19 +87,9 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
         </svg>
       );
     case "upwork":
-      return (
-        <svg {...common}>
-          <path d="M5 5h14v14H5z" />
-          <path d="M8 9h8M8 13h5M8 17h3" />
-        </svg>
-      );
+      return <BriefcaseBusinessIcon {...common} />;
     case "companies":
-      return (
-        <svg {...common}>
-          <rect x="4" y="4" width="16" height="16" rx="2" />
-          <path d="M8 9h8M8 13h8M8 17h5" />
-        </svg>
-      );
+      return <Building2Icon {...common} />;
     default:
       return (
         <svg {...common}>
