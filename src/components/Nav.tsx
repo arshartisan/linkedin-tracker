@@ -26,7 +26,7 @@ import {
   One pipeline: one-to-one LinkedIn outreach to people. Team sits apart from it
   because it counts everyone's work rather than being another screen of yours.
 */
-type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies";
+type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies" | "startups";
 
 type NavLink = { href: string; label: string; icon: IconName };
 
@@ -43,6 +43,7 @@ const UPWORK: NavLink[] = [
 ];
 
 const TEAM: NavLink = { href: "/stats", label: "Team", icon: "stats" };
+const STARTUPS: NavLink = { href: "/startups", label: "Startups", icon: "startups" };
 
 function Icon({ name, className }: { name: IconName; className?: string }) {
   const common = {
@@ -56,6 +57,8 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
     "aria-hidden": true,
   };
   switch (name) {
+    case "startups":
+      return <svg {...common}><path d="m12 3 7 5v12H5V8zM9 20v-6h6v6M9 9h6" /></svg>;
     case "today":
       return (
         <svg {...common}>
@@ -203,6 +206,11 @@ export function Nav() {
               Upwork
             </SidebarGroupLabel>
             <SidebarGroupContent>{menu(UPWORK)}</SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-2">
+            <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">Startups</SidebarGroupLabel>
+            <SidebarGroupContent>{menu([STARTUPS])}</SidebarGroupContent>
           </SidebarGroup>
 
           {/* Team counts everyone, so it sits apart from your own screens. */}

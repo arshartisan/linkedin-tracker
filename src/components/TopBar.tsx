@@ -15,14 +15,18 @@ const outreachTabs = [
 const workspaceTabs = [
   { href: "/companies", label: "Companies" },
   { href: "/upwork", label: "Jobs" },
-  { href: "/stats", label: "Team" },
 ];
+const startupTabs = [{ href: "/startups", label: "Startups" }];
 
 export function TopBar() {
   const { me } = useData();
   const pathname = usePathname();
-  const tabs = workspaceTabs.some((tab) => tab.href === pathname) ? workspaceTabs : outreachTabs;
-  const title = tabs.find((tab) => tab.href === pathname)?.label ?? "Workspace";
+  const tabs = pathname === "/startups"
+    ? startupTabs
+    : pathname === "/stats" || workspaceTabs.some((tab) => tab.href === pathname)
+      ? workspaceTabs
+      : outreachTabs;
+  const title = pathname === "/stats" ? "Team" : tabs.find((tab) => tab.href === pathname)?.label ?? "Workspace";
 
   return (
     <header className="sticky top-0 z-30 border-b border-line-soft bg-ink/95 backdrop-blur-xl">

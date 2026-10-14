@@ -1,5 +1,36 @@
 # Migrations
 
+## Startups
+
+Run [20261014_startups.sql](migrations/20261014_startups.sql) in the Supabase
+SQL Editor before using the Startups section. It is a standalone, transactional
+migration for existing installations; the `users` table must already exist.
+The same definitions are included in `schema.sql` for fresh installations.
+
+Startup names are unique across all owners, ignoring case and repeated spaces.
+Each founder LinkedIn profile and startup LinkedIn link is also unique across
+all startups, ignoring protocol, supported LinkedIn subdomains, tracking params,
+subpages, and trailing slashes. Other details are optional. Multiple founders
+and contact methods are supported; no contact methods means not contacted yet.
+These rules apply to inserts and edits. The database claims profiles inside
+the save transaction, so overlapping simultaneous saves cannot both succeed.
+Removing a startup or changing its profiles releases its previous claims.
+
+The page follows the existing ownership convention: My startups shows your
+records; All team startups shows everyone's records and who added them. In
+browser-only mode, duplicate checks cover only that browser's stored records.
+Startup loading is separate from the other sections so a missing migration
+does not prevent the existing tracker from loading.
+
+Verify both tables and the trigger after running the migration:
+
+```sql
+select to_regclass('public.startups'), to_regclass('public.startup_linkedin_profiles');
+select tgname from pg_trigger
+where tgrelid = 'public.startups'::regclass and not tgisinternal;
+```
+
+
 ## Company duplicate prevention
 
 Company websites are unique across the team by domain (ignoring HTTP/HTTPS,
