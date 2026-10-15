@@ -47,14 +47,14 @@ export function TopBar() {
           <SignOutButton className="flex size-[30px] items-center justify-center rounded-full bg-secondary text-muted shadow-raised transition-colors hover:text-rose disabled:opacity-50" />
         </div>
       </div>
-      <nav aria-label="Workspace sections" className="flex overflow-x-auto px-4 sm:px-6">
+      {pathname !== "/stats" && <nav aria-label="Workspace sections" className="flex overflow-x-auto px-4 sm:px-6">
         {tabs.map((tab) => (
           <Link key={tab.href} href={tab.href} aria-current={pathname === tab.href ? "page" : undefined}
             className={"shrink-0 border-b-2 px-3 py-2.5 text-xs transition-colors " + (pathname === tab.href ? "border-brand font-medium text-text" : "border-transparent text-muted hover:text-text")}>
             {tab.label}
           </Link>
         ))}
-      </nav>
+      </nav>}
     </header>
   );
 }

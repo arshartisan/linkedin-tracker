@@ -9,6 +9,7 @@ import { CompanyOutreachChannels } from "./CompanyOutreachChannels";
 import { formatShort, formatTime } from "@/lib/date";
 import {
   COMPANY_OUTREACH_CHANNEL_LABEL,
+  USER_LABEL,
   type Company,
 } from "@/lib/types";
 
@@ -92,6 +93,7 @@ export function CompanyRow({ company, index = 0, table = false }: { company: Com
             </span>
             <div className="min-w-0">
               <span className="block max-w-64 truncate text-[13px] font-medium">{company.company_name || "Unnamed company"}</span>
+              <span className="mt-0.5 block text-[11px] text-muted">Logged by {USER_LABEL[company.owner]}</span>
               {company.note && <span className="mt-0.5 block max-w-64 truncate text-[11px] text-muted" title={company.note}>{company.note}</span>}
             </div>
           </div>

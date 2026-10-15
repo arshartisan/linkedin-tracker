@@ -42,6 +42,19 @@ export const DEFAULT_GOAL = 30;
 
 export type OutreachChannel = "upwork_connects" | "linkedin_message" | "direct_email";
 
+export const CLIENT_TYPE_LABEL = {
+  unclassified: "Unclassified",
+  enterprise: "Enterprise client",
+  potential: "Potential client",
+} as const;
+export type ClientType = keyof typeof CLIENT_TYPE_LABEL;
+
+export const CLIENT_TYPE_TONE: Record<ClientType, string> = {
+  unclassified: "border-line-soft bg-surface-2 text-muted",
+  enterprise: "border-sky-400/30 bg-sky-400/10 text-sky-300",
+  potential: "border-amber-400/30 bg-amber-400/10 text-amber-300",
+};
+
 export const OUTREACH_CHANNEL_LABEL: Record<OutreachChannel, string> = {
   upwork_connects: "Upwork connects",
   linkedin_message: "LinkedIn message",
@@ -71,6 +84,7 @@ export type Connect = {
   project_title: string;
   project_description: string;
   client_reviews: string;
+  client_type: ClientType;
   email: string;
   outreach_channels: OutreachChannel[];
   /** Who sent the invite. Rows predating multi-user hydrate as "arsh". */
@@ -98,6 +112,7 @@ export type NewConnect = {
   project_title?: string;
   project_description?: string;
   client_reviews?: string;
+  client_type?: ClientType;
   email?: string;
   outreach_channels?: OutreachChannel[];
   note?: string;
@@ -198,6 +213,7 @@ export function hydrate(row: Partial<Connect> & Record<string, unknown>): Connec
     project_title: String(row.project_title ?? ""),
     project_description: String(row.project_description ?? ""),
     client_reviews: String(row.client_reviews ?? ""),
+    client_type: row.client_type === "enterprise" || row.client_type === "potential" ? row.client_type : "unclassified",
     email: String(row.email ?? ""),
     outreach_channels: Array.isArray(row.outreach_channels)
       ? row.outreach_channels.filter(

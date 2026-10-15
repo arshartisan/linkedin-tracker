@@ -145,6 +145,10 @@ alter table public.connects add column if not exists upwork_url text not null de
 alter table public.connects add column if not exists project_title text not null default '';
 alter table public.connects add column if not exists project_description text not null default '';
 alter table public.connects add column if not exists client_reviews text not null default '';
+alter table public.connects add column if not exists client_type text not null default 'unclassified';
+alter table public.connects drop constraint if exists connects_client_type_check;
+alter table public.connects add constraint connects_client_type_check
+  check (client_type in ('unclassified', 'enterprise', 'potential'));
 alter table public.connects add column if not exists email text not null default '';
 alter table public.connects add column if not exists outreach_channels text[] not null default '{}';
 

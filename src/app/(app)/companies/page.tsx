@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowDownUpIcon, Building2Icon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { AddCompany } from "@/components/AddConnect";
 import { CompanyRow } from "@/components/CompanyRow";
+import { MemberFilter, type MemberScope } from "@/components/MemberFilter";
 import { useData } from "@/components/DataProvider";
 import { EmptyState, Page, PageHeader, Chip } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
@@ -23,23 +24,22 @@ import { COMPANY_OUTREACH_CHANNEL_LABEL, type CompanyOutreachChannel } from "@/l
 const PAGE_SIZE = 10;
 
 export default function CompaniesPage() {
-  const { companies, me, loading } = useData();
+  const { companies, loading } = useData();
+  const [owner, setOwner] = useState<MemberScope>("all");
   const [search, setSearch] = useState("");
   const [channel, setChannel] = useState<CompanyOutreachChannel | "all">("all");
   const [sort, setSort] = useState("newest");
   const [adding, setAdding] = useState(false);
   const [page, setPage] = useState(1);
-  const mine = useMemo(
-    () => companies.filter((company) => company.owner === me.id),
-    [companies, me.id]
-  );
+  const mine = companies;
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return mine.filter((company) =>
+      (owner === "all" || company.owner === owner) &&
       (channel === "all" || company.outreach_channels.includes(channel)) &&
       [company.company_name, company.email, company.website_url, company.note].some((value) => value.toLowerCase().includes(query))
     ).sort((a, b) => sort === "name" ? a.company_name.localeCompare(b.company_name) : b.created_at.localeCompare(a.created_at));
-  }, [mine, search, channel, sort]);
+  }, [mine, owner, search, channel, sort]);
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const start = (currentPage - 1) * PAGE_SIZE;
@@ -55,7 +55,7 @@ export default function CompaniesPage() {
     <Page>
       <PageHeader
         title="Companies"
-        lead="Manage your company pipeline and outreach."
+        lead="Browse the team’s company pipeline and outreach."
         actions={<><Chip>{mine.length} companies</Chip><Button onClick={() => setAdding(!adding)} aria-expanded={adding} aria-controls="add-company"><PlusIcon />{adding ? "Close form" : "Add company"}</Button></>}
       />
       <div className="flex flex-col gap-4">
@@ -67,6 +67,7 @@ export default function CompaniesPage() {
               <Input aria-label="Search companies" placeholder="Search companies…" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} className="h-9 rounded-control border-line-soft bg-well pl-8 text-xs md:text-xs" />
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:flex-1">
+              <MemberFilter value={owner} onChange={(value) => { setOwner(value); setPage(1); }} />
               <Select.Root value={channel} onValueChange={(value) => { setChannel(value as CompanyOutreachChannel | "all"); setPage(1); }}>
                 <Select.Trigger aria-label="Filter by outreach channel">
                   <FilterIcon aria-hidden className="size-3.5 shrink-0 text-muted" />
@@ -104,7 +105,7 @@ export default function CompaniesPage() {
           ) : mine.length === 0 ? (
             <div className="px-6 py-12 text-center"><Building2Icon aria-hidden className="mx-auto mb-3 size-7 text-muted" /><p className="text-sm font-medium">Your company pipeline starts here</p><p className="mt-1 text-xs text-muted">Add a company to track its contacts and outreach.</p><Button className="mt-4" onClick={() => setAdding(true)}><PlusIcon />Add company</Button></div>
           ) : filtered.length === 0 ? (
-            <div className="p-4"><EmptyState title="No matching companies">Try another search or outreach channel.</EmptyState><Button variant="secondary" className="mt-3" onClick={() => { setSearch(""); setChannel("all"); setPage(1); }}>Clear filters</Button></div>
+            <div className="p-4"><EmptyState title="No matching companies">Try another search, team member, or outreach channel.</EmptyState><Button variant="secondary" className="mt-3" onClick={() => { setSearch(""); setChannel("all"); setOwner("all"); setPage(1); }}>Clear filters</Button></div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] text-left">

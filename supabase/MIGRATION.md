@@ -1,5 +1,18 @@
 # Migrations
 
+## Upwork client types and team reporting
+
+Run [20261015_client_type.sql](migrations/20261015_client_type.sql) in the Supabase
+SQL Editor before deploying this version. It adds `client_type` with Enterprise,
+Potential, and Unclassified values. Existing jobs remain Unclassified. The same
+definitions are included in `schema.sql` for fresh installations.
+
+Jobs and companies now default to All members and can be filtered by owner.
+Team reporting separates LinkedIn invites from Upwork jobs. A job with a
+researched LinkedIn profile counts only as an Upwork job. Reached/approached
+counts require at least one outreach channel and use the record's logged date;
+they do not measure the date of a later outreach edit.
+
 ## Startups
 
 Run [20261014_startups.sql](migrations/20261014_startups.sql) in the Supabase

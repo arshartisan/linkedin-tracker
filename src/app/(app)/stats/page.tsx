@@ -17,6 +17,7 @@ import {
 import { dayKey, formatShort, shiftDayKey, weekStart } from "@/lib/date";
 import { diffDays, funnel } from "@/lib/pipeline";
 import { USER_IDS, USER_LABEL, type UserId } from "@/lib/types";
+import { linkedinConnects, teamActivity } from "@/lib/team";
 import {
   acceptanceRate,
   averagePerActiveDay,
@@ -135,7 +136,7 @@ function StatsSkeleton() {
 }
 
 export default function StatsPage() {
-  const { connects, goals, me, loading } = useData();
+  const { connects, companies, goals, me, loading } = useData();
   const [range, setRange] = useState<number>(14);
   const [owner, setOwner] = useState<Owner>("all");
 
@@ -145,7 +146,7 @@ export default function StatsPage() {
     don't need to know anyone exists.
   */
   const scoped = useMemo(
-    () => (owner === "all" ? connects : connects.filter((c) => c.owner === owner)),
+    () => linkedinConnects(owner === "all" ? connects : connects.filter((c) => c.owner === owner)),
     [connects, owner]
   );
 
@@ -196,8 +197,16 @@ export default function StatsPage() {
   // `today`, which isn't provably stable, so a manual dependency list here
   // only defeats optimisation.
   const since = shiftDayKey(today, -(range - 1));
+  const activity = teamActivity(connects, companies, since, today, owner);
+  const activityTotals = activity.reduce((total, row) => ({
+    linkedin: total.linkedin + row.linkedin,
+    jobs: total.jobs + row.jobs,
+    jobsReached: total.jobsReached + row.jobsReached,
+    companies: total.companies + row.companies,
+    companiesReached: total.companiesReached + row.companiesReached,
+  }), { linkedin: 0, jobs: 0, jobsReached: 0, companies: 0, companiesReached: 0 });
   const breakdown = USER_IDS.map((id) => {
-    const rows = connects.filter((c) => c.owner === id && c.sent_on >= since);
+    const rows = linkedinConnects(connects).filter((c) => c.owner === id && c.sent_on >= since && c.sent_on <= today);
     return {
       id,
       sent: rows.length,
@@ -214,13 +223,7 @@ export default function StatsPage() {
     <Page>
       <PageHeader
         title="Team"
-        lead={
-          scoped.length === 0
-            ? "Numbers appear once you start logging."
-            : `${scoped.length} connects logged across ${counts.size} active days${
-                owner === "all" ? " by the three of you" : ""
-              }.`
-        }
+        lead="LinkedIn connections, Upwork jobs, and company outreach across the team."
         /*
           The one control that changes what every panel below means, so it sits
           beside the title rather than inside any one panel.
@@ -235,11 +238,30 @@ export default function StatsPage() {
         }
       />
 
+      <Card className="mb-4 p-4 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div><h2 className="font-display text-lg font-semibold">Outreach overview</h2><p className="mt-1 text-xs text-muted">{formatShort(since)} – {formatShort(today)}. Reached means at least one outreach channel was logged. Counts use each record’s logged date.</p></div>
+          <Segmented label="Overview range" options={RANGES.map((r) => ({ value: r.days, label: r.label }))} value={range} onChange={setRange} />
+        </div>
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          <Well className="p-4"><Label>LinkedIn connections</Label><p className="tabular mt-2 text-2xl font-semibold">{activityTotals.linkedin}</p></Well>
+          <Well className="p-4"><Label>Upwork jobs</Label><p className="tabular mt-2 text-2xl font-semibold">{activityTotals.jobs}</p><p className="mt-1 text-xs text-muted">{activityTotals.jobsReached} approached</p></Well>
+          <Well className="p-4"><Label>Companies reached</Label><p className="tabular mt-2 text-2xl font-semibold">{activityTotals.companiesReached}</p><p className="mt-1 text-xs text-muted">{activityTotals.companies} companies registered</p></Well>
+        </div>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[34rem] text-sm">
+            <caption className="sr-only">Outreach by member for the selected date range</caption>
+            <thead><tr className="border-b border-line-soft"><Th className="text-left">Member</Th><Th>LinkedIn</Th><Th>Jobs logged</Th><Th>Jobs approached</Th><Th>Companies reached</Th></tr></thead>
+            <tbody>{activity.map((row) => <tr key={row.id} className="border-b border-line-soft last:border-0"><td className="py-3 font-medium">{USER_LABEL[row.id]}</td><Td value={String(row.linkedin)} /><Td value={String(row.jobs)} /><Td value={String(row.jobsReached)} /><Td value={String(row.companiesReached)} detail={`${row.companies} registered`} /></tr>)}</tbody>
+          </table>
+        </div>
+      </Card>
+
       <Card className="p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-semibold">
-              Momentum
+              LinkedIn momentum
             </h2>
             <p className="mt-0.5 text-xs text-muted">
               Connects per day against{" "}

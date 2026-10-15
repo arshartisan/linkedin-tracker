@@ -19,11 +19,13 @@ import {
 import { FIELD } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ClientTypeSelect } from "./ClientTypeSelect";
+import { cn } from "@/lib/utils";
 import { formatShort, formatTime } from "@/lib/date";
 import { normaliseUrl, parseTags, profileSlug } from "@/lib/linkedin";
 import { isStale, MAX_FOLLOWUPS, nextAction, type Action } from "@/lib/pipeline";
 import type { Connect } from "@/lib/types";
-import { OUTREACH_CHANNEL_LABEL } from "@/lib/types";
+import { CLIENT_TYPE_LABEL, CLIENT_TYPE_TONE, USER_LABEL, OUTREACH_CHANNEL_LABEL } from "@/lib/types";
 
 /** "2 days late" reads as pressure; "in 2 days" reads as a plan. */
 function timing(action: Action): { text: string; late: boolean } {
@@ -49,11 +51,13 @@ export function ConnectRow({
   /** The queue already knows the action; rows elsewhere work it out themselves. */
   action = nextAction(connect),
   showAction = true,
+  showOwner = false,
 }: {
   connect: Connect;
   index?: number;
   action?: Action | null;
   showAction?: boolean;
+  showOwner?: boolean;
 }) {
   const { update, remove, setStage, complete } = useData();
   const [editing, setEditing] = useState(false);
@@ -64,6 +68,9 @@ export function ConnectRow({
   const [projectTitle, setProjectTitle] = useState(connect.project_title);
   const [projectDescription, setProjectDescription] = useState(connect.project_description);
   const [clientReviews, setClientReviews] = useState(connect.client_reviews);
+  const [clientType, setClientType] = useState(connect.client_type);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [channels, setChannels] = useState(connect.outreach_channels);
   const [note, setNote] = useState(connect.note);
   const [tags, setTags] = useState(connect.tags.join(", "));
@@ -74,6 +81,22 @@ export function ConnectRow({
   const showCta = showAction && due;
   // Both follow-ups spent and still nothing - the only move left is to close it.
   const exhausted = showAction && !action && isStale(connect);
+
+  function edit() {
+    setName(connect.name);
+    setUpworkUrl(connect.upwork_url);
+    setProfileUrl(connect.profile_url);
+    setEmail(connect.email);
+    setProjectTitle(connect.project_title);
+    setProjectDescription(connect.project_description);
+    setClientReviews(connect.client_reviews);
+    setClientType(connect.client_type);
+    setChannels(connect.outreach_channels);
+    setNote(connect.note);
+    setTags(connect.tags.join(", "));
+    setError(null);
+    setEditing(!editing);
+  }
 
   async function saveDetails() {
     const nextTags = parseTags(tags);
@@ -87,6 +110,7 @@ export function ConnectRow({
       projectTitle.trim() !== connect.project_title ||
       projectDescription.trim() !== connect.project_description ||
       clientReviews.trim() !== connect.client_reviews ||
+      clientType !== connect.client_type ||
       nextChannels.join(",") !== connect.outreach_channels.join(",") ||
       note.trim() !== connect.note ||
       nextTags.join(",") !== connect.tags.join(",");
@@ -99,6 +123,7 @@ export function ConnectRow({
         project_title: projectTitle.trim(),
         project_description: projectDescription.trim(),
         client_reviews: clientReviews.trim(),
+        client_type: clientType,
         outreach_channels: nextChannels,
         note: note.trim(),
         tags: nextTags,
@@ -106,19 +131,21 @@ export function ConnectRow({
     }
   }
 
-  /**
-   * The editor closes when focus leaves it, not when either field blurs -
-   * closing on a field blur unmounts the panel as you move from note to tags,
-   * so the second field can never be reached.
-   */
-  function leaveEditor(e: React.FocusEvent<HTMLDivElement>) {
-    if (e.currentTarget.contains(e.relatedTarget)) return;
-    setEditing(false);
-    void saveDetails();
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      await saveDetails();
+      setEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save the record.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <li className={ROW} style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}>
+    <li className={cn(ROW, connect.upwork_url && connect.client_type === "enterprise" && "border-sky-400/25 bg-sky-400/[0.04] hover:border-sky-400/45", connect.upwork_url && connect.client_type === "potential" && "border-amber-400/25 bg-amber-400/[0.04] hover:border-amber-400/45")} style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}>
       <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -139,6 +166,10 @@ export function ConnectRow({
             )}
           </div>
 
+          {(showOwner || connect.upwork_url) && <div className="mt-2 flex flex-wrap items-center gap-2">
+            {connect.upwork_url && <span className={`rounded-full border px-2 py-0.5 text-[11px] ${CLIENT_TYPE_TONE[connect.client_type]}`}>{CLIENT_TYPE_LABEL[connect.client_type]}</span>}
+            {showOwner && <span className="text-[11px] text-muted">Logged by {USER_LABEL[connect.owner]}</span>}
+          </div>}
           {connect.project_title && (
             <p className="mt-2 text-sm font-medium text-text">{connect.project_title}</p>
           )}
@@ -166,7 +197,7 @@ export function ConnectRow({
             </div>
           )}
 
-          <a
+          {connect.profile_url && <a
             href={connect.profile_url}
             target="_blank"
             rel="noopener noreferrer"
@@ -183,7 +214,7 @@ export function ConnectRow({
             >
               <path d="M7 17 17 7M9 7h8v8" />
             </svg>
-          </a>
+          </a>}
 
           {!editing && (connect.tags.length > 0 || connect.note) && (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -219,19 +250,19 @@ export function ConnectRow({
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
                 className="text-xs"
-                onSelect={() => setEditing((v) => !v)}
+                onSelect={edit}
               >
                 <PencilIcon />
-                {editing ? "Close details" : "Edit note and tags"}
+                {editing ? "Close details" : "Edit details"}
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="text-xs">
                 <a
-                  href={connect.profile_url}
+                  href={connect.profile_url || connect.upwork_url}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <ExternalLinkIcon />
-                  Open profile
+                  {connect.profile_url ? "Open profile" : "Open job"}
                 </a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -309,9 +340,9 @@ export function ConnectRow({
 
       {editing && (
         <div
-          onBlur={leaveEditor}
           className="mt-3 grid gap-2 border-t border-line-soft pt-3 sm:grid-cols-2"
         >
+          {connect.upwork_url && <label className="flex flex-col gap-1.5 text-xs text-muted">Client type<ClientTypeSelect value={clientType} onChange={(value) => { if (value !== "all") setClientType(value); }} /></label>}
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Client name" className={FIELD} />
           <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email found" className={FIELD} />
           <input value={upworkUrl} onChange={(e) => setUpworkUrl(e.target.value)} placeholder="Upwork job link" className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
@@ -346,6 +377,11 @@ export function ConnectRow({
             placeholder="Note - what you said, or what to follow up on"
             className={FIELD}
           />
+          <div className="flex gap-2 sm:col-span-2">
+            <Button size="sm" onClick={() => void save()} disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setError(null); }} disabled={saving}>Cancel</Button>
+          </div>
+          {error && <p role="alert" className="text-xs text-rose sm:col-span-2">{error}</p>}
         </div>
       )}
     </li>

@@ -5,6 +5,7 @@ import { useData } from "./DataProvider";
 import { Card, FIELD, PrimaryButton } from "@/components/ui/layout";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CompanyOutreachChannels } from "./CompanyOutreachChannels";
+import { ClientTypeSelect } from "./ClientTypeSelect";
 import { isLinkedInUrl, isUpworkUrl, nameFromUrl, parseTags } from "@/lib/linkedin";
 import { formatShort, relativeDay } from "@/lib/date";
 import { DUPLICATE_MESSAGE } from "@/lib/store";
@@ -12,6 +13,7 @@ import {
   OUTREACH_CHANNEL_LABEL,
   type CompanyOutreachChannel,
   type OutreachChannel,
+  type ClientType,
   USER_LABEL,
 } from "@/lib/types";
 
@@ -23,6 +25,7 @@ export function AddUpwork() {
   const [projectTitle, setProjectTitle] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [clientReviews, setClientReviews] = useState("");
+  const [clientType, setClientType] = useState<ClientType>("unclassified");
   const [email, setEmail] = useState("");
   const [channels, setChannels] = useState<OutreachChannel[]>([]);
   const [note, setNote] = useState("");
@@ -57,6 +60,7 @@ export function AddUpwork() {
     setProjectTitle("");
     setProjectDescription("");
     setClientReviews("");
+    setClientType("unclassified");
     setEmail("");
     setChannels([]);
     setNote("");
@@ -85,6 +89,7 @@ export function AddUpwork() {
         project_title: projectTitle,
         project_description: projectDescription,
         client_reviews: clientReviews,
+        client_type: clientType,
         email,
         outreach_channels: channels,
         note,
@@ -125,6 +130,10 @@ export function AddUpwork() {
           </PrimaryButton>
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted">Client type</span>
+          <ClientTypeSelect value={clientType} onChange={(value) => { if (value !== "all") setClientType(value); }} />
+        </div>
         <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button type="button" onClick={() => setShowDetails((v) => !v)} className="text-xs font-semibold text-muted transition-colors hover:text-text">
             {showDetails ? "Hide job and outreach details" : "Add client, research and outreach details"}

@@ -92,6 +92,7 @@ function buildRow(input: NewConnect): Connect {
     project_title: input.project_title?.trim() ?? "",
     project_description: input.project_description?.trim() ?? "",
     client_reviews: input.client_reviews?.trim() ?? "",
+    client_type: input.client_type ?? "unclassified",
     email: input.email?.trim() ?? "",
     outreach_channels: input.outreach_channels ?? [],
     owner: input.owner,
@@ -139,6 +140,7 @@ export type ConnectPatch = Partial<
     | "project_title"
     | "project_description"
     | "client_reviews"
+    | "client_type"
     | "email"
     | "outreach_channels"
     | "stage"
