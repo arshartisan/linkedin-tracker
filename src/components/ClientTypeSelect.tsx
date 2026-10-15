@@ -1,13 +1,32 @@
 "use client";
 
 import * as Select from "@/components/ui/select";
-import { CLIENT_TYPE_LABEL, CLIENT_TYPE_TONE, type ClientType } from "@/lib/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CLIENT_TYPE_LABEL, CLIENT_TYPE_TONE, hasClientLabel, type ClientType } from "@/lib/types";
 
 export function ClientTypeSelect({ value, onChange, filter = false }: {
   value: ClientType | "all";
   onChange: (value: ClientType | "all") => void;
   filter?: boolean;
 }) {
+  if (!filter) {
+    const current = value === "all" ? "unclassified" : value;
+    return (
+      <fieldset className="flex flex-wrap gap-3" aria-label="Client labels">
+        <legend className="sr-only">Client labels — select either or both</legend>
+        {(["enterprise", "potential"] as const).map((label) => (
+          <label key={label} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs ${hasClientLabel(current, label) ? CLIENT_TYPE_TONE[label] : CLIENT_TYPE_TONE.unclassified}`}>
+            <Checkbox checked={hasClientLabel(current, label)} onCheckedChange={(checked) => {
+              const enterprise = label === "enterprise" ? checked === true : hasClientLabel(current, "enterprise");
+              const potential = label === "potential" ? checked === true : hasClientLabel(current, "potential");
+              onChange(enterprise && potential ? "enterprise_potential" : enterprise ? "enterprise" : potential ? "potential" : "unclassified");
+            }} />
+            {CLIENT_TYPE_LABEL[label]}
+          </label>
+        ))}
+      </fieldset>
+    );
+  }
   return (
     <Select.Root value={value} onValueChange={(next) => onChange(next as ClientType | "all")}>
       <Select.Trigger aria-label={filter ? "Filter by client type" : "Client type"} className="w-full sm:w-auto"><Select.Value /></Select.Trigger>

@@ -131,7 +131,7 @@ export function AddUpwork() {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted">Client type</span>
+          <span className="text-xs text-muted">Client labels — select either or both</span>
           <ClientTypeSelect value={clientType} onChange={(value) => { if (value !== "all") setClientType(value); }} />
         </div>
         <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">

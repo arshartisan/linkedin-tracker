@@ -2,10 +2,13 @@
 
 ## Upwork client types and team reporting
 
-Run [20261015_client_type.sql](migrations/20261015_client_type.sql) in the Supabase
-SQL Editor before deploying this version. It adds `client_type` with Enterprise,
-Potential, and Unclassified values. Existing jobs remain Unclassified. The same
-definitions are included in `schema.sql` for fresh installations.
+Run [20261015_overlapping_client_labels.sql](migrations/20261015_overlapping_client_labels.sql)
+in the Supabase SQL Editor before deploying this version. It supports independent
+Enterprise and Potential labels, including both on one client. It works with or
+without the earlier client-type migration and preserves existing classifications.
+Unclassified means neither label is selected. The same definitions are included
+in `schema.sql` for fresh installations. Clients carrying both labels appear in
+both the Enterprise and Potential filters, and in the dedicated combined filter.
 
 Jobs and companies now default to All members and can be filtered by owner.
 Team reporting separates LinkedIn invites from Upwork jobs. A job with a

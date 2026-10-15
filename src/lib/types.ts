@@ -46,6 +46,7 @@ export const CLIENT_TYPE_LABEL = {
   unclassified: "Unclassified",
   enterprise: "Enterprise client",
   potential: "Potential client",
+  enterprise_potential: "Enterprise & Potential",
 } as const;
 export type ClientType = keyof typeof CLIENT_TYPE_LABEL;
 
@@ -53,7 +54,18 @@ export const CLIENT_TYPE_TONE: Record<ClientType, string> = {
   unclassified: "border-line-soft bg-surface-2 text-muted",
   enterprise: "border-sky-400/30 bg-sky-400/10 text-sky-300",
   potential: "border-amber-400/30 bg-amber-400/10 text-amber-300",
+  enterprise_potential: "border-violet-400/30 bg-violet-400/10 text-violet-300",
 };
+
+export function hasClientLabel(value: ClientType, label: "enterprise" | "potential"): boolean {
+  return value === label || value === "enterprise_potential";
+}
+
+export function matchesClientType(value: ClientType, filter: ClientType | "all"): boolean {
+  return filter === "all" || (filter === "enterprise" || filter === "potential"
+    ? hasClientLabel(value, filter)
+    : value === filter);
+}
 
 export const OUTREACH_CHANNEL_LABEL: Record<OutreachChannel, string> = {
   upwork_connects: "Upwork connects",
@@ -213,7 +225,7 @@ export function hydrate(row: Partial<Connect> & Record<string, unknown>): Connec
     project_title: String(row.project_title ?? ""),
     project_description: String(row.project_description ?? ""),
     client_reviews: String(row.client_reviews ?? ""),
-    client_type: row.client_type === "enterprise" || row.client_type === "potential" ? row.client_type : "unclassified",
+    client_type: row.client_type === "enterprise" || row.client_type === "potential" || row.client_type === "enterprise_potential" ? row.client_type : "unclassified",
     email: String(row.email ?? ""),
     outreach_channels: Array.isArray(row.outreach_channels)
       ? row.outreach_channels.filter(

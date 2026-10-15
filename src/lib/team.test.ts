@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { dayKey } from "./date";
 import { linkedinConnects, teamActivity } from "./team";
-import { hydrate, hydrateCompany } from "./types";
+import { hydrate, hydrateCompany, hasClientLabel, matchesClientType } from "./types";
 import { store } from "./store";
 import { hasSupabase } from "./supabase";
 
@@ -10,7 +10,20 @@ test("client categories hydrate legacy and invalid rows without assigning a cate
   assert.equal(hydrate({}).client_type, "unclassified");
   assert.equal(hydrate({ client_type: "enterprise" }).client_type, "enterprise");
   assert.equal(hydrate({ client_type: "potential" }).client_type, "potential");
+  assert.equal(hydrate({ client_type: "enterprise_potential" }).client_type, "enterprise_potential");
   assert.equal(hydrate({ client_type: "invalid" } as never).client_type, "unclassified");
+});
+
+test("overlapping labels appear under either filter and the combined filter", () => {
+  assert.equal(hasClientLabel("enterprise_potential", "enterprise"), true);
+  assert.equal(hasClientLabel("enterprise_potential", "potential"), true);
+  for (const filter of ["all", "enterprise", "potential", "enterprise_potential"] as const) {
+    assert.equal(matchesClientType("enterprise_potential", filter), true);
+  }
+  assert.equal(matchesClientType("enterprise_potential", "unclassified"), false);
+  assert.equal(matchesClientType("enterprise", "potential"), false);
+  assert.equal(matchesClientType("potential", "enterprise"), false);
+  assert.equal(matchesClientType("unclassified", "enterprise"), false);
 });
 
 test("team totals separate researched profiles from invites, filter owners and dates, and count reached records once", () => {
@@ -46,6 +59,12 @@ test("local job categories persist on creation and editing and hydrate old recor
     assert.equal((await store.list())[0].client_type, "enterprise");
     await store.update(row.id, { client_type: "potential" });
     assert.equal((await store.list())[0].client_type, "potential");
+    await store.update(row.id, { client_type: "enterprise_potential" });
+    assert.equal((await store.list())[0].client_type, "enterprise_potential");
+    await store.update(row.id, { client_type: "enterprise" });
+    assert.equal((await store.list())[0].client_type, "enterprise");
+    await store.update(row.id, { client_type: "unclassified" });
+    assert.equal((await store.list())[0].client_type, "unclassified");
     storage.set("reach.connects.v1", JSON.stringify([{ id: "legacy", upwork_url: "https://www.upwork.com/jobs/~2" }]));
     assert.equal((await store.list())[0].client_type, "unclassified");
   } finally {

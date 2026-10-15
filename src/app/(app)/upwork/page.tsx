@@ -8,14 +8,14 @@ import { EmptyState, Page, PageHeader, SectionHeading } from "@/components/ui/la
 import { MemberFilter, type MemberScope } from "@/components/MemberFilter";
 import { ClientTypeSelect } from "@/components/ClientTypeSelect";
 import { Button } from "@/components/ui/button";
-import type { ClientType } from "@/lib/types";
+import { matchesClientType, type ClientType } from "@/lib/types";
 
 export default function UpworkPage() {
   const { connects, loading } = useData();
   const [owner, setOwner] = useState<MemberScope>("all");
   const [clientType, setClientType] = useState<ClientType | "all">("all");
   const jobs = useMemo(() => connects.filter((connect) => Boolean(connect.upwork_url)), [connects]);
-  const filtered = jobs.filter((job) => (owner === "all" || job.owner === owner) && (clientType === "all" || job.client_type === clientType));
+  const filtered = jobs.filter((job) => (owner === "all" || job.owner === owner) && matchesClientType(job.client_type, clientType));
 
   return (
     <Page>

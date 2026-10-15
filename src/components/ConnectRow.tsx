@@ -25,7 +25,7 @@ import { formatShort, formatTime } from "@/lib/date";
 import { normaliseUrl, parseTags, profileSlug } from "@/lib/linkedin";
 import { isStale, MAX_FOLLOWUPS, nextAction, type Action } from "@/lib/pipeline";
 import type { Connect } from "@/lib/types";
-import { CLIENT_TYPE_LABEL, CLIENT_TYPE_TONE, USER_LABEL, OUTREACH_CHANNEL_LABEL } from "@/lib/types";
+import { CLIENT_TYPE_LABEL, CLIENT_TYPE_TONE, hasClientLabel, USER_LABEL, OUTREACH_CHANNEL_LABEL } from "@/lib/types";
 
 /** "2 days late" reads as pressure; "in 2 days" reads as a plan. */
 function timing(action: Action): { text: string; late: boolean } {
@@ -145,7 +145,11 @@ export function ConnectRow({
   }
 
   return (
-    <li className={cn(ROW, connect.upwork_url && connect.client_type === "enterprise" && "border-sky-400/25 bg-sky-400/[0.04] hover:border-sky-400/45", connect.upwork_url && connect.client_type === "potential" && "border-amber-400/25 bg-amber-400/[0.04] hover:border-amber-400/45")} style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}>
+    <li className={cn(ROW,
+      connect.upwork_url && connect.client_type === "enterprise" && "border-sky-400/25 bg-sky-400/[0.04] hover:border-sky-400/45",
+      connect.upwork_url && connect.client_type === "potential" && "border-amber-400/25 bg-amber-400/[0.04] hover:border-amber-400/45",
+      connect.upwork_url && connect.client_type === "enterprise_potential" && "border-violet-400/25 bg-violet-400/[0.04] hover:border-violet-400/45",
+    )} style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}>
       <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -167,7 +171,9 @@ export function ConnectRow({
           </div>
 
           {(showOwner || connect.upwork_url) && <div className="mt-2 flex flex-wrap items-center gap-2">
-            {connect.upwork_url && <span className={`rounded-full border px-2 py-0.5 text-[11px] ${CLIENT_TYPE_TONE[connect.client_type]}`}>{CLIENT_TYPE_LABEL[connect.client_type]}</span>}
+            {connect.upwork_url && (connect.client_type === "unclassified"
+              ? <span className={`rounded-full border px-2 py-0.5 text-[11px] ${CLIENT_TYPE_TONE.unclassified}`}>Unclassified</span>
+              : (["enterprise", "potential"] as const).filter((label) => hasClientLabel(connect.client_type, label)).map((label) => <span key={label} className={`rounded-full border px-2 py-0.5 text-[11px] ${CLIENT_TYPE_TONE[label]}`}>{CLIENT_TYPE_LABEL[label]}</span>))}
             {showOwner && <span className="text-[11px] text-muted">Logged by {USER_LABEL[connect.owner]}</span>}
           </div>}
           {connect.project_title && (
@@ -342,7 +348,7 @@ export function ConnectRow({
         <div
           className="mt-3 grid gap-2 border-t border-line-soft pt-3 sm:grid-cols-2"
         >
-          {connect.upwork_url && <label className="flex flex-col gap-1.5 text-xs text-muted">Client type<ClientTypeSelect value={clientType} onChange={(value) => { if (value !== "all") setClientType(value); }} /></label>}
+          {connect.upwork_url && <div className="flex flex-col gap-1.5 text-xs text-muted sm:col-span-2"><span>Client labels — select either or both</span><ClientTypeSelect value={clientType} onChange={(value) => { if (value !== "all") setClientType(value); }} /></div>}
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Client name" className={FIELD} />
           <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email found" className={FIELD} />
           <input value={upworkUrl} onChange={(e) => setUpworkUrl(e.target.value)} placeholder="Upwork job link" className={`${FIELD} font-mono text-xs placeholder:font-sans placeholder:text-sm`} />

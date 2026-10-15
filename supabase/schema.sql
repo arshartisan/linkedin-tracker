@@ -148,7 +148,7 @@ alter table public.connects add column if not exists client_reviews text not nul
 alter table public.connects add column if not exists client_type text not null default 'unclassified';
 alter table public.connects drop constraint if exists connects_client_type_check;
 alter table public.connects add constraint connects_client_type_check
-  check (client_type in ('unclassified', 'enterprise', 'potential'));
+  check (client_type in ('unclassified', 'enterprise', 'potential', 'enterprise_potential'));
 alter table public.connects add column if not exists email text not null default '';
 alter table public.connects add column if not exists outreach_channels text[] not null default '{}';
 
