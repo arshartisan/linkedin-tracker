@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useData } from "@/components/DataProvider";
 import { Heatmap, heatmapStart } from "@/components/Heatmap";
 import { TrendChart } from "@/components/TrendChart";
@@ -14,32 +14,26 @@ import {
   Segmented,
   Well,
 } from "@/components/ui/layout";
-import { dayKey, formatShort, shiftDayKey, weekStart } from "@/lib/date";
+import { dayKey, formatShort, shiftDayKey } from "@/lib/date";
 import { diffDays, funnel } from "@/lib/pipeline";
 import { USER_IDS, USER_LABEL, type UserId } from "@/lib/types";
-import { linkedinConnects, teamActivity } from "@/lib/team";
+import { ACTIVITY_LABEL, activityCountsByDay, linkedinConnects, teamActivity, teamDateRange, type DatePreset, type ActivityKind } from "@/lib/team";
+import { TeamDateFilter } from "@/components/TeamDateFilter";
+import * as Select from "@/components/ui/select";
+import { startupStore } from "@/lib/startup-store";
+import type { Startup } from "@/lib/startup";
 import {
   acceptanceRate,
   averagePerActiveDay,
   bestDay,
   bestStreak,
   countsByDay,
-  currentStreak,
   periodDelta,
   replyRate,
-  sumSince,
-  totalsThisMonth,
-  totalsThisWeek,
 } from "@/lib/stats";
 
 /** Kept beside the caption below, which has to name the same window. */
 const HEATMAP_WEEKS = 26;
-
-const RANGES = [
-  { days: 14, label: "14d" },
-  { days: 30, label: "30d" },
-  { days: 90, label: "90d" },
-] as const;
 
 /** "all" is the team; the rest are the three of us. */
 type Owner = UserId | "all";
@@ -137,76 +131,80 @@ function StatsSkeleton() {
 
 export default function StatsPage() {
   const { connects, companies, goals, me, loading } = useData();
-  const [range, setRange] = useState<number>(14);
+  const today = dayKey();
+  const [datePreset, setDatePreset] = useState<DatePreset>("14");
+  const [customDates, setCustomDates] = useState({ from: shiftDayKey(today, -13), to: today });
+  const { from: since, to: until } = teamDateRange(datePreset, today, customDates);
+  const range = diffDays(since, until) + 1;
   const [owner, setOwner] = useState<Owner>("all");
+  const [kind, setKind] = useState<ActivityKind>("all");
+  const [startups, setStartups] = useState<Startup[]>([]);
+  const [startupsLoading, setStartupsLoading] = useState(true);
+  const [startupsError, setStartupsError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    startupStore.list().then((rows) => { if (!cancelled) setStartups(rows); })
+      .catch((err: Error) => { if (!cancelled) setStartupsError(err.message); })
+      .finally(() => { if (!cancelled) setStartupsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
-  /*
-    Every metric on this page is a pure function of a Connect[], so filtering
-    once here is the whole of the per-person view - stats.ts and pipeline.ts
-    don't need to know anyone exists.
-  */
+  // Keep invite-specific conversion rates separate from the combined activity chart.
   const scoped = useMemo(
     () => linkedinConnects(owner === "all" ? connects : connects.filter((c) => c.owner === owner)),
     [connects, owner]
   );
 
-  /*
-    A team day is on target when all three have hit theirs, so the combined
-    target is the sum. Anything else would make the team line trivially green.
-  */
+  // Daily goals are configured for LinkedIn; other activity has no target yet.
   const goal =
     owner === "all"
       ? USER_IDS.reduce((sum, id) => sum + (goals[id] ?? 0), 0)
       : goals[owner];
 
   const counts = useMemo(() => countsByDay(scoped), [scoped]);
-  const today = dayKey();
+  const momentumCounts = useMemo(() => activityCountsByDay(connects, companies, startups, owner, kind), [connects, companies, startups, owner, kind]);
+  const momentumGoal = kind === "linkedin" ? goal : undefined;
 
-  const streak = currentStreak(counts, goal);
-  const best = bestStreak(counts, goal);
-  const week = totalsThisWeek(counts);
-  const month = totalsThisMonth(counts);
-  const last30 = sumSince(counts, shiftDayKey(today, -29));
-  const average = averagePerActiveDay(counts);
-  const peak = bestDay(counts);
-  const { rate, decided } = acceptanceRate(scoped);
-  const { rate: replies, pitched } = replyRate(scoped);
+  const selectedLinkedin = scoped.filter((row) => row.sent_on >= since && row.sent_on <= until);
+  const selectedCounts = countsByDay(selectedLinkedin);
+  const best = bestStreak(selectedCounts, goal);
+  const average = averagePerActiveDay(selectedCounts);
+  const peak = bestDay(selectedCounts);
+  const { rate, decided } = acceptanceRate(selectedLinkedin);
+  const { rate: replies, pitched } = replyRate(selectedLinkedin);
 
-  const daysThisWeek = diffDays(weekStart(today), today) + 1;
-  const weekTarget = goal * daysThisWeek;
-
-  const period = useMemo(() => periodDelta(counts, range), [counts, range]);
+  const period = periodDelta(momentumCounts, range, until);
 
   // Left to the React Compiler rather than a useMemo - `today` isn't provably
   // stable to it, so a manual dependency list here only defeats optimisation.
   const points: { day: string; count: number }[] = [];
   for (let i = range - 1; i >= 0; i--) {
-    const day = shiftDayKey(today, -i);
-    points.push({ day, count: counts.get(day) ?? 0 });
+    const day = shiftDayKey(until, -i);
+    points.push({ day, count: momentumCounts.get(day) ?? 0 });
   }
 
-  const onTarget = points.filter((p) => p.count >= goal).length;
+  const onTarget = points.filter((p) => momentumGoal === undefined ? p.count > 0 : p.count >= momentumGoal).length;
   const rangeAverage = period.current / range;
 
-  /*
-    One row per person, always all three regardless of the filter above - the
-    point of this table is the side-by-side. Scoped to the selected window so
-    the numbers answer "how are we doing lately", not "ever".
-  */
-  // Left to the React Compiler, like `points` above - `since` derives from
-  // `today`, which isn't provably stable, so a manual dependency list here
-  // only defeats optimisation.
-  const since = shiftDayKey(today, -(range - 1));
-  const activity = teamActivity(connects, companies, since, today, owner);
+  // The overview follows both the selected member and inclusive date range.
+  const activity = teamActivity(connects, companies, since, until, owner).map((row) => {
+    const firms = startups.filter((startup) => {
+      const day = dayKey(new Date(startup.created_at));
+      return startup.owner === row.id && day >= since && day <= until;
+    });
+    return { ...row, startups: firms.length, startupsReached: firms.filter((startup) => startup.outreach_channels.length > 0).length };
+  });
   const activityTotals = activity.reduce((total, row) => ({
     linkedin: total.linkedin + row.linkedin,
     jobs: total.jobs + row.jobs,
     jobsReached: total.jobsReached + row.jobsReached,
     companies: total.companies + row.companies,
     companiesReached: total.companiesReached + row.companiesReached,
-  }), { linkedin: 0, jobs: 0, jobsReached: 0, companies: 0, companiesReached: 0 });
+    startups: total.startups + row.startups,
+    startupsReached: total.startupsReached + row.startupsReached,
+  }), { linkedin: 0, jobs: 0, jobsReached: 0, companies: 0, companiesReached: 0, startups: 0, startupsReached: 0 });
   const breakdown = USER_IDS.map((id) => {
-    const rows = linkedinConnects(connects).filter((c) => c.owner === id && c.sent_on >= since && c.sent_on <= today);
+    const rows = linkedinConnects(connects).filter((c) => c.owner === id && c.sent_on >= since && c.sent_on <= until);
     return {
       id,
       sent: rows.length,
@@ -223,36 +221,36 @@ export default function StatsPage() {
     <Page>
       <PageHeader
         title="Team"
-        lead="LinkedIn connections, Upwork jobs, and company outreach across the team."
+        lead="LinkedIn connections, Upwork jobs, companies, and startups across the team."
         /*
           The one control that changes what every panel below means, so it sits
           beside the title rather than inside any one panel.
         */
         actions={
-          <Segmented
+          <><TeamDateFilter value={datePreset} onChange={setDatePreset} custom={customDates} onCustomChange={setCustomDates} today={today} /><Segmented
             label="Whose numbers"
             options={OWNERS}
             value={owner}
             onChange={setOwner}
-          />
+          /></>
         }
       />
 
       <Card className="mb-4 p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div><h2 className="font-display text-lg font-semibold">Outreach overview</h2><p className="mt-1 text-xs text-muted">{formatShort(since)} – {formatShort(today)}. Reached means at least one outreach channel was logged. Counts use each record’s logged date.</p></div>
-          <Segmented label="Overview range" options={RANGES.map((r) => ({ value: r.days, label: r.label }))} value={range} onChange={setRange} />
+          <div><h2 className="font-display text-lg font-semibold">Outreach overview</h2><p className="mt-1 text-xs text-muted">{formatShort(since)} – {formatShort(until)}. Reached means at least one outreach channel was logged. Counts use each record’s logged date.</p></div>
         </div>
-        <div className="grid gap-2.5 sm:grid-cols-3">
+        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
           <Well className="p-4"><Label>LinkedIn connections</Label><p className="tabular mt-2 text-2xl font-semibold">{activityTotals.linkedin}</p></Well>
           <Well className="p-4"><Label>Upwork jobs</Label><p className="tabular mt-2 text-2xl font-semibold">{activityTotals.jobs}</p><p className="mt-1 text-xs text-muted">{activityTotals.jobsReached} approached</p></Well>
           <Well className="p-4"><Label>Companies reached</Label><p className="tabular mt-2 text-2xl font-semibold">{activityTotals.companiesReached}</p><p className="mt-1 text-xs text-muted">{activityTotals.companies} companies registered</p></Well>
+          <Well className="p-4"><Label>Startups</Label><p className="tabular mt-2 text-2xl font-semibold">{startupsLoading || startupsError ? "—" : activityTotals.startups}</p><p className="mt-1 text-xs text-muted">{startupsLoading ? "Loading…" : startupsError ? "Startup activity unavailable" : `${activityTotals.startupsReached} reached`}</p></Well>
         </div>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[34rem] text-sm">
             <caption className="sr-only">Outreach by member for the selected date range</caption>
-            <thead><tr className="border-b border-line-soft"><Th className="text-left">Member</Th><Th>LinkedIn</Th><Th>Jobs logged</Th><Th>Jobs approached</Th><Th>Companies reached</Th></tr></thead>
-            <tbody>{activity.map((row) => <tr key={row.id} className="border-b border-line-soft last:border-0"><td className="py-3 font-medium">{USER_LABEL[row.id]}</td><Td value={String(row.linkedin)} /><Td value={String(row.jobs)} /><Td value={String(row.jobsReached)} /><Td value={String(row.companiesReached)} detail={`${row.companies} registered`} /></tr>)}</tbody>
+            <thead><tr className="border-b border-line-soft"><Th className="text-left">Member</Th><Th>LinkedIn</Th><Th>Jobs logged</Th><Th>Jobs approached</Th><Th>Companies reached</Th><Th>Startups</Th></tr></thead>
+            <tbody>{activity.map((row) => <tr key={row.id} className="border-b border-line-soft last:border-0"><td className="py-3 font-medium">{USER_LABEL[row.id]}</td><Td value={String(row.linkedin)} /><Td value={String(row.jobs)} /><Td value={String(row.jobsReached)} /><Td value={String(row.companiesReached)} detail={`${row.companies} registered`} /><Td value={startupsLoading || startupsError ? "—" : String(row.startups)} detail={startupsLoading || startupsError ? undefined : `${row.startupsReached} reached`} /></tr>)}</tbody>
           </table>
         </div>
       </Card>
@@ -261,37 +259,32 @@ export default function StatsPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-semibold">
-              LinkedIn momentum
+              Activity momentum
             </h2>
             <p className="mt-0.5 text-xs text-muted">
-              Connects per day against{" "}
-              {owner === "all"
-                ? `the combined target of ${goal}`
-                : owner === me.id
-                  ? `your target of ${goal}`
-                  : `${USER_LABEL[owner]}'s target of ${goal}`}
-              .
+              {ACTIVITY_LABEL[kind]} per day, {formatShort(since)} – {formatShort(until)}.
+              {momentumGoal !== undefined ? ` Daily LinkedIn target: ${momentumGoal}.` : " Each record counts once, on its logged date."}
             </p>
           </div>
 
-          <Segmented
-            label="Chart range"
-            options={RANGES.map((r) => ({ value: r.days, label: r.label }))}
-            value={range}
-            onChange={setRange}
-          />
+          <Select.Root value={kind} onValueChange={(value) => setKind(value as ActivityKind)}>
+            <Select.Trigger aria-label="Filter momentum by activity"><Select.Value /></Select.Trigger>
+            <Select.Content align="end"><Select.Group><Select.GroupLabel>Activity</Select.GroupLabel>{Object.entries(ACTIVITY_LABEL).map(([value, label]) => <Select.Item key={value} value={value}>{label}</Select.Item>)}</Select.Group></Select.Content>
+          </Select.Root>
         </div>
 
-        <TrendChart className="mt-5" points={points} goal={goal} />
+        {(kind === "all" || kind === "startups") && startupsLoading ? <p role="status" className="py-10 text-sm text-muted">Loading startup activity…</p>
+          : (kind === "all" || kind === "startups") && startupsError ? <p role="alert" className="py-10 text-sm text-rose">Could not load startup activity: {startupsError}. Select another activity to view its chart.</p>
+          : <TrendChart key={`${kind}-${since}-${until}`} className="mt-5" points={points} goal={momentumGoal} label={ACTIVITY_LABEL[kind]} />}
 
         <Well className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 px-4 py-3.5">
           <div>
-            <Label>Sent in {range} days</Label>
+            <Label>Logged in {range} {range === 1 ? "day" : "days"}</Label>
             <div className="mt-1.5 flex items-baseline gap-2.5">
               <span className="tabular font-display text-3xl font-semibold">
-                {period.current}
+                {(kind === "all" || kind === "startups") && (startupsLoading || startupsError) ? "—" : period.current}
               </span>
-              <Delta change={period.change} />
+              {!((kind === "all" || kind === "startups") && (startupsLoading || startupsError)) && <Delta change={period.change} />}
             </div>
           </div>
 
@@ -300,16 +293,16 @@ export default function StatsPage() {
               <Label>Per day</Label>
               <div
                 className={`tabular mt-1.5 font-display text-xl font-semibold ${
-                  rangeAverage >= goal ? "text-brand" : "text-text"
+                  momentumGoal !== undefined && rangeAverage >= momentumGoal ? "text-brand" : "text-text"
                 }`}
               >
-                {rangeAverage.toFixed(1)}
+                {(kind === "all" || kind === "startups") && (startupsLoading || startupsError) ? "—" : rangeAverage.toFixed(1)}
               </div>
             </div>
             <div>
-              <Label>On target</Label>
+              <Label>{momentumGoal === undefined ? "Active days" : "On target"}</Label>
               <div className="tabular mt-1.5 font-display text-xl font-semibold">
-                {onTarget}
+                {(kind === "all" || kind === "startups") && (startupsLoading || startupsError) ? "—" : onTarget}
                 <span className="text-xs font-semibold text-muted"> / {range}</span>
               </div>
             </div>
@@ -317,21 +310,21 @@ export default function StatsPage() {
         </Well>
       </Card>
 
+      <h2 className="mt-6 mb-2 font-display text-lg font-semibold">LinkedIn in the selected period</h2>
       <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Stat
-          label="Streak"
-          value={String(streak)}
-          detail={best > 0 ? `best ${best}` : "days at target"}
-          tone={streak > 0 ? "brand" : "text"}
+          label="Best streak"
+          value={String(best)}
+          detail="consecutive days at target"
+          tone={best > 0 ? "brand" : "text"}
         />
         <Stat
-          label="This week"
-          value={String(week)}
-          detail={`of ${weekTarget} so far`}
-          tone={week >= weekTarget ? "brand" : "text"}
+          label="Connections logged"
+          value={String(selectedLinkedin.length)}
+          detail={`${formatShort(since)} – ${formatShort(until)}`}
         />
-        <Stat label="This month" value={String(month)} />
-        <Stat label="Last 30 days" value={String(last30)} />
+        <Stat label="Active days" value={String(selectedCounts.size)} />
+        <Stat label="Leads" value={String(funnel(selectedLinkedin).leads)} />
       </div>
 
       <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
@@ -363,10 +356,10 @@ export default function StatsPage() {
       <Card className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4">
           <h2 className="font-display text-lg font-semibold">
-            Side by side
+            LinkedIn side by side
           </h2>
           <p className="mt-0.5 text-xs text-muted">
-            The last {range} days, whoever is selected above.
+            {formatShort(since)} – {formatShort(until)}, all members for comparison.
           </p>
         </div>
 
@@ -444,10 +437,10 @@ export default function StatsPage() {
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-semibold">
-              Six months
+              LinkedIn history — six months
             </h2>
             <p className="mt-0.5 text-xs text-muted">
-              Every day since {formatShort(heatmapStart(HEATMAP_WEEKS, today))}.
+              Fixed history since {formatShort(heatmapStart(HEATMAP_WEEKS, today))}; follows the member filter.
             </p>
           </div>
 

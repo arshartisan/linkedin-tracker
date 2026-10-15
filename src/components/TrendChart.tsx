@@ -18,10 +18,12 @@ const VIEW = 100;
 export function TrendChart({
   points,
   goal,
+  label = "Connects",
   className = "",
 }: {
   points: TrendPoint[];
-  goal: number;
+  goal?: number;
+  label?: string;
   className?: string;
 }) {
   const gradientId = useId();
@@ -29,11 +31,21 @@ export function TrendChart({
 
   const { xs, ys, goalY } = project(
     points.map((p) => p.count),
-    goal,
+    goal ?? 0,
     VIEW
   );
   const line = monotonePath(ys, xs);
 
+  if (points.length === 1) {
+    const point = points[0];
+    return <div className={className} role="img" aria-label={`${label} on ${formatShort(point.day)}: ${point.count}${goal === undefined ? "" : `, daily target ${goal}`}.`}>
+      <div className="flex h-52 flex-col items-center justify-end gap-3 sm:h-60">
+        <span className="tabular text-2xl font-semibold">{point.count}</span>
+        <div className="w-14 rounded-t-lg bg-brand/70" style={{ height: point.count === 0 ? 2 : `${Math.max(8, Math.min(160, goal ? point.count / goal * 160 : 160))}px` }} />
+      </div>
+      <p className="mt-2 text-center text-xs text-muted">{formatShort(point.day)}{goal === undefined ? "" : ` · Target ${goal}`}</p>
+    </div>;
+  }
   if (points.length < 2) {
     return (
       <div
@@ -64,7 +76,7 @@ export function TrendChart({
       <div
         className="relative h-52 w-full touch-none sm:h-60"
         role="img"
-        aria-label={`Connects per day over the last ${points.length} days, ${total} in total, against a daily target of ${goal}.`}
+        aria-label={`${label} per day over the last ${points.length} days, ${total} in total${goal === undefined ? "." : `, against a daily target of ${goal}.`}`}
         tabIndex={0}
         onPointerMove={(e) => moveTo(e.clientX, e.currentTarget)}
         onPointerLeave={() => setHover(null)}
@@ -95,7 +107,7 @@ export function TrendChart({
           <path d={area} fill={`url(#${gradientId})`} className="fade-in" />
 
           {/* The target, as a line you can be above or below at a glance. */}
-          <line
+          {goal !== undefined && <line
             x1="0"
             x2={VIEW}
             y1={goalY}
@@ -104,7 +116,7 @@ export function TrendChart({
             strokeWidth="1"
             strokeDasharray="3 4"
             vectorEffect="non-scaling-stroke"
-          />
+          />}
 
           {hover !== null && (
             <line
@@ -164,15 +176,15 @@ export function TrendChart({
             <div className="tabular font-display text-sm font-semibold whitespace-nowrap">
               <span
                 className={
-                  activePoint.count >= goal ? "text-brand" : "text-text"
+                  goal !== undefined && activePoint.count >= goal ? "text-brand" : "text-text"
                 }
               >
                 {activePoint.count}
               </span>
-              <span className="text-[10px] font-semibold text-muted">
+              {goal !== undefined && <span className="text-[10px] font-semibold text-muted">
                 {" "}
                 / {goal}
-              </span>
+              </span>}
             </div>
           </div>
         </div>

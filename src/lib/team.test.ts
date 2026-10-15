@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { dayKey } from "./date";
-import { linkedinConnects, teamActivity } from "./team";
+import { activityCountsByDay, linkedinConnects, teamActivity, teamDateRange } from "./team";
+import { EMPTY_STARTUP } from "./startup";
+import { periodDelta } from "./stats";
 import { hydrate, hydrateCompany, hasClientLabel, matchesClientType } from "./types";
 import { store } from "./store";
 import { hasSupabase } from "./supabase";
@@ -24,6 +26,36 @@ test("overlapping labels appear under either filter and the combined filter", ()
   assert.equal(matchesClientType("enterprise", "potential"), false);
   assert.equal(matchesClientType("potential", "enterprise"), false);
   assert.equal(matchesClientType("unclassified", "enterprise"), false);
+});
+
+test("date presets use inclusive local calendar days across month and year boundaries", () => {
+  const custom = { from: "2025-12-20", to: "2025-12-25" };
+  assert.deepEqual(teamDateRange("today", "2026-01-01", custom), { from: "2026-01-01", to: "2026-01-01" });
+  assert.deepEqual(teamDateRange("yesterday", "2026-01-01", custom), { from: "2025-12-31", to: "2025-12-31" });
+  assert.deepEqual(teamDateRange("7", "2026-01-01", custom), { from: "2025-12-26", to: "2026-01-01" });
+  assert.deepEqual(teamDateRange("14", "2026-10-15", custom), { from: "2026-10-02", to: "2026-10-15" });
+  assert.deepEqual(teamDateRange("custom", "2026-01-01", custom), custom);
+});
+
+test("momentum includes every tracked record once with matching category, owner, and date totals", () => {
+  const created = new Date(2026, 9, 15, 12).toISOString();
+  const connects = [
+    hydrate({ owner: "arsh", sent_on: "2026-10-15" }),
+    hydrate({ owner: "abdul", sent_on: "2026-10-15", upwork_url: "https://upwork.com/jobs/~1", profile_url: "https://linkedin.com/in/client", outreach_channels: ["direct_email", "linkedin_message"] }),
+    hydrate({ owner: "arsh", sent_on: "2026-10-14" }),
+  ];
+  const companies = [hydrateCompany({ owner: "arsh", created_at: created }), hydrateCompany({ owner: "rishad", created_at: "invalid" })];
+  const startups = [{ ...EMPTY_STARTUP, id: "startup", owner: "rishad" as const, created_at: created }];
+  const all = activityCountsByDay(connects, companies, startups, "all", "all");
+  assert.equal(all.get("2026-10-15"), 4);
+  assert.equal(all.get("2026-10-14"), 1);
+  assert.equal(all.size, 2);
+  assert.equal(activityCountsByDay(connects, companies, startups, "arsh", "all").get("2026-10-15"), 2);
+  for (const kind of ["linkedin", "upwork", "companies", "startups"] as const) {
+    assert.equal(activityCountsByDay(connects, companies, startups, "all", kind).get("2026-10-15"), 1);
+  }
+  assert.deepEqual(periodDelta(all, 1, "2026-10-15"), { current: 4, previous: 1, change: 3 });
+  assert.deepEqual(periodDelta(all, 1, "2026-10-14"), { current: 1, previous: 0, change: null });
 });
 
 test("team totals separate researched profiles from invites, filter owners and dates, and count reached records once", () => {
