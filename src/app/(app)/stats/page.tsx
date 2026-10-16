@@ -27,7 +27,6 @@ import {
   averagePerActiveDay,
   bestDay,
   bestStreak,
-  countsByDay,
   periodDelta,
   replyRate,
 } from "@/lib/stats";
@@ -161,13 +160,13 @@ export default function StatsPage() {
       ? USER_IDS.reduce((sum, id) => sum + (goals[id] ?? 0), 0)
       : goals[owner];
 
-  const counts = useMemo(() => countsByDay(scoped), [scoped]);
   const momentumCounts = useMemo(() => activityCountsByDay(connects, companies, startups, owner, kind), [connects, companies, startups, owner, kind]);
   const momentumGoal = kind === "linkedin" ? goal : undefined;
 
   const selectedLinkedin = scoped.filter((row) => row.sent_on >= since && row.sent_on <= until);
-  const selectedCounts = countsByDay(selectedLinkedin);
-  const best = bestStreak(selectedCounts, goal);
+  const activityUnavailable = (kind === "all" || kind === "startups") && (startupsLoading || Boolean(startupsError));
+  const selectedCounts = new Map([...momentumCounts].filter(([day]) => day >= since && day <= until));
+  const best = bestStreak(selectedCounts, momentumGoal ?? 1);
   const average = averagePerActiveDay(selectedCounts);
   const peak = bestDay(selectedCounts);
   const { rate, decided } = acceptanceRate(selectedLinkedin);
@@ -204,15 +203,13 @@ export default function StatsPage() {
     startupsReached: total.startupsReached + row.startupsReached,
   }), { linkedin: 0, jobs: 0, jobsReached: 0, companies: 0, companiesReached: 0, startups: 0, startupsReached: 0 });
   const breakdown = USER_IDS.map((id) => {
-    const rows = linkedinConnects(connects).filter((c) => c.owner === id && c.sent_on >= since && c.sent_on <= until);
-    return {
-      id,
-      sent: rows.length,
-      accept: acceptanceRate(rows),
-      reply: replyRate(rows),
-      leads: funnel(rows).leads,
-      target: (goals[id] ?? 0) * range,
-    };
+    const counts = activityCountsByDay(connects, companies, startups, id, kind);
+    const selected = new Map([...counts].filter(([day]) => day >= since && day <= until));
+    const total = periodDelta(counts, range, until).current;
+    const categories = (["linkedin", "upwork", "companies", "startups"] as const).map((category) => ({
+      category, total: periodDelta(activityCountsByDay(connects, companies, startups, id, category), range, until).current,
+    }));
+    return { id, total, activeDays: selected.size, categories };
   });
 
   if (loading) return <StatsSkeleton />;
@@ -268,7 +265,7 @@ export default function StatsPage() {
           </div>
 
           <Select.Root value={kind} onValueChange={(value) => setKind(value as ActivityKind)}>
-            <Select.Trigger aria-label="Filter momentum by activity"><Select.Value /></Select.Trigger>
+            <Select.Trigger aria-label="Filter statistics by activity"><Select.Value /></Select.Trigger>
             <Select.Content align="end"><Select.Group><Select.GroupLabel>Activity</Select.GroupLabel>{Object.entries(ACTIVITY_LABEL).map(([value, label]) => <Select.Item key={value} value={value}>{label}</Select.Item>)}</Select.Group></Select.Content>
           </Select.Root>
         </div>
@@ -310,137 +307,54 @@ export default function StatsPage() {
         </Well>
       </Card>
 
-      <h2 className="mt-6 mb-2 font-display text-lg font-semibold">LinkedIn in the selected period</h2>
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <Stat
-          label="Best streak"
-          value={String(best)}
-          detail="consecutive days at target"
-          tone={best > 0 ? "brand" : "text"}
-        />
-        <Stat
-          label="Connections logged"
-          value={String(selectedLinkedin.length)}
-          detail={`${formatShort(since)} – ${formatShort(until)}`}
-        />
-        <Stat label="Active days" value={String(selectedCounts.size)} />
+      <h2 className="mt-6 mb-2 font-display text-lg font-semibold">{ACTIVITY_LABEL[kind]} in the selected period</h2>
+      {activityUnavailable ? <p role={startupsError ? "alert" : "status"} className="py-6 text-sm text-muted">{startupsError ? "Activity statistics unavailable until startup activity can be loaded." : "Loading activity statistics..."}</p> : <>
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        <Stat label="Best streak" value={String(best)} detail={momentumGoal === undefined ? "consecutive active days" : "consecutive days at target"} tone={best > 0 ? "brand" : "text"} />
+        <Stat label="Records logged" value={String(period.current)} detail={formatShort(since) + " - " + formatShort(until)} />
+        <Stat label="Active days" value={String(selectedCounts.size)} detail={"of " + range + " days"} />
+        <Stat label="Avg / active day" value={average.toFixed(1)} detail={momentumGoal === undefined ? "records per active day" : "daily target " + momentumGoal} />
+        <Stat label="Best day" value={peak ? String(peak.count) : "0"} detail={peak ? formatShort(peak.day) : undefined} />
+        <Stat label="Avg / calendar day" value={rangeAverage.toFixed(1)} detail="including days with no activity" />
+      </div>
+      {kind === "linkedin" && <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         <Stat label="Leads" value={String(funnel(selectedLinkedin).leads)} />
-      </div>
-
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <Stat
-          label="Avg / active day"
-          value={average.toFixed(1)}
-          detail={average >= goal ? "above target" : `target ${goal}`}
-          tone={average >= goal ? "brand" : "dim"}
-        />
-        <Stat
-          label="Best day"
-          value={peak ? String(peak.count) : "0"}
-          detail={peak ? formatShort(peak.day) : undefined}
-        />
-        <Stat
-          label="Accept rate"
-          value={decided === 0 ? "-" : `${Math.round(rate * 100)}%`}
-          detail={decided === 0 ? "no invites decided yet" : `of ${decided} decided`}
-          tone={decided === 0 ? "text" : "brand"}
-        />
-        <Stat
-          label="Reply rate"
-          value={pitched === 0 ? "-" : `${Math.round(replies * 100)}%`}
-          detail={pitched === 0 ? "send an opener first" : `of ${pitched} pitched`}
-          tone={pitched === 0 ? "text" : "brand"}
-        />
-      </div>
+        <Stat label="Accept rate" value={decided === 0 ? "-" : Math.round(rate * 100) + "%"} detail={decided === 0 ? "no invites decided yet" : "of " + decided + " decided"} />
+        <Stat label="Reply rate" value={pitched === 0 ? "-" : Math.round(replies * 100) + "%"} detail={pitched === 0 ? "send an opener first" : "of " + pitched + " pitched"} />
+      </div>}
+      </>}
 
       <Card className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4">
           <h2 className="font-display text-lg font-semibold">
-            LinkedIn side by side
+            Activity side by side
           </h2>
           <p className="mt-0.5 text-xs text-muted">
-            {formatShort(since)} – {formatShort(until)}, all members for comparison.
+            {formatShort(since)} – {formatShort(until)}, all members for comparison. Totals and active days follow the activity filter.
           </p>
         </div>
 
-        {/* Narrow screens scroll the table rather than the page. */}
-        <div className="-mx-1 overflow-x-auto px-1">
-          <table className="w-full min-w-[30rem] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line-soft text-left">
-                <Th className="text-left">Person</Th>
-                <Th>Sent</Th>
-                <Th>Accept</Th>
-                <Th>Reply</Th>
-                <Th>Leads</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {breakdown.map((row) => (
-                <tr
-                  key={row.id}
-                  className={`border-b border-line-soft/60 last:border-0 ${
-                    row.id === me.id ? "bg-surface-2/40" : ""
-                  }`}
-                >
-                  <td className="py-3 pr-3">
-                    <span className="font-display font-semibold">
-                      {USER_LABEL[row.id]}
-                    </span>
-                    {row.id === me.id && (
-                      <span className="label ml-2 text-[10px] text-brand">
-                        you
-                      </span>
-                    )}
-                  </td>
-                  <td className="tabular py-3 text-right font-semibold">
-                    <span
-                      className={row.sent >= row.target ? "text-brand" : "text-text"}
-                    >
-                      {row.sent}
-                    </span>
-                    <span className="text-muted"> / {row.target}</span>
-                  </td>
-                  <Td
-                    value={
-                      row.accept.decided === 0
-                        ? "-"
-                        : `${Math.round(row.accept.rate * 100)}%`
-                    }
-                    detail={
-                      row.accept.decided === 0
-                        ? undefined
-                        : `${row.accept.decided} decided`
-                    }
-                  />
-                  <Td
-                    value={
-                      row.reply.pitched === 0
-                        ? "-"
-                        : `${Math.round(row.reply.rate * 100)}%`
-                    }
-                    detail={
-                      row.reply.pitched === 0
-                        ? undefined
-                        : `${row.reply.pitched} pitched`
-                    }
-                  />
-                  <Td value={String(row.leads)} tone={row.leads > 0 ? "brand" : "text"} />
-                </tr>
-              ))}
-            </tbody>
+        {activityUnavailable ? <p className="py-6 text-sm text-muted">{startupsError ? "Member comparison unavailable until startup activity can be loaded." : "Loading member comparison..."}</p> : <div className="-mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[42rem] border-collapse text-sm">
+            <caption className="sr-only">Activity by member for the selected period</caption>
+            <thead><tr className="border-b border-line-soft"><Th className="text-left">Person</Th><Th>Total</Th><Th>Active days</Th><Th>LinkedIn</Th><Th>Upwork jobs</Th><Th>Companies</Th><Th>Startups</Th></tr></thead>
+            <tbody>{breakdown.map((row) => <tr key={row.id} className={"border-b border-line-soft/60 last:border-0 " + (row.id === me.id ? "bg-surface-2/40" : "")}>
+              <td className="py-3 pr-3"><span className="font-display font-semibold">{USER_LABEL[row.id]}</span>{row.id === me.id && <span className="label ml-2 text-[10px] text-brand">you</span>}</td>
+              <Td value={String(row.total)} /><Td value={String(row.activeDays)} />
+              {row.categories.map(({category, total}) => <Td key={category} value={category === "startups" && (startupsLoading || startupsError) ? "-" : String(total)} />)}
+            </tr>)}</tbody>
           </table>
-        </div>
+        </div>}
       </Card>
 
       <Card className="mt-2.5 p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-semibold">
-              LinkedIn history — six months
+              {ACTIVITY_LABEL[kind]} history &mdash; six months
             </h2>
             <p className="mt-0.5 text-xs text-muted">
-              Fixed history since {formatShort(heatmapStart(HEATMAP_WEEKS, today))}; follows the member filter.
+              Fixed history since {formatShort(heatmapStart(HEATMAP_WEEKS, today))}; follows the member and activity filters. Each record counts once, on its logged date.
             </p>
           </div>
 
@@ -451,11 +365,12 @@ export default function StatsPage() {
             <span className="size-[11px] rounded-[2px] bg-brand/35" />
             <span className="size-[11px] rounded-[2px] bg-brand/60" />
             <span className="size-[11px] rounded-[2px] bg-brand" />
-            target
+            {momentumGoal === undefined ? "more" : "target"}
           </div>
         </div>
 
-        <Heatmap counts={counts} goal={goal} weeks={HEATMAP_WEEKS} />
+        {activityUnavailable ? <p className="py-6 text-sm text-muted">{startupsError ? "Activity history unavailable until startup activity can be loaded." : "Loading activity history..."}</p>
+          : <Heatmap counts={momentumCounts} goal={momentumGoal} weeks={HEATMAP_WEEKS} unit="records logged" />}
       </Card>
     </Page>
   );

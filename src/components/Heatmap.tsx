@@ -27,9 +27,11 @@ export function Heatmap({
   counts,
   goal,
   weeks = 26,
+  unit = "sent",
 }: {
   counts: Map<string, number>;
-  goal: number;
+  goal?: number;
+  unit?: string;
   weeks?: number;
 }) {
   const today = dayKey();
@@ -46,11 +48,14 @@ export function Heatmap({
     columns.push(column);
   }
 
+  // Without a configured target, intensity follows the busiest visible day.
+  const scale = goal && goal > 0 ? goal : Math.max(1, ...[...counts].filter(([day]) => day >= start && day <= today).map(([, count]) => count));
+
   function tone(day: string) {
     if (day > today) return "bg-transparent";
     const n = counts.get(day) ?? 0;
     if (n === 0) return "bg-line-soft";
-    const ratio = n / goal;
+    const ratio = n / scale;
     if (ratio > 1) return "bg-brand shadow-[0_0_7px_-1px_var(--brand)]";
     if (ratio >= 1) return "bg-brand";
     if (ratio >= 0.66) return "bg-brand/60";
@@ -99,7 +104,7 @@ export function Heatmap({
               {column.map((day) => (
                 <div
                   key={day}
-                  title={`${formatShort(day)} - ${counts.get(day) ?? 0} sent`}
+                  title={`${formatShort(day)} - ${counts.get(day) ?? 0} ${unit}`}
                   className={`rounded-[2px] ${tone(day)}`}
                   style={{ width: CELL, height: CELL }}
                 />
