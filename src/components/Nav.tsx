@@ -147,7 +147,7 @@ export function Nav() {
               </Link>
             </SidebarMenuButton>
             {count !== null && (
-              <SidebarMenuBadge className="tabular h-4 min-w-6 rounded-full border-[0.5px] border-[#414141] bg-surface-2 px-1 text-[12px] leading-none font-normal text-[#cfcfcf] shadow-[0_0_0_0.5px_#0e0e0e] peer-data-[size=default]/menu-button:top-2 peer-data-[active=true]/menu-button:text-[#cfcfcf] peer-hover/menu-button:text-[#cfcfcf]">
+              <SidebarMenuBadge className="tabular h-4 min-w-6 rounded-full border-[0.5px] border-line bg-surface-2 px-1 text-[12px] leading-none font-normal text-[#cfcfcf] shadow-[0_0_0_0.5px_#0e0e0e] peer-data-[size=default]/menu-button:top-2 peer-data-[active=true]/menu-button:text-[#cfcfcf] peer-hover/menu-button:text-[#cfcfcf]">
                 {count}
               </SidebarMenuBadge>
             )}
@@ -171,7 +171,7 @@ export function Nav() {
         collapsible="icon"
         className="border-sidebar-border **:data-[sidebar=sidebar]:bg-sidebar"
       >
-        <SidebarHeader className="h-[65px] justify-center border-b border-sidebar-border bg-[#181818] px-4 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-1">
+        <SidebarHeader className="h-[65px] justify-center border-b border-sidebar-border bg-sidebar px-4 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-1">
           <Link
             href="/"
             className="flex min-w-0 items-center gap-2.5 overflow-hidden px-1"
@@ -214,7 +214,7 @@ export function Nav() {
         </SidebarContent>
 
         {/* Collapsed to icons there is no room for the tally, so it steps aside. */}
-        <SidebarFooter inert={collapsed} aria-hidden={collapsed || undefined} className="grid grid-rows-[1fr] border-t border-sidebar-border bg-[#181818] p-4 transition-[grid-template-rows,padding,opacity] duration-300 ease-out-strong group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:grid-rows-[0fr] group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:opacity-0">
+        <SidebarFooter inert={collapsed} aria-hidden={collapsed || undefined} className="grid grid-rows-[1fr] border-t border-sidebar-border bg-sidebar p-4 transition-[grid-template-rows,padding,opacity] duration-300 ease-out-strong group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:grid-rows-[0fr] group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:opacity-0">
           <div className="min-h-0 overflow-hidden whitespace-nowrap">
             <div className="flex items-center justify-between gap-2">
               <span className="label text-[10px]">{me.name} · Today</span>

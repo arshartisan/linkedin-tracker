@@ -69,13 +69,16 @@ export function PageHeader({
 export function Card({
   children,
   className,
+  glow = false,
   as: Tag = "section",
 }: {
   children: React.ReactNode;
   className?: string;
+  /** The brand-lit treatment. One featured panel per screen, at most. */
+  glow?: boolean;
   as?: "section" | "div" | "article" | "li";
 }) {
-  return <Tag className={cn("card", className)}>{children}</Tag>;
+  return <Tag className={cn("card", glow && "card-glow", className)}>{children}</Tag>;
 }
 
 /**
@@ -277,7 +280,7 @@ export function Chip({
   className?: string;
 }) {
   const tones = {
-    muted: "border-[#363636] bg-surface-2 text-[#cfcfcf]",
+    muted: "border-line bg-surface-2 text-[#cfcfcf]",
     brand: "border-brand-edge bg-brand-soft text-brand-tint",
     rose: "border-[#4c2324] bg-rose-soft text-[#febfc6]",
   };

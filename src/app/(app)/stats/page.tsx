@@ -261,7 +261,7 @@ export default function StatsPage() {
         </div>
       </Card>
 
-      <Card className="p-4 sm:p-6">
+      <Card glow className="p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-semibold">
