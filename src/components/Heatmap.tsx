@@ -1,28 +1,35 @@
 "use client";
 
-import { dayKey, formatShort, parseDayKey, shiftDayKey, weekStart } from "@/lib/date";
-
-/** Cell size and gutter, in px. The column pitch falls out of the two. */
-const CELL = 11;
-const GAP = 3;
-const PITCH = CELL + GAP;
+import {
+  HeatmapCells,
+  HeatmapChart,
+  HeatmapInteractionBoundary,
+  HeatmapInteractionProvider,
+  HeatmapLegend,
+  HeatmapTooltip,
+  HeatmapXAxis,
+  HeatmapYAxis,
+  type HeatmapColumn,
+} from "@/components/charts/heatmap";
+import { CHART_SCALE_VARS } from "@/components/charts/chart-scale";
+import { dayKey, formatShort, parseDayKey, shiftDayKey } from "@/lib/date";
 
 /**
- * Six months of days, one column per week starting Monday. Colour encodes
- * effort against the goal on a single ramp, and only a day that actually hit
- * the goal reaches full strength - so a wall of solid lime means a wall of met
- * targets, and a day that beat the goal is the only thing that glows.
- */
-/**
- * The Monday the grid opens on: `weeks` columns back from the Monday of the
+ * The Sunday the grid opens on: `weeks` columns back from the Sunday of the
  * week we're in, so the last column is the current week and today always has a
- * cell. Counting a flat `weeks * 7` days back instead lands the final column on
- * the *previous* week, which hides today and everything logged since Sunday.
+ * cell. bklit's heatmap lays its rows out Sunday-first.
  */
 export function heatmapStart(weeks: number, today: string = dayKey()): string {
-  return weekStart(shiftDayKey(today, -(weeks - 1) * 7));
+  const sunday = shiftDayKey(today, -parseDayKey(today).getDay());
+  return shiftDayKey(sunday, -(weeks - 1) * 7);
 }
 
+/**
+ * Six months of days as a bklit heatmap, one column per week. Colour encodes
+ * effort against the goal, and only a day that hit the goal reaches full
+ * strength - so a wall of solid lime means a wall of met targets. Without a
+ * goal, intensity follows the busiest visible day.
+ */
 export function Heatmap({
   counts,
   goal,
@@ -37,82 +44,41 @@ export function Heatmap({
   const today = dayKey();
   const start = heatmapStart(weeks, today);
 
-  const columns: string[][] = [];
+  const data: HeatmapColumn[] = [];
   let cursor = start;
   for (let w = 0; w < weeks; w++) {
-    const column: string[] = [];
+    const bins = [];
     for (let d = 0; d < 7; d++) {
-      column.push(cursor);
+      // Future days get no cell rather than an empty one that reads as a miss.
+      if (cursor <= today) bins.push({ bin: d, count: counts.get(cursor) ?? 0, date: parseDayKey(cursor) });
       cursor = shiftDayKey(cursor, 1);
     }
-    columns.push(column);
+    data.push({ bin: w, bins });
   }
 
-  // Without a configured target, intensity follows the busiest visible day.
   const scale = goal && goal > 0 ? goal : Math.max(1, ...[...counts].filter(([day]) => day >= start && day <= today).map(([, count]) => count));
 
-  function tone(day: string) {
-    if (day > today) return "bg-transparent";
-    const n = counts.get(day) ?? 0;
-    if (n === 0) return "bg-line-soft";
+  function colorScale(count: number | null | undefined) {
+    const n = count ?? 0;
+    if (n <= 0) return CHART_SCALE_VARS[0];
     const ratio = n / scale;
-    if (ratio > 1) return "bg-brand shadow-[0_0_7px_-1px_var(--brand)]";
-    if (ratio >= 1) return "bg-brand";
-    if (ratio >= 0.66) return "bg-brand/60";
-    if (ratio >= 0.33) return "bg-brand/35";
-    return "bg-brand/18";
+    if (ratio >= 1) return CHART_SCALE_VARS[4];
+    if (ratio >= 0.66) return CHART_SCALE_VARS[3];
+    if (ratio >= 0.33) return CHART_SCALE_VARS[2];
+    return CHART_SCALE_VARS[1];
   }
 
-  // Label a column when its Monday opens a new month.
-  const monthLabels = columns.map((column) => {
-    const first = parseDayKey(column[0]);
-    const prev = parseDayKey(shiftDayKey(column[0], -7));
-    return first.getMonth() !== prev.getMonth()
-      ? first.toLocaleDateString(undefined, { month: "short" })
-      : "";
-  });
-
-  const width = weeks * PITCH - GAP;
-
   return (
-    <div className="overflow-x-auto pb-1">
-      <div className="inline-flex flex-col gap-1.5" style={{ width }}>
-        {/*
-          A month name is three characters wide and a column is eleven pixels,
-          so the labels cannot live *in* the grid - laid out as flex items they
-          overflow their cell and shove every later month out of register.
-          They're absolutely positioned against the column pitch instead, which
-          pins each one to the week it names and lets it overhang freely.
-        */}
-        <div className="relative h-3">
-          {monthLabels.map((label, i) =>
-            label ? (
-              <span
-                key={i}
-                className="absolute top-0 text-[9px] font-semibold uppercase tracking-wide text-muted"
-                style={{ left: i * PITCH }}
-              >
-                {label}
-              </span>
-            ) : null
-          )}
-        </div>
-
-        <div className="flex" style={{ gap: GAP }}>
-          {columns.map((column, i) => (
-            <div key={i} className="flex flex-col" style={{ gap: GAP }}>
-              {column.map((day) => (
-                <div
-                  key={day}
-                  title={`${formatShort(day)} - ${counts.get(day) ?? 0} ${unit}`}
-                  className={`rounded-[2px] ${tone(day)}`}
-                  style={{ width: CELL, height: CELL }}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <HeatmapInteractionProvider>
+      <HeatmapInteractionBoundary>
+        <HeatmapChart data={data} layout="fluid" gap={3} colorScale={colorScale} margin={{ top: 20, right: 0, bottom: 0, left: 32 }}>
+          <HeatmapCells />
+          <HeatmapXAxis />
+          <HeatmapYAxis />
+          <HeatmapTooltip formatLabel={(count, date) => `${formatShort(dayKey(date))} · ${count} ${unit}`} />
+        </HeatmapChart>
+        <HeatmapLegend className="mt-3" interactive={false} lessLabel="none" moreLabel={goal ? "target" : "more"} />
+      </HeatmapInteractionBoundary>
+    </HeatmapInteractionProvider>
   );
 }

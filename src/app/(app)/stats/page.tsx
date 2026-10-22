@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useData } from "@/components/DataProvider";
 import { Heatmap, heatmapStart } from "@/components/Heatmap";
 import { TrendChart } from "@/components/TrendChart";
+import { MemberBarChart, type MemberSeries } from "@/components/MemberBarChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -40,6 +41,14 @@ type Owner = UserId | "all";
 const OWNERS: { value: Owner; label: string }[] = [
   { value: "all", label: "All" },
   ...USER_IDS.map((id) => ({ value: id as Owner, label: USER_LABEL[id] })),
+];
+
+/** Stacked-bar segments for the member comparison, in table column order. */
+const MEMBER_SERIES: MemberSeries[] = [
+  { key: "linkedin", label: "LinkedIn", color: "var(--chart-1)" },
+  { key: "upwork", label: "Upwork jobs", color: "var(--chart-2)" },
+  { key: "companies", label: "Companies", color: "var(--chart-3)" },
+  { key: "startups", label: "Startups", color: "var(--chart-4)" },
 ];
 
 type Tone = "text" | "brand" | "dim";
@@ -334,7 +343,13 @@ export default function StatsPage() {
           </p>
         </div>
 
-        {activityUnavailable ? <p className="py-6 text-sm text-muted">{startupsError ? "Member comparison unavailable until startup activity can be loaded." : "Loading member comparison..."}</p> : <div className="-mx-1 overflow-x-auto px-1">
+        {activityUnavailable ? <p className="py-6 text-sm text-muted">{startupsError ? "Member comparison unavailable until startup activity can be loaded." : "Loading member comparison..."}</p> : <>
+        <MemberBarChart
+          className="mb-5"
+          series={kind === "all" ? MEMBER_SERIES : MEMBER_SERIES.filter((s) => s.key === kind)}
+          rows={breakdown.map((row) => ({ name: USER_LABEL[row.id], ...Object.fromEntries(row.categories.map(({ category, total }) => [category, total])) }))}
+        />
+        <div className="-mx-1 overflow-x-auto px-1">
           <table className="w-full min-w-[42rem] border-collapse text-sm">
             <caption className="sr-only">Activity by member for the selected period</caption>
             <thead><tr className="border-b border-line-soft"><Th className="text-left">Person</Th><Th>Total</Th><Th>Active days</Th><Th>LinkedIn</Th><Th>Upwork jobs</Th><Th>Companies</Th><Th>Startups</Th></tr></thead>
@@ -344,7 +359,8 @@ export default function StatsPage() {
               {row.categories.map(({category, total}) => <Td key={category} value={category === "startups" && (startupsLoading || startupsError) ? "-" : String(total)} />)}
             </tr>)}</tbody>
           </table>
-        </div>}
+        </div>
+        </>}
       </Card>
 
       <Card className="mt-2.5 p-4 sm:p-6">
@@ -356,16 +372,6 @@ export default function StatsPage() {
             <p className="mt-0.5 text-xs text-muted">
               Fixed history since {formatShort(heatmapStart(HEATMAP_WEEKS, today))}; follows the member and activity filters. Each record counts once, on its logged date.
             </p>
-          </div>
-
-          <div className="label flex items-center gap-1.5">
-            none
-            <span className="size-[11px] rounded-[2px] bg-line-soft" />
-            <span className="size-[11px] rounded-[2px] bg-brand/18" />
-            <span className="size-[11px] rounded-[2px] bg-brand/35" />
-            <span className="size-[11px] rounded-[2px] bg-brand/60" />
-            <span className="size-[11px] rounded-[2px] bg-brand" />
-            {momentumGoal === undefined ? "more" : "target"}
           </div>
         </div>
 

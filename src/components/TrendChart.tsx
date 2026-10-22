@@ -1,20 +1,18 @@
 "use client";
 
-import { useId, useState } from "react";
-import { monotonePath, project } from "@/lib/chart";
-import { formatShort } from "@/lib/date";
+import { Area, AreaChart } from "@/components/charts/area-chart";
+import { Grid } from "@/components/charts/grid";
+import { ChartTooltip } from "@/components/charts/tooltip";
+import { XAxis } from "@/components/charts/x-axis";
+import { formatShort, parseDayKey } from "@/lib/date";
 
 export type TrendPoint = { day: string; count: number };
 
 /**
- * The chart draws in a fixed 0–100 square and is stretched to fill its box by
- * `preserveAspectRatio="none"`. That keeps one coordinate system for both the
- * SVG geometry and the HTML overlay - a point at x=40 is at `left: 40%` - and
- * `vector-effect="non-scaling-stroke"` stops the stretch from smearing the
- * stroke or the baseline's dashes.
+ * Daily activity as a bklit area chart. A goal, when there is one, rides along
+ * as a flat dashed series so it both draws the target line and keeps the
+ * y-domain tall enough to show it on days well under target.
  */
-const VIEW = 100;
-
 export function TrendChart({
   points,
   goal,
@@ -26,182 +24,56 @@ export function TrendChart({
   label?: string;
   className?: string;
 }) {
-  const gradientId = useId();
-  const [hover, setHover] = useState<number | null>(null);
-
-  const { xs, ys, goalY } = project(
-    points.map((p) => p.count),
-    goal ?? 0,
-    VIEW
-  );
-  const line = monotonePath(ys, xs);
-
-  if (points.length === 1) {
-    const point = points[0];
-    return <div className={className} role="img" aria-label={`${label} on ${formatShort(point.day)}: ${point.count}${goal === undefined ? "" : `, daily target ${goal}`}.`}>
-      <div className="flex h-52 flex-col items-center justify-end gap-3 sm:h-60">
-        <span className="tabular text-2xl font-semibold">{point.count}</span>
-        <div className="w-14 rounded-t-lg bg-brand/70" style={{ height: point.count === 0 ? 2 : `${Math.max(8, Math.min(160, goal ? point.count / goal * 160 : 160))}px` }} />
-      </div>
-      <p className="mt-2 text-center text-xs text-muted">{formatShort(point.day)}{goal === undefined ? "" : ` · Target ${goal}`}</p>
-    </div>;
-  }
   if (points.length < 2) {
+    const point = points[0];
     return (
       <div
-        className={`flex h-52 items-center justify-center rounded-well border border-dashed border-line ${className}`}
+        className={`flex h-52 flex-col items-center justify-center gap-1 rounded-well border border-dashed border-line ${className}`}
       >
-        <p className="text-sm text-muted">Not enough days logged yet.</p>
+        {point ? <>
+          <span className="tabular text-2xl font-semibold">{point.count}{goal === undefined ? "" : <span className="text-sm text-muted"> / {goal}</span>}</span>
+          <p className="text-xs text-muted">{label} on {formatShort(point.day)}</p>
+        </> : <p className="text-sm text-muted">Not enough days logged yet.</p>}
       </div>
     );
   }
 
-  const area = `${line} L ${xs[xs.length - 1]} ${VIEW} L ${xs[0]} ${VIEW} Z`;
-  const last = points.length - 1;
-  const active = hover ?? last;
-  const activePoint = points[active];
-
-  function moveTo(clientX: number, element: HTMLElement) {
-    const box = element.getBoundingClientRect();
-    if (box.width === 0) return;
-    const ratio = (clientX - box.left) / box.width;
-    const index = Math.round(ratio * (points.length - 1));
-    setHover(Math.min(Math.max(index, 0), points.length - 1));
-  }
-
+  const data = points.map((p) => ({
+    date: parseDayKey(p.day),
+    count: p.count,
+    ...(goal === undefined ? {} : { target: goal }),
+  }));
   const total = points.reduce((sum, p) => sum + p.count, 0);
 
   return (
-    <div className={className}>
-      <div
-        className="relative h-52 w-full touch-none sm:h-60"
-        role="img"
-        aria-label={`${label} per day over the last ${points.length} days, ${total} in total${goal === undefined ? "." : `, against a daily target of ${goal}.`}`}
-        tabIndex={0}
-        onPointerMove={(e) => moveTo(e.clientX, e.currentTarget)}
-        onPointerLeave={() => setHover(null)}
-        onBlur={() => setHover(null)}
-        onKeyDown={(e) => {
-          if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-          e.preventDefault();
-          const step = e.key === "ArrowLeft" ? -1 : 1;
-          setHover((current) =>
-            Math.min(Math.max((current ?? last) + step, 0), last)
-          );
-        }}
-      >
-        <svg
-          viewBox={`0 0 ${VIEW} ${VIEW}`}
-          preserveAspectRatio="none"
-          className="absolute inset-0 h-full w-full overflow-visible"
-          aria-hidden
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.30" />
-              <stop offset="55%" stopColor="var(--brand)" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="var(--brand)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-
-          <path d={area} fill={`url(#${gradientId})`} className="fade-in" />
-
-          {/* The target, as a line you can be above or below at a glance. */}
-          {goal !== undefined && <line
-            x1="0"
-            x2={VIEW}
-            y1={goalY}
-            y2={goalY}
-            stroke="var(--line)"
-            strokeWidth="1"
-            strokeDasharray="3 4"
-            vectorEffect="non-scaling-stroke"
-          />}
-
-          {hover !== null && (
-            <line
-              x1={xs[hover]}
-              x2={xs[hover]}
-              y1="0"
-              y2={VIEW}
-              stroke="var(--brand-edge)"
-              strokeWidth="1"
-              vectorEffect="non-scaling-stroke"
-            />
-          )}
-
-          <path
-            d={line}
-            fill="none"
-            stroke="var(--brand)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-            pathLength={1}
-            className="draw-line"
+    <div
+      className={className}
+      role="img"
+      aria-label={`${label} per day over the last ${points.length} days, ${total} in total${goal === undefined ? "." : `, against a daily target of ${goal}.`}`}
+    >
+      <AreaChart data={data} aspectRatio="3 / 1" margin={{ top: 24, right: 16, bottom: 32, left: 16 }}>
+        <Grid horizontal numTicksRows={4} />
+        <Area dataKey="count" fill="var(--chart-line-primary)" fillOpacity={0.3} strokeWidth={2} />
+        {goal !== undefined && (
+          <Area
+            dataKey="target"
+            stroke="var(--muted)"
+            fill="var(--muted)"
+            fillOpacity={0}
+            strokeWidth={1}
+            dashFromIndex={0}
+            dashArray="3,4"
+            showHighlight={false}
           />
-        </svg>
-
-        {/*
-          The dots ride on top as HTML. Inside the SVG they would be stretched
-          into ellipses by `preserveAspectRatio="none"`, and the readout would
-          be stuck rendering text at the same distortion.
-        */}
-        <span
-          className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand ring-4 ring-brand/15 transition-[left,top] duration-150"
-          style={{
-            left: `${xs[active]}%`,
-            top: `${ys[active]}%`,
-            boxShadow: "var(--shadow-brand)",
-          }}
-        />
-
-        <div
-          className="pointer-events-none absolute -translate-y-full pb-3 transition-[left] duration-150"
-          style={{
-            left: `${xs[active]}%`,
-            top: `${ys[active]}%`,
-            // Near the ends the card would hang off the panel, so it stops
-            // being centred and tucks back inside instead.
-            transform: `translate(${
-              xs[active] < 15 ? "0%" : xs[active] > 85 ? "-100%" : "-50%"
-            }, -100%)`,
-          }}
-        >
-          <div className="rounded-control border border-line bg-surface-3 px-3 py-1.5 shadow-[var(--sh-float)]">
-            <div className="tabular font-mono text-[10px] whitespace-nowrap text-muted">
-              {formatShort(activePoint.day)}
-            </div>
-            <div className="tabular font-display text-sm font-semibold whitespace-nowrap">
-              <span
-                className={
-                  goal !== undefined && activePoint.count >= goal ? "text-brand" : "text-text"
-                }
-              >
-                {activePoint.count}
-              </span>
-              {goal !== undefined && <span className="text-[10px] font-semibold text-muted">
-                {" "}
-                / {goal}
-              </span>}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/*
-        Four evenly spaced dates - a label per day would be an unreadable comb.
-        Deduplicated because on a very short range the quarter marks collide,
-        and the same day twice is both a wrong axis and a duplicate key.
-      */}
-      <div className="mt-2 flex justify-between font-mono text-[10px] text-muted">
-        {[...new Set([0, Math.round(last / 3), Math.round((last * 2) / 3), last])].map(
-          (i) => (
-            <span key={i}>{formatShort(points[i].day)}</span>
-          )
         )}
-      </div>
+        <XAxis numTicks={4} />
+        <ChartTooltip
+          rows={(point) => [
+            { color: "var(--chart-line-primary)", label, value: Number(point.count ?? 0) },
+            ...(goal === undefined ? [] : [{ color: "var(--muted)", label: "Daily target", value: goal }]),
+          ]}
+        />
+      </AreaChart>
     </div>
   );
 }
