@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored bklit chart source, installed from the shadcn registry.
+    "src/components/charts/**",
   ]),
 ]);
 
