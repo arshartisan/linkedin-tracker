@@ -3,10 +3,12 @@
 import { useMemo, useRef, useState } from "react";
 import { useData } from "./DataProvider";
 import { Card, FIELD, PrimaryButton } from "@/components/ui/layout";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CompanyOutreachChannels } from "./CompanyOutreachChannels";
 import { ClientTypeSelect } from "./ClientTypeSelect";
-import { isLinkedInUrl, isUpworkUrl, nameFromUrl, parseTags } from "@/lib/linkedin";
+import { Check, ExternalLink } from "lucide-react";
+import { isLinkedInUrl, isUpworkUrl, nameFromUrl, normaliseUrl, parseTags } from "@/lib/linkedin";
 import { formatShort, relativeDay } from "@/lib/date";
 import { DUPLICATE_MESSAGE } from "@/lib/store";
 import {
@@ -192,19 +194,50 @@ export function AddUpwork() {
   );
 }
 
+/** LinkedIn caps a connection note at 300 characters. */
+const INVITE_NOTE_LIMIT = 300;
+
+/**
+ * Assisted manual sending: the tracker never touches LinkedIn. It opens the
+ * profile and copies the note, the user clicks Connect themselves, and only
+ * "Mark as sent" writes a row - so the daily tally counts real invites only.
+ */
 export function AddConnect() {
   const { me, add, findDuplicate } = useData();
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
+  const [inviteNote, setInviteNote] = useState("");
   const [note, setNote] = useState("");
   const [tags, setTags] = useState("");
+  const [opened, setOpened] = useState(false);
+  const [copied, setCopied] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const valid = isLinkedInUrl(url.trim());
+  const trimmedUrl = url.trim();
+  const valid = isLinkedInUrl(trimmedUrl);
   const duplicate = useMemo(
-    () => (valid ? findDuplicate(url.trim(), "profile") : null),
-    [findDuplicate, url, valid]
+    () => (valid ? findDuplicate(trimmedUrl, "profile") : null),
+    [findDuplicate, trimmedUrl, valid]
   );
+  const derivedName = valid ? nameFromUrl(trimmedUrl) : "";
+  const ready = valid && !duplicate;
+  const noteTooLong = inviteNote.trim().length > INVITE_NOTE_LIMIT;
+
+  async function openProfile() {
+    if (!ready || noteTooLong) return;
+    window.open(normaliseUrl(trimmedUrl), "_blank", "noopener,noreferrer");
+    setOpened(true);
+    if (!inviteNote.trim()) {
+      setCopied(null);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(inviteNote.trim());
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -221,16 +254,19 @@ export function AddConnect() {
     setError(null);
     try {
       await add({
-        profile_url: url.trim(),
+        profile_url: trimmedUrl,
         upwork_url: "",
-        name: name.trim() || nameFromUrl(url.trim()),
+        name: name.trim() || derivedName,
         note,
         tags: parseTags(tags),
       });
       setUrl("");
       setName("");
+      setInviteNote("");
       setNote("");
       setTags("");
+      setOpened(false);
+      setCopied(null);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -241,26 +277,53 @@ export function AddConnect() {
   return (
     <Card as="div" className="p-4 sm:p-5">
       <form onSubmit={submit}>
-        <div className="flex flex-col gap-2.5 sm:flex-row">
-          <input
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              setError(null);
-            }}
-            placeholder="Paste the LinkedIn profile link"
-            aria-label="LinkedIn profile link"
-            className={`${FIELD} min-w-0 flex-1 py-3.5 font-mono text-[13px] placeholder:font-sans placeholder:text-sm`}
-          />
-          <PrimaryButton type="submit" disabled={!valid || Boolean(duplicate) || saving} className="shrink-0 sm:self-center">
-            <span aria-hidden>+</span>
-            {saving ? "Logging…" : "Log connect"}
-          </PrimaryButton>
-        </div>
+        <input
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            setOpened(false);
+            setCopied(null);
+            setError(null);
+          }}
+          placeholder="Paste the LinkedIn profile link"
+          aria-label="LinkedIn profile link"
+          autoComplete="off"
+          spellCheck={false}
+          className={`${FIELD} w-full py-3.5 font-mono text-[13px] placeholder:font-sans placeholder:text-sm`}
+        />
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (optional)" className={`${FIELD} flex-1`} />
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note" className={`${FIELD} flex-1`} />
-          <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" className={`${FIELD} flex-1 font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={derivedName || "Name (optional)"} aria-label="Name" className={`${FIELD} flex-1`} />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Tracker note" aria-label="Tracker note" className={`${FIELD} flex-1`} />
+          <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated" aria-label="Tags" className={`${FIELD} flex-1 font-mono text-xs placeholder:font-sans placeholder:text-sm`} />
+        </div>
+        <label className="mt-2.5 grid gap-1.5 text-xs text-muted">
+          <span className="flex justify-between gap-3">
+            Invitation note (optional, copied when you open the profile)
+            <span className={noteTooLong ? "text-rose" : undefined}>{inviteNote.trim().length}/{INVITE_NOTE_LIMIT}</span>
+          </span>
+          <textarea value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} rows={2} placeholder="Hi, I came across your work on…" className={FIELD} />
+        </label>
+
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button type="button" variant={opened ? "secondary" : "default"} disabled={!ready || noteTooLong} onClick={openProfile}>
+            <ExternalLink aria-hidden />
+            {opened ? "Open profile again" : "Open & connect"}
+          </Button>
+          <Button type="submit" variant={opened ? "default" : "secondary"} disabled={!ready || saving}>
+            <Check aria-hidden />
+            {saving ? "Logging…" : "Mark as sent"}
+          </Button>
+          <p className="text-xs text-muted sm:ml-1" aria-live="polite">
+            {!ready
+              ? "Nothing is logged until you mark the invite as sent."
+              : !opened
+                ? "Opens the profile in a new tab. Click Connect there, then come back."
+                : copied
+                  ? "Note copied. On LinkedIn choose “Add a note”, paste it, send, then mark as sent."
+                  : copied === false
+                    ? "Couldn’t copy the note. Copy it manually, then mark as sent."
+                    : "Sent the invite on LinkedIn? Mark it as sent."}
+          </p>
         </div>
         {duplicate && <p className="mt-2 text-xs text-rose">{duplicate.owner === me.id ? "You already logged this LinkedIn profile." : `${USER_LABEL[duplicate.owner]} already logged this LinkedIn profile.`}</p>}
         {error && !duplicate && <p className="mt-2 text-xs text-rose">{error}</p>}
