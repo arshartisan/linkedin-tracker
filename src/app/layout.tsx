@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { DesktopTitleBar } from "@/components/DesktopTitleBar";
 import "./globals.css";
 
 const sans = Geist({
@@ -31,8 +32,23 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${sans.variable} h-full`}
+      // The script below adds "desktop" before hydration.
+      suppressHydrationWarning
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {/*
+          Tauri injects __TAURI_INTERNALS__ before any page script runs, so this
+          tags the desktop app before first paint and the frameless chrome
+          never flashes in or out.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if (window.__TAURI_INTERNALS__) document.documentElement.classList.add("desktop")`,
+          }}
+        />
+        <DesktopTitleBar />
+        {children}
+      </body>
     </html>
   );
 }

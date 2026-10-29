@@ -13,6 +13,7 @@
   "dependencies": {
     "@number-flow/react": "^0.6.2",
     "@supabase/supabase-js": "^2.110.7",
+    "@tauri-apps/api": "^2.12.4",
     "@visx/curve": "^4.0.0",
     "@visx/event": "^4.0.0",
     "@visx/gradient": "^4.0.0",

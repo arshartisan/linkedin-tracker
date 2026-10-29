@@ -196,6 +196,43 @@
 
 html {
   color-scheme: dark;
+  --titlebar-h: 40px;
+}
+
+/*
+  Desktop app chrome (src-tauri). The window is frameless, so DesktopTitleBar
+  draws the top strip and the content pane becomes a card floating in the
+  sidebar colour, scrolling inside itself rather than taking the whole window.
+*/
+html.desktop body {
+  background: var(--sidebar);
+}
+
+html.desktop .desktop-titlebar {
+  display: flex;
+}
+
+html.desktop [data-slot="sidebar-wrapper"] {
+  height: 100svh;
+  min-height: 0;
+  padding-top: var(--titlebar-h);
+}
+
+html.desktop [data-slot="sidebar-container"] {
+  top: var(--titlebar-h);
+  height: calc(100svh - var(--titlebar-h));
+}
+
+html.desktop [data-slot="sidebar-inset"] {
+  margin: 0 8px 8px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--r-card);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.055);
+}
+
+html.desktop main:not([data-slot]) {
+  padding-top: var(--titlebar-h);
 }
 
 body {

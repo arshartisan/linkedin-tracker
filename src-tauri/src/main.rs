@@ -7,6 +7,7 @@
 // No console window behind the app in release builds.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use tauri::ipc::CapabilityBuilder;
 use tauri::menu::MenuBuilder;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::webview::NewWindowResponse;
@@ -26,14 +27,20 @@ const MAIN: &str = "main";
 fn main() {
     let app_url = Url::parse(APP_URL).expect("REACH_URL must be an absolute URL");
 
-    tauri::Builder::default()
-        // Registered first so a second launch focuses this one instead of
-        // opening another window with its own copy of the pipeline.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            show_main(app);
-        }))
+    let builder = tauri::Builder::default();
+
+    // Registered first so a second launch focuses this one instead of opening
+    // another window with its own copy of the pipeline. Release only, so
+    // `desktop:dev` can run next to the installed app.
+    #[cfg(not(debug_assertions))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        show_main(app);
+    }));
+
+    builder
         .plugin(tauri_plugin_opener::init())
         .setup(move |app| {
+            app.add_capability(window_chrome_capability(&app_url))?;
             build_main_window(app.handle(), app_url.clone())?;
             build_tray(app.handle())?;
             Ok(())
@@ -51,6 +58,30 @@ fn main() {
         .expect("error while running Reach");
 }
 
+/// The page draws its own title bar (DesktopTitleBar.tsx), so the hosted app
+/// gets exactly the window calls that needs and nothing else. Built here rather
+/// than in capabilities/ so it follows REACH_URL.
+fn window_chrome_capability(app_url: &Url) -> CapabilityBuilder {
+    let origin = app_url.origin().ascii_serialization();
+    [
+        "core:window:allow-minimize",
+        "core:window:allow-toggle-maximize",
+        "core:window:allow-internal-toggle-maximize",
+        "core:window:allow-is-maximized",
+        "core:window:allow-start-dragging",
+        "core:window:allow-close",
+        "core:event:allow-listen",
+        "core:event:allow-unlisten",
+    ]
+    .into_iter()
+    .fold(
+        CapabilityBuilder::new("window-chrome")
+            .remote(format!("{origin}/*"))
+            .window(MAIN),
+        |capability, permission| capability.permission(permission),
+    )
+}
+
 fn build_main_window(app: &AppHandle, app_url: Url) -> tauri::Result<()> {
     let nav_handle = app.clone();
     let nav_origin = app_url.origin();
@@ -61,6 +92,9 @@ fn build_main_window(app: &AppHandle, app_url: Url) -> tauri::Result<()> {
         .inner_size(1280.0, 820.0)
         .min_inner_size(900.0, 600.0)
         .center()
+        // Frameless: the page's own title bar takes over. Windows 11 keeps the
+        // rounded corners, drop shadow and edge resizing.
+        .decorations(false)
         // Links that leave the app (LinkedIn, Upwork, mailto:) belong in the
         // user's real browser, where they're signed in to those sites.
         .on_navigation(move |url| {
