@@ -31,7 +31,7 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-line-soft bg-ink/95 backdrop-blur-xl">
       <div className="flex h-16 items-center gap-2.5 px-4 sm:px-6">
-        <SidebarTrigger className="size-[30px] shrink-0 rounded-full bg-secondary text-muted shadow-raised hover:text-text" />
+        <SidebarTrigger className="web-only size-[30px] shrink-0 rounded-full bg-secondary text-muted shadow-raised hover:text-text" />
         <span className="truncate text-base font-medium">{title}</span>
         <span className="hidden items-center gap-1.5 rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] text-text sm:inline-flex">
           <span className="size-1.5 rounded-full bg-emerald-400" />

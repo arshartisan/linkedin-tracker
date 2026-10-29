@@ -208,8 +208,12 @@ html.desktop body {
   background: var(--sidebar);
 }
 
-html.desktop .desktop-titlebar {
+html.desktop .desktop-only {
   display: flex;
+}
+
+html.desktop .web-only {
+  display: none;
 }
 
 html.desktop [data-slot="sidebar-wrapper"] {
