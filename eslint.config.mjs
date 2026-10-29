@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored bklit chart source, installed from the shadcn registry.
     "src/components/charts/**",
+    // Rust build output from the desktop app.
+    "src-tauri/target/**",
   ]),
 ]);
 

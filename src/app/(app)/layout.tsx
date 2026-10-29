@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DataProvider } from "@/components/DataProvider";
+import { DesktopSidebarToggle } from "@/components/DesktopTitleBar";
 import { Nav } from "@/components/Nav";
 import { TopBar } from "@/components/TopBar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -22,6 +23,7 @@ export default async function AppLayout({
   return (
     <DataProvider me={me}>
       <SidebarProvider>
+        <DesktopSidebarToggle />
         <Nav />
         {/* The rail is fixed, so only this pane scrolls. */}
         <SidebarInset className="min-w-0 pb-24 md:pb-0">

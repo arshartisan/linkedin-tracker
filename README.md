@@ -122,6 +122,33 @@ Then redeploy. `AUTH_SECRET` is **required**: without it the login route refuses
 to sign a session and nobody can get in. Without the Supabase keys the
 deployment still runs, but each browser keeps its own separate log.
 
+## Desktop app (Windows)
+
+`src-tauri/` wraps the app in a native window with [Tauri](https://tauri.app).
+It bundles none of the Next.js app: the window loads the hosted deployment, so
+sign-in, the auth proxy and `AUTH_SECRET` stay on the server and every deploy
+reaches the desktop app without a reinstall.
+
+- Closing the window hides it to the tray; **Quit** in the tray menu exits.
+- Launching it again focuses the running window.
+- LinkedIn, Upwork and email links open in your normal browser.
+
+One-time setup: install [Rust](https://rustup.rs) and the Visual Studio C++
+Build Tools ("Desktop development with C++").
+
+```bash
+npm run desktop:dev                                  # window over `npm run dev`
+REACH_URL=https://your-app.vercel.app npm run desktop:build
+```
+
+In PowerShell, set the variable first: `$env:REACH_URL = "https://your-app.vercel.app"`.
+
+`REACH_URL` is compiled in. Without it the build points at
+`http://localhost:3000`. Installers land in
+`src-tauri/target/release/bundle/` (`nsis/*.exe` and `msi/*.msi`). They're
+unsigned, so Windows SmartScreen will warn on first install. Click
+**More info → Run anyway**.
+
 ## Stack
 
 Next.js 16 (App Router) · React 19 · Tailwind 4 · Supabase.
