@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArrowDownUpIcon, Building2Icon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { AddCompany } from "@/components/AddConnect";
+import { draftKey, useHasDraft } from "@/hooks/use-form-draft";
 import { CompanyRow } from "@/components/CompanyRow";
 import { MemberFilter, type MemberScope } from "@/components/MemberFilter";
 import { useData } from "@/components/DataProvider";
@@ -24,12 +25,13 @@ import { COMPANY_OUTREACH_CHANNEL_LABEL, type CompanyOutreachChannel } from "@/l
 const PAGE_SIZE = 10;
 
 export default function CompaniesPage() {
-  const { companies, loading } = useData();
+  const { me, companies, loading } = useData();
   const [owner, setOwner] = useState<MemberScope>("all");
   const [search, setSearch] = useState("");
   const [channel, setChannel] = useState<CompanyOutreachChannel | "all">("all");
   const [sort, setSort] = useState("newest");
   const [adding, setAdding] = useState(false);
+  const companyDraft = useHasDraft(draftKey(me.id, "company"));
   const [page, setPage] = useState(1);
   const mine = companies;
   const filtered = useMemo(() => {
@@ -56,7 +58,7 @@ export default function CompaniesPage() {
       <PageHeader
         title="Companies"
         lead="Browse the team’s company pipeline and outreach."
-        actions={<><Chip>{mine.length} companies</Chip><Button onClick={() => setAdding(!adding)} aria-expanded={adding} aria-controls="add-company"><PlusIcon />{adding ? "Close form" : "Add company"}</Button></>}
+        actions={<><Chip>{mine.length} companies</Chip><Button onClick={() => setAdding(!adding)} aria-expanded={adding} aria-controls="add-company"><PlusIcon />{adding ? "Close form" : companyDraft ? "Resume draft" : "Add company"}</Button></>}
       />
       <div className="flex flex-col gap-4">
         {adding && <div id="add-company"><AddCompany /></div>}

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Chip, EmptyState, Page, PageHeader } from "@/components/ui/layout";
 import * as Select from "@/components/ui/select";
 import { startupStore } from "@/lib/startup-store";
+import { draftKey, useHasDraft } from "@/hooks/use-form-draft";
 import { STARTUP_CHANNEL_LABEL, type Startup, type StartupChannel, type StartupDetails } from "@/lib/startup";
 import { USER_LABEL } from "@/lib/types";
 
@@ -31,6 +32,7 @@ export default function StartupsPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const myCount = rows.filter((row) => row.owner === me.id).length;
+  const startupDraft = useHasDraft(draftKey(me.id, "startup"));
 
   useEffect(() => {
     let cancelled = false;
@@ -78,11 +80,11 @@ export default function StartupsPage() {
 
   return <Page>
     <PageHeader title="Startups" lead="Track startups, founders, and the ways you have reached them."
-      actions={<><Chip>{myCount} startup{myCount === 1 ? "" : "s"}</Chip><Button disabled={loading || Boolean(error)} onClick={() => { setEditor("new"); setDeleting(null); }} aria-expanded={editor !== null} aria-controls="startup-editor"><PlusIcon />Add startup</Button></>} />
+      actions={<><Chip>{myCount} startup{myCount === 1 ? "" : "s"}</Chip><Button disabled={loading || Boolean(error)} onClick={() => { setEditor("new"); setDeleting(null); }} aria-expanded={editor !== null} aria-controls="startup-editor"><PlusIcon />{startupDraft && editor !== "new" ? "Resume draft" : "Add startup"}</Button></>} />
     <div className="flex flex-col gap-4">
       {mode === "local" && <p className="text-xs text-muted">Saved in this browser. Connect shared storage to prevent duplicates across team members on different devices.</p>}
       {error && <div role="alert" className="flex flex-wrap items-center gap-3 rounded-card border border-line-soft p-4 text-sm text-rose">{error}<Button variant="secondary" size="sm" disabled={loading} onClick={() => void refresh()}>Retry</Button></div>}
-      {editor && <div id="startup-editor"><StartupForm key={editor === "new" ? "new" : editor.id} startup={editor === "new" ? undefined : editor} rows={rows} onSave={save} onCancel={() => setEditor(null)} /></div>}
+      {editor && <div id="startup-editor"><StartupForm me={me.id} key={editor === "new" ? "new" : editor.id} startup={editor === "new" ? undefined : editor} rows={rows} onSave={save} onCancel={() => setEditor(null)} /></div>}
       <section aria-label="Tracked startups" className="overflow-hidden rounded-card border border-line-soft">
         <div className="flex flex-wrap items-center gap-2 border-b border-line-soft p-3">
           <div className="relative w-full sm:w-64"><SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted" /><Input className="h-9 bg-well pl-8 text-xs md:text-xs" aria-label="Search startups" placeholder="Search startups or founders…" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></div>

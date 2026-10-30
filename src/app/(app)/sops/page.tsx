@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeftIcon, DownloadIcon, PencilIcon, PlusIcon, RefreshCwIcon, SearchIcon, Trash2Icon } from "lucide-react";
 import { useData } from "@/components/DataProvider";
+import { DraftStatus } from "@/components/DraftStatus";
 import { RichEditor } from "@/components/RichEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { dayKey, formatShort, formatTime, relativeDay } from "@/lib/date";
 import { EMPTY_SOP, SOP_CATEGORY_LABEL, SOP_TITLE_MAX, sopPlainText, type Sop, type SopCategory, type SopDetails } from "@/lib/sop";
 import { downloadSopPdf } from "@/lib/sop-pdf";
 import { sopStore } from "@/lib/sop-store";
+import { draftKey, useFormDraft, useHasDraft } from "@/hooks/use-form-draft";
 import { USER_LABEL } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -48,10 +50,21 @@ export default function SopsPage() {
   const [category, setCategory] = useState<SopCategory | "all">("all");
   // Phones show one pane at a time; this is whether the document pane has been opened.
   const [reading, setReading] = useState(false);
+  // The editor is seeded once at mount, so restoring or discarding a draft remounts it.
+  const [editorEpoch, setEditorEpoch] = useState(0);
 
   const selected = rows.find((row) => row.id === selectedId) ?? null;
   const editing = mode !== "view";
-  const dirty = editing && !sameDetails(draft, base ?? EMPTY_SOP);
+  // A new SOP is kept as a draft on this device until it's created, so leaving
+  // it loses nothing. Only edits to an existing SOP can be lost.
+  const dirty = mode === "edit" && base !== null && !sameDetails(draft, base);
+  const sopDraft = useFormDraft({
+    key: mode === "new" ? draftKey(me.id, "sop") : null,
+    value: draft,
+    empty: EMPTY_SOP,
+    restore: (saved) => { setDraft(saved); setEditorEpoch((epoch) => epoch + 1); },
+  });
+  const hasSopDraft = useHasDraft(draftKey(me.id, "sop"));
 
   useEffect(() => {
     let cancelled = false;
@@ -104,6 +117,7 @@ export default function SopsPage() {
     setSaving(true); setSaveError(null);
     try {
       const row = await sopStore.save(draft, me.id, base ?? undefined);
+      if (mode === "new") sopDraft.clear();
       setRows((previous) => [row, ...previous.filter((item) => item.id !== row.id)]);
       setSelectedId(row.id);
       closeEditor();
@@ -139,7 +153,7 @@ export default function SopsPage() {
 
   return <Page>
     <PageHeader title="SOPs" lead="The team's standard operating procedures. Everyone can read and edit them."
-      actions={<><Chip>{rows.length} SOP{rows.length === 1 ? "" : "s"}</Chip><Button disabled={loading || Boolean(error) || mode === "new"} onClick={startNew}><PlusIcon />New SOP</Button></>} />
+      actions={<><Chip>{rows.length} SOP{rows.length === 1 ? "" : "s"}</Chip><Button disabled={loading || Boolean(error) || mode === "new"} onClick={startNew}><PlusIcon />{hasSopDraft && mode !== "new" ? "Resume draft" : "New SOP"}</Button></>} />
     <div className="flex flex-col gap-4">
       {storage === "local" && <p className="text-xs text-muted">Saved in this browser. Connect shared storage so the team sees the same SOPs.</p>}
       {error && <div role="alert" className="flex flex-wrap items-center gap-3 rounded-card border border-line-soft p-4 text-sm text-rose">{error}<Button variant="secondary" size="sm" disabled={loading} onClick={() => void refresh()}>Retry</Button></div>}
@@ -192,8 +206,9 @@ export default function SopsPage() {
                 <Button type="submit" disabled={saving || !draft.title.trim() || (mode === "edit" && !dirty)}>{saving ? "Saving…" : mode === "new" ? "Create SOP" : "Save changes"}</Button>
               </div>
             </div>
+            {mode === "new" && <DraftStatus dirty={sopDraft.dirty} restoredAt={sopDraft.restoredAt} onDiscard={sopDraft.discard} className="border-b border-line-soft px-4 py-2" />}
             {saveError && <p role="alert" className="border-b border-line-soft bg-rose-soft/40 px-4 py-2.5 text-xs text-rose">{saveError}</p>}
-            <RichEditor key={base ? `${base.id}:${base.updated_at}` : "new"} label="SOP content" content={draft.content}
+            <RichEditor key={base ? `${base.id}:${base.updated_at}` : `new:${editorEpoch}`} label="SOP content" content={draft.content}
               onChange={(content) => setDraft((previous) => ({ ...previous, content }))} />
           </form>
           : selected ? <article>

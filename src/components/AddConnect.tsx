@@ -6,6 +6,8 @@ import { Card, FIELD, PrimaryButton } from "@/components/ui/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CompanyOutreachChannels } from "./CompanyOutreachChannels";
+import { DraftStatus } from "./DraftStatus";
+import { draftKey, useFormDraft } from "@/hooks/use-form-draft";
 import { ClientTypeSelect } from "./ClientTypeSelect";
 import { Check, ExternalLink } from "lucide-react";
 import { isLinkedInUrl, isUpworkUrl, nameFromUrl, normaliseUrl, parseTags } from "@/lib/linkedin";
@@ -18,6 +20,11 @@ import {
   type ClientType,
   USER_LABEL,
 } from "@/lib/types";
+
+const EMPTY_UPWORK = {
+  upworkUrl: "", linkedinUrl: "", name: "", projectTitle: "", projectDescription: "", clientReviews: "",
+  clientType: "unclassified" as ClientType, email: "", channels: [] as OutreachChannel[], note: "", tags: "",
+};
 
 export function AddUpwork() {
   const { me, add, findDuplicate } = useData();
@@ -36,6 +43,26 @@ export function AddUpwork() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const urlRef = useRef<HTMLInputElement>(null);
+  const draft = useFormDraft({
+    key: draftKey(me.id, "upwork-job"),
+    value: { upworkUrl, linkedinUrl, name, projectTitle, projectDescription, clientReviews, clientType, email, channels, note, tags },
+    empty: EMPTY_UPWORK,
+    restore: (saved) => {
+      setUpworkUrl(saved.upworkUrl);
+      setLinkedinUrl(saved.linkedinUrl);
+      setName(saved.name);
+      setProjectTitle(saved.projectTitle);
+      setProjectDescription(saved.projectDescription);
+      setClientReviews(saved.clientReviews);
+      setClientType(saved.clientType);
+      setEmail(saved.email);
+      setChannels(saved.channels);
+      setNote(saved.note);
+      setTags(saved.tags);
+      // Reopen the details so restored research isn't hidden behind a toggle.
+      if (saved.name || saved.linkedinUrl || saved.email || saved.projectTitle || saved.projectDescription || saved.clientReviews || saved.channels.length || saved.note || saved.tags) setShowDetails(true);
+    },
+  });
 
   const trimmedUpworkUrl = upworkUrl.trim();
   const trimmedLinkedinUrl = linkedinUrl.trim();
@@ -142,6 +169,7 @@ export function AddUpwork() {
           </button>
           {error && !raced && <span className="text-xs text-rose">{error}</span>}
         </div>
+        <DraftStatus dirty={draft.dirty} restoredAt={draft.restoredAt} onDiscard={() => { draft.discard(); setShowDetails(false); setError(null); }} className="mt-2.5" />
 
         {duplicate ? (
           <div id="duplicate-warning" role="alert" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-well border border-rose/25 bg-rose-soft/35 px-3.5 py-2.5 text-xs">
@@ -202,6 +230,8 @@ const INVITE_NOTE_LIMIT = 300;
  * profile and copies the note, the user clicks Connect themselves, and only
  * "Mark as sent" writes a row - so the daily tally counts real invites only.
  */
+const EMPTY_CONNECT = { url: "", name: "", inviteNote: "", note: "", tags: "" };
+
 export function AddConnect() {
   const { me, add, findDuplicate } = useData();
   const [url, setUrl] = useState("");
@@ -213,6 +243,20 @@ export function AddConnect() {
   const [copied, setCopied] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const draft = useFormDraft({
+    key: draftKey(me.id, "linkedin-connect"),
+    value: { url, name, inviteNote, note, tags },
+    empty: EMPTY_CONNECT,
+    restore: (saved) => {
+      setUrl(saved.url);
+      setName(saved.name);
+      setInviteNote(saved.inviteNote);
+      setNote(saved.note);
+      setTags(saved.tags);
+      setOpened(false);
+      setCopied(null);
+    },
+  });
   const trimmedUrl = url.trim();
   const valid = isLinkedInUrl(trimmedUrl);
   const duplicate = useMemo(
@@ -327,13 +371,16 @@ export function AddConnect() {
         </div>
         {duplicate && <p className="mt-2 text-xs text-rose">{duplicate.owner === me.id ? "You already logged this LinkedIn profile." : `${USER_LABEL[duplicate.owner]} already logged this LinkedIn profile.`}</p>}
         {error && !duplicate && <p className="mt-2 text-xs text-rose">{error}</p>}
+        <DraftStatus dirty={draft.dirty} restoredAt={draft.restoredAt} onDiscard={() => { draft.discard(); setError(null); }} className="mt-2.5" />
       </form>
     </Card>
   );
 }
 
+const EMPTY_COMPANY = { companyName: "", email: "", websiteUrl: "", linkedinUrl: "", channels: [] as CompanyOutreachChannel[], note: "" };
+
 export function AddCompany() {
-  const { addCompany } = useData();
+  const { me, addCompany } = useData();
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -342,6 +389,19 @@ export function AddCompany() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const draft = useFormDraft({
+    key: draftKey(me.id, "company"),
+    value: { companyName, email, websiteUrl, linkedinUrl, channels, note },
+    empty: EMPTY_COMPANY,
+    restore: (saved) => {
+      setCompanyName(saved.companyName);
+      setEmail(saved.email);
+      setWebsiteUrl(saved.websiteUrl);
+      setLinkedinUrl(saved.linkedinUrl);
+      setChannels(saved.channels);
+      setNote(saved.note);
+    },
+  });
 
   function reset() {
     setCompanyName("");
@@ -429,6 +489,7 @@ export function AddCompany() {
           />
         </div>
         {error && <p className="mt-2 text-xs text-rose">{error}</p>}
+        <DraftStatus dirty={draft.dirty} restoredAt={draft.restoredAt} onDiscard={() => { draft.discard(); setError(null); }} className="mt-2.5" />
       </form>
     </Card>
   );

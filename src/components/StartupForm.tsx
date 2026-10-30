@@ -3,18 +3,25 @@
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DraftStatus } from "@/components/DraftStatus";
+import { draftKey, useFormDraft } from "@/hooks/use-form-draft";
 import { FIELD } from "@/components/ui/layout";
 import { EMPTY_STARTUP, findStartupDuplicate, STARTUP_CHANNEL_LABEL, type Startup, type StartupChannel, type StartupDetails } from "@/lib/startup";
-import { USER_LABEL } from "@/lib/types";
+import { USER_LABEL, type UserId } from "@/lib/types";
 
-export function StartupForm({ startup, rows, onSave, onCancel }: {
+const NEW_STARTUP: StartupDetails = { ...EMPTY_STARTUP, founder_linkedin_urls: [""] };
+
+export function StartupForm({ me, startup, rows, onSave, onCancel }: {
+  me: UserId;
   startup?: Startup;
   rows: Startup[];
   onSave: (details: StartupDetails) => Promise<void>;
   onCancel: () => void;
 }) {
   const formId = useId();
-  const [draft, setDraft] = useState<StartupDetails>(startup ?? { ...EMPTY_STARTUP, founder_linkedin_urls: [""] });
+  const [draft, setDraft] = useState<StartupDetails>(startup ?? NEW_STARTUP);
+  // Only a new startup is a draft; edits to an existing one save or cancel as before.
+  const saved = useFormDraft({ key: startup ? null : draftKey(me, "startup"), value: draft, empty: NEW_STARTUP, restore: setDraft });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const duplicate = findStartupDuplicate(rows, draft, startup?.id);
@@ -36,7 +43,7 @@ export function StartupForm({ startup, rows, onSave, onCancel }: {
       event.preventDefault();
       if (saving || duplicate) return;
       setSaving(true); setError(null);
-      try { await onSave(draft); }
+      try { await onSave(draft); saved.clear(); }
       catch (err) { setError(err instanceof Error ? err.message : "Could not save startup."); }
       finally { setSaving(false); }
     }}>
@@ -83,6 +90,7 @@ export function StartupForm({ startup, rows, onSave, onCancel }: {
       </label>
       {duplicate && <p role="alert" className="rounded-control border border-brand-edge bg-brand-soft p-3 text-xs text-brand-tint">Already tracked: {duplicate.name}, added by {USER_LABEL[duplicate.owner]}. The startup name or a LinkedIn profile matches. Use the existing startup.</p>}
       {error && <p role="alert" className="text-sm text-rose">{error}</p>}
+      <DraftStatus dirty={saved.dirty} restoredAt={saved.restoredAt} onDiscard={() => { saved.discard(); setError(null); }} />
       <div className="flex gap-2">
         <Button type="submit" disabled={!draft.name.trim() || Boolean(duplicate)}>{saving ? "Saving…" : startup ? "Save changes" : "Add startup"}</Button>
         <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
