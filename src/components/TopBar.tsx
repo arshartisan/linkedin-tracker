@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useData } from "./DataProvider";
@@ -17,19 +18,33 @@ const workspaceTabs = [
   { href: "/upwork", label: "Jobs" },
 ];
 const startupTabs = [{ href: "/startups", label: "Startups" }];
+const sopTabs = [{ href: "/sops", label: "SOPs" }];
 
 export function TopBar() {
   const { me } = useData();
   const pathname = usePathname();
   const tabs = pathname === "/startups"
     ? startupTabs
-    : pathname === "/stats" || workspaceTabs.some((tab) => tab.href === pathname)
+    : pathname === "/sops"
+      ? sopTabs
+      : pathname === "/stats" || workspaceTabs.some((tab) => tab.href === pathname)
       ? workspaceTabs
       : outreachTabs;
   const title = pathname === "/stats" ? "Team" : tabs.find((tab) => tab.href === pathname)?.label ?? "Workspace";
+  const header = useRef<HTMLElement>(null);
+
+  // Publish the bar's height so things that stick under it (the SOP toolbar) line up exactly.
+  useEffect(() => {
+    const element = header.current;
+    if (!element) return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() => root.style.setProperty("--topbar-h", `${element.offsetHeight}px`));
+    observer.observe(element);
+    return () => { observer.disconnect(); root.style.removeProperty("--topbar-h"); };
+  }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line-soft bg-ink/95 backdrop-blur-xl">
+    <header ref={header} className="sticky top-0 z-30 border-b border-line-soft bg-ink/95 backdrop-blur-xl">
       <div className="flex h-16 items-center gap-2.5 px-4 sm:px-6">
         <SidebarTrigger className="web-only size-[30px] shrink-0 rounded-full bg-secondary text-muted shadow-raised hover:text-text" />
         <span className="truncate text-base font-medium">{title}</span>

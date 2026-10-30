@@ -1,5 +1,31 @@
 # Migrations
 
+## Team SOPs
+
+Run [20261030_sops.sql](migrations/20261030_sops.sql) in the Supabase SQL
+Editor before using the SOPs section. It is standalone and transactional; the
+`users` table must already exist. The same definitions are included in
+`schema.sql` for fresh installations.
+
+SOPs are shared: every member can read and edit every SOP, and each one records
+who created it and who edited it last. Only the creator can delete it. Content
+is stored as HTML produced by the editor, which only keeps the formatting it
+supports (headings, lists, checklists, quotes, code, links and inline marks).
+
+The database stamps `updated_at` on every edit. A save only applies if the SOP
+is still at the version the editor opened, so when two people edit the same SOP
+the second save is refused with a prompt to reload rather than overwriting the
+first. SOP loading is separate from the rest of the app, so a missing migration
+only affects this section.
+
+Verify the table and trigger after running the migration:
+
+```sql
+select to_regclass('public.sops');
+select tgname from pg_trigger
+where tgrelid = 'public.sops'::regclass and not tgisinternal;
+```
+
 ## Upwork client types and team reporting
 
 Run [20261015_overlapping_client_labels.sql](migrations/20261015_overlapping_client_labels.sql)
