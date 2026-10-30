@@ -4,6 +4,7 @@ import { DataProvider } from "@/components/DataProvider";
 import { DesktopSidebarToggle } from "@/components/DesktopTitleBar";
 import { Nav } from "@/components/Nav";
 import { TopBar } from "@/components/TopBar";
+import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth";
 
@@ -30,6 +31,7 @@ export default async function AppLayout({
           <TopBar />
           {children}
         </SidebarInset>
+        <UpdatePrompt />
       </SidebarProvider>
     </DataProvider>
   );
