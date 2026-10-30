@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusinessIcon, Building2Icon } from "lucide-react";
+import { BookOpenTextIcon, BriefcaseBusinessIcon, Building2Icon } from "lucide-react";
 import { useData } from "./DataProvider";
 import { LogoMark } from "./Logo";
 import { SignOutButton } from "./SignOutButton";
@@ -27,7 +27,7 @@ import {
   One pipeline: one-to-one LinkedIn outreach to people. Team sits apart from it
   because it counts everyone's work rather than being another screen of yours.
 */
-type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies" | "startups";
+type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies" | "startups" | "sops";
 
 type NavLink = { href: string; label: string; icon: IconName };
 
@@ -45,6 +45,7 @@ const UPWORK: NavLink[] = [
 
 const TEAM: NavLink = { href: "/stats", label: "Team", icon: "stats" };
 const STARTUPS: NavLink = { href: "/startups", label: "Startups", icon: "startups" };
+const SOPS: NavLink = { href: "/sops", label: "SOPs", icon: "sops" };
 
 function Icon({ name, className }: { name: IconName; className?: string }) {
   const common = {
@@ -90,6 +91,8 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
       return <BriefcaseBusinessIcon {...common} />;
     case "companies":
       return <Building2Icon {...common} />;
+    case "sops":
+      return <BookOpenTextIcon {...common} />;
     default:
       return (
         <svg {...common}>
@@ -204,12 +207,12 @@ export function Nav() {
             <SidebarGroupContent>{menu([STARTUPS])}</SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Team counts everyone, so it sits apart from your own screens. */}
+          {/* Team and SOPs belong to everyone, so they sit apart from your own screens. */}
           <SidebarGroup className="px-3 py-3 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-2">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">
               Shared
             </SidebarGroupLabel>
-            <SidebarGroupContent>{menu([TEAM])}</SidebarGroupContent>
+            <SidebarGroupContent>{menu([TEAM, SOPS])}</SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
