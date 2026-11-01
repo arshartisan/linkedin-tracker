@@ -1,5 +1,25 @@
 # Migrations
 
+## Contacts (common leads)
+
+Run [20261101_contacts.sql](migrations/20261101_contacts.sql) in the Supabase
+SQL Editor before using the Contacts section. It is standalone and
+transactional; the `users` table must already exist. The same definitions are
+included in `schema.sql` for fresh installations.
+
+The email address is the primary key. It is stored trimmed and lowercase (a
+check constraint enforces this), so the same address cannot be saved twice by
+anyone on the team, whatever its casing. Name is required; mobile number,
+country and social media link are optional. Contacts are shared: everyone sees
+every contact, and only the person who added one can edit or delete it. Editing
+a contact's email changes its key and still respects the uniqueness rule.
+
+Verify the table after running the migration:
+
+```sql
+select to_regclass('public.contacts');
+```
+
 ## Team SOPs
 
 Run [20261030_sops.sql](migrations/20261030_sops.sql) in the Supabase SQL

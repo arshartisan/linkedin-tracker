@@ -31,6 +31,8 @@ Sign in with your mobile number. Three people share the pipeline.
 - **Queue** — who needs a message from you, and when.
 - **Leads** — your funnel, step by step, and how long a connect takes to become
   a lead.
+- **Contacts** — common leads from anywhere: name, email (unique across the
+  team), and optional mobile number, country and social media link.
 - **Team** — the shared screen. Everyone's connects per day, accept rate, reply
   rate and leads, filterable down to one person, plus a side-by-side table of
   all three.
