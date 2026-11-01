@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenTextIcon, BriefcaseBusinessIcon, Building2Icon } from "lucide-react";
+import { BookOpenTextIcon, BriefcaseBusinessIcon, Building2Icon, ContactRoundIcon } from "lucide-react";
 import { useData } from "./DataProvider";
 import { LogoMark } from "./Logo";
 import { SignOutButton } from "./SignOutButton";
@@ -27,7 +27,7 @@ import {
   One pipeline: one-to-one LinkedIn outreach to people. Team sits apart from it
   because it counts everyone's work rather than being another screen of yours.
 */
-type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies" | "startups" | "sops";
+type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies" | "startups" | "sops" | "contacts";
 
 type NavLink = { href: string; label: string; icon: IconName };
 
@@ -46,6 +46,7 @@ const UPWORK: NavLink[] = [
 const TEAM: NavLink = { href: "/stats", label: "Team", icon: "stats" };
 const STARTUPS: NavLink = { href: "/startups", label: "Startups", icon: "startups" };
 const SOPS: NavLink = { href: "/sops", label: "SOPs", icon: "sops" };
+const CONTACTS: NavLink = { href: "/contacts", label: "Contacts", icon: "contacts" };
 
 function Icon({ name, className }: { name: IconName; className?: string }) {
   const common = {
@@ -93,6 +94,8 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
       return <Building2Icon {...common} />;
     case "sops":
       return <BookOpenTextIcon {...common} />;
+    case "contacts":
+      return <ContactRoundIcon {...common} />;
     default:
       return (
         <svg {...common}>
@@ -205,6 +208,11 @@ export function Nav() {
           <SidebarGroup className="border-b border-sidebar-border px-3 py-3 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-2">
             <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">Startups</SidebarGroupLabel>
             <SidebarGroupContent>{menu([STARTUPS])}</SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="border-b border-sidebar-border px-3 py-3 transition-[padding] duration-300 ease-out-strong group-data-[collapsible=icon]:px-2">
+            <SidebarGroupLabel className="label px-2 text-[11px] text-[#676767]">Contacts</SidebarGroupLabel>
+            <SidebarGroupContent>{menu([CONTACTS])}</SidebarGroupContent>
           </SidebarGroup>
 
           {/* Team and SOPs belong to everyone, so they sit apart from your own screens. */}
