@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenTextIcon, BriefcaseBusinessIcon, Building2Icon, ContactRoundIcon } from "lucide-react";
+import { BookOpenTextIcon, BotIcon, BriefcaseBusinessIcon, Building2Icon, ContactRoundIcon } from "lucide-react";
 import { useData } from "./DataProvider";
 import { LogoMark } from "./Logo";
 import { SignOutButton } from "./SignOutButton";
@@ -27,7 +27,7 @@ import {
   One pipeline: one-to-one LinkedIn outreach to people. Team sits apart from it
   because it counts everyone's work rather than being another screen of yours.
 */
-type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies" | "startups" | "sops" | "contacts";
+type IconName = "today" | "history" | "queue" | "leads" | "stats" | "upwork" | "companies" | "startups" | "sops" | "contacts" | "engine";
 
 type NavLink = { href: string; label: string; icon: IconName };
 
@@ -40,6 +40,7 @@ const LINKEDIN: NavLink[] = [
 
 const UPWORK: NavLink[] = [
   { href: "/upwork", label: "Jobs", icon: "upwork" },
+  { href: "/engine", label: "Engine", icon: "engine" },
   { href: "/companies", label: "Companies", icon: "companies" },
 ];
 
@@ -96,6 +97,8 @@ function Icon({ name, className }: { name: IconName; className?: string }) {
       return <BookOpenTextIcon {...common} />;
     case "contacts":
       return <ContactRoundIcon {...common} />;
+    case "engine":
+      return <BotIcon {...common} />;
     default:
       return (
         <svg {...common}>
