@@ -51,10 +51,38 @@ export type Intel = {
   jobs_posted: number | null;
   avg_hourly_rate_paid: string | null;
   industry_or_company_size: string | null;
-  past_jobs: { title: string; freelancer_feedback: string | null; client_feedback: string | null; rating_given_by_freelancer: number | null }[];
+  past_jobs: {
+    title: string; freelancer_feedback: string | null; client_feedback: string | null; rating_given_by_freelancer: number | null;
+    amount_or_rate?: string | null; dates?: string | null; kind?: string | null; amount_usd?: number | null; in_progress?: boolean | null;
+  }[];
+  total_hires?: number | null;
+  active_hires?: number | null;
+  open_jobs?: number | null;
+  job_type?: string | null;
+  experience_level?: string | null;
+  posted?: string | null;
+  proposals?: string | null;
+  interviewing?: number | null;
+  /** Worked out by the worker from the fields above (see upwork/engine/scoring.py). */
+  client_score?: ClientScore | null;
   other_open_jobs: string[];
   client_personality_notes: string;
   proposal_tips: string[];
+};
+
+export type ClientScore = {
+  score: number;
+  tier: "A" | "B" | "C" | "D" | "New";
+  verdict: string;
+  parts: { label: string; points: number; max: number; note: string }[];
+  strengths: string[];
+  weaknesses: string[];
+  metrics: {
+    spent_usd: number | null; hire_rate: number | null; rate_paid: number | null; target_rate: number;
+    spend_per_hire: number | null; hires: number | null; active_hires: number; jobs_posted: number; years: number | null;
+  };
+  timeline: { month: string; usd: number; jobs: number }[];
+  history_usd: number;
 };
 
 export type TraceEntry =
@@ -134,6 +162,7 @@ export type EngineJobSummary = Pick<EngineJob,
   "requested_step" | "error" | "hold_reason" | "skipped" | "duplicate_note" | "sent_by"> & {
   client_name: string | null; country: string | null; spent: string | null;
   company: string | null; founder: string | null; confidence: string | null; email: string | null; sent_at: string | null;
+  score: string | null; tier: string | null;
 };
 
 const LIST_COLUMNS = [
@@ -142,6 +171,7 @@ const LIST_COLUMNS = [
   "client_name:intel->>client_name", "country:intel->>country", "spent:intel->>total_spent",
   "company:enrich->company->>name", "founder:enrich->founder->>name", "confidence:enrich->>match_confidence",
   "email:verify->>chosen", "sent_at:sent->>at",
+  "score:intel->client_score->>score", "tier:intel->client_score->>tier",
 ].join(",");
 
 export type EngineEvent = {

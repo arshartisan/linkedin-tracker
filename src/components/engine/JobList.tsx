@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { TierBadge } from "@/components/engine/ClientScore";
 import { ENGINE_STEPS, ago, stepDone, type EngineJobSummary } from "@/lib/engine";
 
 export type JobFilter = "review" | "progress" | "ready" | "sent" | "skipped" | "all";
@@ -83,7 +84,10 @@ export function JobList({
                 job.id === selectedId && "bg-surface-2",
               )}
             >
-              <span className="truncate text-[13px] font-medium">{job.title || "(untitled job)"}</span>
+              <span className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{job.title || "(untitled job)"}</span>
+                {job.tier && job.score && <TierBadge tier={job.tier} score={job.score} />}
+              </span>
               <span className="truncate text-xs text-muted">{who || "Not analysed yet"}{job.spent ? ` · ${job.spent} spent` : ""}</span>
               <span className="mt-1 flex items-center justify-between gap-2 text-[11px]">
                 <Dots job={job} />

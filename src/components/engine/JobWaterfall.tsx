@@ -12,6 +12,7 @@ import {
   ENGINE_STEPS, STEP_LABEL, ago, engineStore, gmailComposeUrl, safeHref, stepDone,
   type Draft, type EngineEvent, type EngineJob, type EngineStep, type EngineWorker, type TraceEntry,
 } from "@/lib/engine";
+import { ClientScore } from "@/components/engine/ClientScore";
 
 type CardState = "done" | "running" | "waiting" | "held" | "failed" | "locked";
 
@@ -242,6 +243,7 @@ export function JobWaterfall({
                 “{ev.quote}” <span className="text-muted">— {ev.source}</span>
               </blockquote>
             ))}
+            {i.client_score && <ClientScore score={i.client_score} />}
             <Facts rows={[
               ["Location", [i.city, i.country].filter(Boolean).join(", ")],
               ["Company hint", i.company_name],
@@ -249,6 +251,8 @@ export function JobWaterfall({
               ["Rating", i.rating !== null ? `${i.rating} (${i.reviews_count ?? "?"} reviews)` : null],
               ["Member since", i.member_since],
               ["Budget", i.budget],
+              ["This job", [i.job_type, i.experience_level, i.posted && `posted ${i.posted}`, i.proposals && `${i.proposals} proposals`,
+                i.interviewing ? `${i.interviewing} interviewing` : null].filter(Boolean).join(" · ")],
               ["Summary", i.job_summary],
               ["How they work", i.client_personality_notes],
             ]} />
@@ -257,7 +261,9 @@ export function JobWaterfall({
                 <summary className="cursor-pointer text-xs text-muted hover:text-text">Past jobs and reviews ({i.past_jobs.length})</summary>
                 <ul className="mt-2 flex flex-col gap-1.5 text-xs">
                   {i.past_jobs.map((p, index) => (
-                    <li key={index}><span className="text-text">{p.title}</span>{p.freelancer_feedback && <span className="text-muted"> — “{p.freelancer_feedback}”</span>}</li>
+                    <li key={index}><span className="text-text">{p.title}</span>
+                      {(p.amount_or_rate || p.dates) && <span className="text-muted tabular-nums"> · {[p.amount_or_rate, p.dates].filter(Boolean).join(" · ")}</span>}
+                      {p.freelancer_feedback && <span className="text-muted"> — “{p.freelancer_feedback}”</span>}</li>
                   ))}
                 </ul>
               </details>
