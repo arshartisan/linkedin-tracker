@@ -44,6 +44,25 @@ The daily target is per person and defaults to 30 — click `/ 30` on the Today
 screen to change yours. It's stored on your user record, so it follows you
 across devices.
 
+## Upwork Engine (testing)
+
+**Upwork → Engine** is an automated pipeline that sits apart from the manual
+Jobs page. A worker on a Windows machine (`../upwork/engine`) collects Upwork
+jobs, then analyses the client, researches the founder and company on the web,
+verifies the email and writes a draft, all on its own. This screen shows every
+step and every activity: the jobs collected, each web search Claude ran, the
+pages it opened, how it reached its conclusion, and the email it wrote. A
+person reviews it, then sends it with **Open in Gmail** (or SMTP from the
+worker). The email that was sent is stored with the job.
+
+It needs Supabase: run
+[`supabase/migrations/20261114_upwork_engine.sql`](supabase/migrations/20261114_upwork_engine.sql).
+The worker reports a heartbeat every 30 seconds. If it stops for 2 minutes the
+screen shows **Engine offline**, and healthchecks.io alerts you. Buttons here
+never run anything directly; they leave a request the worker picks up within
+a few seconds. Engine tables are separate from `connects`/`companies`/`contacts`,
+so test runs never touch the manual pipeline.
+
 ## Signing in
 
 Three numbers are recognised, listed in `src/lib/auth.ts`. Enter one on the
