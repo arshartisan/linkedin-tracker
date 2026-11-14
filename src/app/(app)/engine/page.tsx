@@ -1,18 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PauseIcon, PlayIcon, RefreshCwIcon } from "lucide-react";
+import { ActivityIcon, PauseIcon, PlayIcon, RefreshCwIcon } from "lucide-react";
 import { useData } from "@/components/DataProvider";
 import { ActivityFeed } from "@/components/engine/ActivityFeed";
 import { JOB_FILTERS, JobList, matchesFilter, type JobFilter } from "@/components/engine/JobList";
 import { JobWaterfall } from "@/components/engine/JobWaterfall";
+import { MachineCheck } from "@/components/engine/MachineCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, Page, PageHeader, Segmented, Stat } from "@/components/ui/layout";
 import { cn } from "@/lib/utils";
 import {
   ago, engineStore, workerOnline,
-  type EngineCommand, type EngineEvent, type EngineJob, type EngineJobSummary, type EngineWorker,
+  type EngineCommand, type EngineEvent, type EngineHealth, type EngineJob, type EngineJobSummary, type EngineWorker,
 } from "@/lib/engine";
 
 const STATUS_TEXT: Record<EngineWorker["status"], string> = {
@@ -42,6 +43,8 @@ export default function EnginePage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [health, setHealth] = useState<{ result: EngineHealth; at: number } | null>(null);
+  const [checking, setChecking] = useState(false);
   const selectedRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -93,6 +96,21 @@ export default function EnginePage() {
     try { await engineStore.command(name, me.id, args); await refresh(); }
     catch (err) { setError(err instanceof Error ? err.message : "Command failed."); }
     finally { setBusy(false); }
+  }
+
+  async function checkMachine() {
+    setChecking(true);
+    try {
+      const res = await fetch("/api/engine/health", { cache: "no-store" });
+      const result: EngineHealth = res.ok
+        ? await res.json()
+        : { reachable: false, ms: 0, reason: `Reach couldn't run the check (HTTP ${res.status}).` };
+      setHealth({ result, at: Date.now() });
+    } catch (e) {
+      setHealth({ result: { reachable: false, ms: 0, reason: `Reach couldn't run the check: ${e instanceof Error ? e.message : String(e)}` }, at: Date.now() });
+    } finally {
+      setChecking(false);
+    }
   }
 
   const online = workerOnline(worker, now);
@@ -151,12 +169,17 @@ export default function EnginePage() {
                 {pendingCollect ? "Collecting…" : "Collect now"}
               </Button>
             </div>
+            <Button variant="secondary" size="sm" disabled={checking} onClick={() => void checkMachine()}
+              title="Ask the Windows machine directly (through Tailscale Funnel)">
+              <ActivityIcon />{checking ? "Checking…" : "Check machine"}
+            </Button>
             <Button variant="ghost" size="icon-sm" aria-label="Refresh" onClick={() => void refresh()}><RefreshCwIcon /></Button>
           </>
         }
       />
 
       <div className="flex flex-col gap-4">
+        {health && <MachineCheck result={health.result} at={health.at} onClose={() => setHealth(null)} />}
         {/* Alerts: machine off, a person needed, recent alert events */}
         {worker && !online && (
           <div role="alert" className="rounded-card border border-[#4c2324] bg-rose-soft px-4 py-3 text-sm text-[#febfc6]">

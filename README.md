@@ -58,7 +58,9 @@ worker). The email that was sent is stored with the job.
 It needs Supabase: run
 [`supabase/migrations/20261114_upwork_engine.sql`](supabase/migrations/20261114_upwork_engine.sql).
 The worker reports a heartbeat every 30 seconds. If it stops for 2 minutes the
-screen shows **Engine offline**, and healthchecks.io alerts you. Buttons here
+screen shows **Engine offline**, and healthchecks.io alerts you. **Check machine** asks the
+Windows machine directly through a Tailscale Funnel; it needs `ENGINE_HEALTH_URL`
+and `ENGINE_HEALTH_TOKEN` in Vercel (see `UPWORK-ENGINE-TESTING.md`). Other buttons here
 never run anything directly; they leave a request the worker picks up within
 a few seconds. Engine tables are separate from `connects`/`companies`/`contacts`,
 so test runs never touch the manual pipeline.

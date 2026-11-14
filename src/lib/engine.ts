@@ -87,6 +87,19 @@ export type Verification = {
   at: string;
 };
 
+/** A live check of the Windows machine through its Tailscale Funnel (GET /api/engine/health). */
+export type HealthCheck = { ok: boolean; detail: string; at?: string };
+export type EngineHealth =
+  | {
+      reachable: true;
+      ms: number;
+      report: {
+        ok: boolean; time: string; status: string; detail: string; version: string; worker_id: string;
+        uptime_s: number; paused: boolean; chrome_running: boolean; checks: Record<string, HealthCheck>;
+      };
+    }
+  | { reachable: false; ms: number; reason: string };
+
 export type Draft = { to: string; subject: string; body: string; at?: string; edited_by?: UserId };
 export type Sent = { via: string; to: string; subject: string; body: string; at: string; by?: UserId | null; from?: string };
 
