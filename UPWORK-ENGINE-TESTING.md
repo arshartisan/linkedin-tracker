@@ -72,6 +72,8 @@ Do this on the machine that will run all day.
    | `HUNTER_API_KEY` | Optional: checks that the mailbox exists, not just the domain |
    | `HEALTH_TOKEN` | A long random secret for Reach's **Check machine** button (step 9). Make one with `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
    | `HEALTH_PORT` | Leave at `8787` |
+   | `TARGET_HOURLY_RATE` | The hourly rate you want, in USD (default `30`). Clients who pay less score lower |
+   | `MIN_CLIENT_SCORE` | Hold jobs whose client scores below this (0–100) before the web research, to save Claude usage. `0` (default) never holds |
 
 7. **Write your profile:** in Reach, open **Upwork → Engine → Profile** and replace the starter text with
    your real name, link, services and case studies, then **Save profile**. The worker uploads
@@ -131,6 +133,21 @@ For the first 5–10 jobs, open each one and check:
 - [ ] **Held jobs** (the "Review" filter): how often does it fail to identify the company, and why?
 - [ ] **Email:** is the chosen address sensible (founder's address before a generic one)?
 - [ ] **Draft:** is it specific to the job, accurate, and something you'd actually send?
+- [ ] **Client score** (on the Analyse step, and the A–D badge in the job list): do the reasons match what
+      you see on the job page? Tier A–D comes from spend, rate paid against `TARGET_HOURLY_RATE`, hire rate,
+      reviews and activity; **New** means the client has no history yet.
+- [ ] **Second check:** after the research names a company, a sceptical second pass looks for reasons it's
+      the wrong person (location, timeline, names, type of business). A *doubtful* result holds the job with
+      the concern; a *rejected* one counts as not identified. Do its concerns make sense?
+- [ ] **Leads** (the **Leads** panel, and on each job): every person and company the research came across,
+      with why it's linked, where it was found and every way to reach it. Useful when no email was found.
+- [ ] **Same client:** jobs from one client are linked (shown on each job). If that client was already
+      emailed, the new job is held instead of drafting a second email.
+
+**Rate each result** with the buttons under the job (**Good lead**, **Wrong person**, **Wrong company**,
+**Weak email**, **Not a fit for us**). The ratings appear in the **Insights** panel, together with the
+pipeline funnel, lead outcomes, clients by tier and Claude usage per job. That's how you'll see whether the
+research is getting better.
 
 Note anything wrong, such as a wrong founder, a weak draft or a failed step. The research instructions and
 the template can be tuned from real examples.
@@ -145,6 +162,9 @@ the template can be tuned from real examples.
 - [ ] **Pause**, then **Resume** (the worker status changes within a few seconds).
 - [ ] **Sending test:** change **To** to **your own email**, click **Open in Gmail**, send it to yourself,
       then click **I sent it – mark as sent**. Check that the sent email is stored on the job.
+- [ ] **Leads:** on a lead, click **Email** or **LinkedIn** under *Write a message for*. The worker writes it
+      within about 30 seconds (LinkedIn notes stay under 280 characters). Edit it, change the lead's status
+      (New → Checked → Contacted → Replied, or Dismissed) and add a note.
 
 > Don't email real founders until you trust the research.
 
@@ -213,8 +233,17 @@ What else raises an alert: Upwork logged out, the Claude usage limit reached or 
 | A step shows **Failed** | Read the error on the step card, then click **Retry** |
 | A job is stuck on **Review** | The company or email wasn't found. Check the research, then **Continue anyway** or **Skip** |
 | Machine logs | The worker console window, and `upwork\engine\engine.log` |
+| Profile panel: *"Profile storage is not set up yet"* | Run `supabase/migrations/20261116_engine_settings.sql`, then restart the worker so it uploads the profile |
+| Engine page: a column or `engine_leads` is missing | Run `supabase/migrations/20261115_engine_leads.sql` |
 
 ## Good to know
+
+- **Replay mode (tuning without Upwork):** `python worker.py import` loads job pages saved earlier in
+  `option5-stealth\output` instead of browsing Upwork. The running worker then runs every step on them, so you
+  can change the profile or research instructions and compare results with no captcha risk.
+  Options: `--limit 5`, a file or folder path, `--keep-intel` (reuse the saved analysis) and `--again`
+  (start jobs that already exist over). Only full captures (a few thousand characters, with reviews) are
+  useful; captures from before 15 Nov 2026 only hold the client sidebar.
 
 - **Separate test data:** engine data is kept apart from the manual Jobs, Companies and Contacts. Sent engine
   emails don't feed Reach's Queue or follow-ups yet.
