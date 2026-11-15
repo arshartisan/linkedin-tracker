@@ -9,10 +9,11 @@ import { ActivityFeed } from "./ActivityFeed";
 import { cn } from "@/lib/utils";
 import { USER_LABEL, type UserId } from "@/lib/types";
 import {
-  ENGINE_STEPS, STEP_LABEL, ago, engineStore, gmailComposeUrl, safeHref, stepDone,
-  type Draft, type EngineEvent, type EngineJob, type EngineStep, type EngineWorker, type TraceEntry,
+  ENGINE_STEPS, FEEDBACK_LABEL, FEEDBACK_VERDICTS, STEP_LABEL, ago, engineStore, gmailComposeUrl, safeHref, stepDone,
+  type Draft, type EngineEvent, type EngineJob, type EngineJobSummary, type EngineLead, type EngineStep, type EngineWorker, type TraceEntry,
 } from "@/lib/engine";
 import { ClientScore } from "@/components/engine/ClientScore";
+import { LeadList } from "@/components/engine/LeadList";
 
 type CardState = "done" | "running" | "waiting" | "held" | "failed" | "locked";
 
@@ -135,10 +136,15 @@ function TraceList({ trace }: { trace: TraceEntry[] }) {
 }
 
 export function JobWaterfall({
-  job, events, worker, me, onChanged,
+  job, events, leads, siblings, worker, me, onChanged, onSelectJob,
 }: {
   job: EngineJob;
   events: EngineEvent[];
+  /** Leads found while researching this job. */
+  leads: EngineLead[];
+  /** Other jobs from the same Upwork client. */
+  siblings: EngineJobSummary[];
+  onSelectJob: (id: string) => void;
   worker: EngineWorker | null;
   me: UserId;
   onChanged: () => void;
@@ -165,6 +171,7 @@ export function JobWaterfall({
   const saveDraft = () => act(async () => { await engineStore.saveDraft(job, draft, me); setDirty(false); });
 
   const sent = job.stage === "sent";
+  const usage = (job.intel?.usage?.cost_usd ?? 0) + (job.enrich?.usage?.cost_usd ?? 0) + (job.draft?.usage?.cost_usd ?? 0);
   const workerBusyHere = Boolean(job.running_step || job.requested_step);
 
   function stateOf(step: EngineStep | "collect"): CardState {
@@ -244,6 +251,19 @@ export function JobWaterfall({
               </blockquote>
             ))}
             {i.client_score && <ClientScore score={i.client_score} />}
+            {siblings.length > 0 && (
+              <div className="well rounded-card border border-line-soft p-3 text-xs">
+                <p className="label mb-1.5">Same client · {siblings.length} other job{siblings.length === 1 ? "" : "s"}</p>
+                <ul className="flex flex-col gap-1">
+                  {siblings.map((o) => (
+                    <li key={o.id} className="flex flex-wrap items-baseline gap-x-2">
+                      <button type="button" onClick={() => onSelectJob(o.id)} className="text-left text-text underline decoration-line underline-offset-2 hover:decoration-text">{o.title}</button>
+                      <span className="text-muted">{o.stage}{o.sent_at ? ` · emailed ${new Date(o.sent_at).toLocaleDateString()}` : ""} · collected {ago(o.created_at)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <Facts rows={[
               ["Location", [i.city, i.country].filter(Boolean).join(", ")],
               ["Company hint", i.company_name],
@@ -284,7 +304,36 @@ export function JobWaterfall({
               <p className="text-[13px]">{e.conclusion}</p>
               {e.reasoning && <p className="mt-1.5 text-xs text-muted">{e.reasoning}</p>}
             </div>
+            {e.check && e.check.verdict !== "skipped" && (
+              <div className="well p-3">
+                <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                  <span className="label">Second check</span>
+                  <Chip tone={e.check.verdict === "confirmed" ? "brand" : "rose"}>{e.check.verdict}</Chip>
+                  <Tag value={e.check.confidence} />
+                </div>
+                {e.check.concern && <p className="text-xs">{e.check.concern}</p>}
+                <ul className="mt-2 flex flex-col gap-1 text-xs">
+                  {e.check.checks.map((c) => (
+                    <li key={c.check} className="grid grid-cols-[1rem_minmax(5rem,max-content)_1fr] gap-x-2">
+                      <span aria-hidden className={c.result === "match" ? "text-brand" : c.result === "conflict" ? "text-rose" : "text-muted"}>
+                        {c.result === "match" ? "✓" : c.result === "conflict" ? "✕" : "?"}
+                      </span>
+                      <span className="text-muted">{c.check}<span className="sr-only">: {c.result}</span></span>
+                      <span>{c.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {holdFor("enrich")}
+            {leads.length > 0 && (
+              <div className="overflow-hidden rounded-card border border-line-soft">
+                <p className="label border-b border-line-soft px-4 py-2.5">
+                  Leads found while researching this job · {leads.length}
+                </p>
+                <LeadList leads={leads} me={me} online={Boolean(worker)} onChanged={onChanged} />
+              </div>
+            )}
             <div className="grid gap-3 xl:grid-cols-2">
               <div className="well p-3">
                 <p className="label mb-2">Founder</p>
@@ -432,6 +481,27 @@ export function JobWaterfall({
           ) : null}
         </StepCard>
       </ol>
+
+      {job.enrich && (
+        <section className="card p-4" aria-label="Rate this result">
+          <p className="label mb-2">Rate this result</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {FEEDBACK_VERDICTS.map((v) => (
+              <Button key={v} size="sm" variant={job.feedback?.verdict === v ? "default" : "secondary"} disabled={busy}
+                aria-pressed={job.feedback?.verdict === v}
+                onClick={() => void act(() => engineStore.setFeedback(job, job.feedback?.verdict === v ? null : v, job.feedback?.note ?? "", me))}>
+                {FEEDBACK_LABEL[v]}
+              </Button>
+            ))}
+          </div>
+          {job.feedback && (
+            <p className="mt-2 text-xs text-muted">
+              Rated by {USER_LABEL[job.feedback.by]} · {new Date(job.feedback.at).toLocaleString()}. Ratings feed the Insights panel.
+            </p>
+          )}
+          {usage > 0 && <p className="mt-2 text-[11px] text-muted">Claude usage for this job: about ${usage.toFixed(2)} at API prices.</p>}
+        </section>
+      )}
 
       <section className="card overflow-hidden">
         <p className="label border-b border-line-soft px-4 py-3">Job activity</p>

@@ -63,6 +63,7 @@ export type Intel = {
   posted?: string | null;
   proposals?: string | null;
   interviewing?: number | null;
+  usage?: Usage | null;
   /** Worked out by the worker from the fields above (see upwork/engine/scoring.py). */
   client_score?: ClientScore | null;
   other_open_jobs: string[];
@@ -105,6 +106,14 @@ export type Enrichment = {
     other_profiles: Sourced[]; email_found: Sourced | null; email_guesses: string[]; email_pattern_evidence: string | null;
   };
   sources: string[];
+  /** A sceptical second pass over the match (no web access). */
+  check?: {
+    verdict: "confirmed" | "doubtful" | "rejected" | "skipped";
+    confidence: string;
+    concern: string;
+    checks: { check: string; result: "match" | "conflict" | "unknown"; detail: string }[];
+  } | null;
+  usage?: Usage | null;
   trace: TraceEntry[];
 };
 
@@ -128,7 +137,7 @@ export type EngineHealth =
     }
   | { reachable: false; ms: number; reason: string };
 
-export type Draft = { to: string; subject: string; body: string; at?: string; edited_by?: UserId };
+export type Draft = { to: string; subject: string; body: string; at?: string; edited_by?: UserId; usage?: Usage | null };
 export type Sent = { via: string; to: string; subject: string; body: string; at: string; by?: UserId | null; from?: string };
 
 export type EngineJob = {
@@ -154,6 +163,64 @@ export type EngineJob = {
   draft: Draft | null;
   sent: Sent | null;
   sent_by: UserId | null;
+  /** Fingerprint of the Upwork client; jobs that share it are from one client. */
+  client_key: string | null;
+  feedback: Feedback | null;
+};
+
+/** A person's verdict on what the engine produced for a job. */
+export const FEEDBACK_VERDICTS = ["good", "wrong_person", "wrong_company", "weak_draft", "not_a_fit"] as const;
+export type FeedbackVerdict = (typeof FEEDBACK_VERDICTS)[number];
+export const FEEDBACK_LABEL: Record<FeedbackVerdict, string> = {
+  good: "Good lead", wrong_person: "Wrong person", wrong_company: "Wrong company",
+  weak_draft: "Weak email", not_a_fit: "Not a fit for us",
+};
+export type Feedback = { verdict: FeedbackVerdict; note: string; by: UserId; at: string };
+
+/** What one Claude call used. cost_usd is the API-equivalent cost, a measure of usage on a subscription. */
+export type Usage = { cost_usd: number; seconds: number; input_tokens: number; output_tokens: number; turns?: number | null };
+
+export const LEAD_STATUSES = ["new", "checked", "contacted", "replied", "dismissed"] as const;
+export type LeadStatus = (typeof LEAD_STATUSES)[number];
+export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
+  new: "New", checked: "Checked", contacted: "Contacted", replied: "Replied", dismissed: "Dismissed",
+};
+export const LEAD_CHANNELS = ["email", "linkedin", "contact_form", "x"] as const;
+export type LeadChannel = (typeof LEAD_CHANNELS)[number];
+export const LEAD_CHANNEL_LABEL: Record<LeadChannel, string> = {
+  email: "Email", linkedin: "LinkedIn", contact_form: "Contact form", x: "X",
+};
+export const RELATION_LABEL: Record<EngineLead["relation"], string> = {
+  client: "Likely the client", company: "The business", colleague: "Works there",
+  related: "Related", mentioned: "Mentioned",
+};
+
+/** A person or company found while researching a job (engine_leads). */
+export type EngineLead = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  job_key: string;
+  kind: "person" | "company";
+  name: string;
+  role: string;
+  company: string;
+  location: string;
+  relation: "client" | "colleague" | "company" | "related" | "mentioned";
+  confidence: "high" | "medium" | "low";
+  why: string;
+  found_via: string;
+  source_url: string;
+  channels: Partial<Record<"email" | "linkedin" | "x" | "website" | "contact_form" | "phone", string>>;
+  approach: string;
+  status: LeadStatus;
+  note: string;
+  draft_requested: LeadChannel | null;
+  draft: { channel: LeadChannel; subject: string; body: string; to: string; at: string } | null;
+  draft_error: string;
+  contacted_at: string | null;
+  contacted_by: UserId | null;
+  contacted_via: string;
 };
 
 /** The list view: everything but the heavy JSON, plus a few fields pulled out of it. */
@@ -163,6 +230,8 @@ export type EngineJobSummary = Pick<EngineJob,
   client_name: string | null; country: string | null; spent: string | null;
   company: string | null; founder: string | null; confidence: string | null; email: string | null; sent_at: string | null;
   score: string | null; tier: string | null;
+  client_key: string | null; verdict: FeedbackVerdict | null; check: string | null; identified: string | null;
+  cost_analyse: string | null; cost_enrich: string | null; cost_draft: string | null;
 };
 
 const LIST_COLUMNS = [
@@ -172,6 +241,8 @@ const LIST_COLUMNS = [
   "company:enrich->company->>name", "founder:enrich->founder->>name", "confidence:enrich->>match_confidence",
   "email:verify->>chosen", "sent_at:sent->>at",
   "score:intel->client_score->>score", "tier:intel->client_score->>tier",
+  "client_key", "verdict:feedback->>verdict", "check:enrich->check->>verdict", "identified:enrich->>identified",
+  "cost_analyse:intel->usage->>cost_usd", "cost_enrich:enrich->usage->>cost_usd", "cost_draft:draft->usage->>cost_usd",
 ].join(",");
 
 export type EngineEvent = {
@@ -289,6 +360,43 @@ export const engineStore = {
     needSupabase();
     const { error } = await supabase().from("engine_commands").insert({ command, args, created_by: by });
     if (error) fail(error);
+  },
+  /** Leads for one job, or every lead (newest first) when no job is given. */
+  async leads(jobKey?: string): Promise<EngineLead[]> {
+    needSupabase();
+    let query = supabase().from("engine_leads").select("*").order("created_at", { ascending: false }).limit(500);
+    if (jobKey) query = query.eq("job_key", jobKey);
+    const { data, error } = await query;
+    if (error) fail(error);
+    return (data ?? []) as EngineLead[];
+  },
+  async updateLead(lead: Pick<EngineLead, "id" | "job_key" | "name">, values: Partial<Pick<EngineLead, "status" | "note">>, by: UserId): Promise<void> {
+    const { error } = await supabase().from("engine_leads").update(values).eq("id", lead.id);
+    if (error) fail(error);
+    if (values.status) await this.note(lead.job_key, "lead", `${USER_LABEL[by]} marked lead ${lead.name} as ${LEAD_STATUS_LABEL[values.status].toLowerCase()}`);
+  },
+  /** Ask the worker to write a first message to this lead for one channel. */
+  async requestLeadMessage(lead: Pick<EngineLead, "id" | "job_key" | "name">, channel: LeadChannel, by: UserId): Promise<void> {
+    const { error } = await supabase().from("engine_leads").update({ draft_requested: channel, draft_error: "" }).eq("id", lead.id);
+    if (error) fail(error);
+    await this.note(lead.job_key, "lead", `${USER_LABEL[by]} asked for a ${LEAD_CHANNEL_LABEL[channel]} message for ${lead.name}`);
+  },
+  async saveLeadMessage(lead: EngineLead, body: string, subject: string): Promise<void> {
+    if (!lead.draft) return;
+    const { error } = await supabase().from("engine_leads").update({ draft: { ...lead.draft, body, subject } }).eq("id", lead.id);
+    if (error) fail(error);
+  },
+  async markLeadContacted(lead: Pick<EngineLead, "id" | "job_key" | "name">, via: string, by: UserId): Promise<void> {
+    const { error } = await supabase().from("engine_leads")
+      .update({ status: "contacted", contacted_at: new Date().toISOString(), contacted_by: by, contacted_via: via }).eq("id", lead.id);
+    if (error) fail(error);
+    await this.note(lead.job_key, "lead", `${USER_LABEL[by]} contacted lead ${lead.name} by ${via}`);
+  },
+  async setFeedback(job: Pick<EngineJob, "id" | "job_key">, verdict: FeedbackVerdict | null, note: string, by: UserId): Promise<void> {
+    const feedback: Feedback | null = verdict ? { verdict, note, by, at: new Date().toISOString() } : null;
+    const { error } = await supabase().from("engine_jobs").update({ feedback }).eq("id", job.id);
+    if (error) fail(error);
+    await this.note(job.job_key, "review", verdict ? `${USER_LABEL[by]} rated this result: ${FEEDBACK_LABEL[verdict]}${note ? ` — ${note}` : ""}` : `${USER_LABEL[by]} cleared the rating`);
   },
   /** Reach-side actions go into the same activity log as the worker's. */
   async note(jobKey: string | null, step: string, message: string): Promise<void> {

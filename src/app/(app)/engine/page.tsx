@@ -5,7 +5,9 @@ import { ActivityIcon, PauseIcon, PlayIcon, RefreshCwIcon } from "lucide-react";
 import { useData } from "@/components/DataProvider";
 import { ActivityFeed } from "@/components/engine/ActivityFeed";
 import { JOB_FILTERS, JobList, matchesFilter, type JobFilter } from "@/components/engine/JobList";
+import { Insights } from "@/components/engine/Insights";
 import { JobWaterfall } from "@/components/engine/JobWaterfall";
+import { LeadList } from "@/components/engine/LeadList";
 import { MachineCheck } from "@/components/engine/MachineCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +15,7 @@ import { EmptyState, Page, PageHeader, Segmented, Stat } from "@/components/ui/l
 import { cn } from "@/lib/utils";
 import {
   ago, engineStore, workerOnline,
-  type EngineCommand, type EngineEvent, type EngineHealth, type EngineJob, type EngineJobSummary, type EngineWorker,
+  type EngineCommand, type EngineEvent, type EngineHealth, type EngineJob, type EngineJobSummary, type EngineLead, type EngineWorker,
 } from "@/lib/engine";
 
 const STATUS_TEXT: Record<EngineWorker["status"], string> = {
@@ -37,7 +39,9 @@ export default function EnginePage() {
   const [job, setJob] = useState<EngineJob | null>(null);
   const [jobEvents, setJobEvents] = useState<EngineEvent[]>([]);
   const [filter, setFilter] = useState<JobFilter>("ready");
-  const [panel, setPanel] = useState<"job" | "activity">("activity");
+  const [panel, setPanel] = useState<"job" | "activity" | "leads" | "insights">("activity");
+  const [leads, setLeads] = useState<EngineLead[]>([]);
+  const [showDismissed, setShowDismissed] = useState(false);
   const [limit, setLimit] = useState(5);
   const [loading, setLoading] = useState(mode === "supabase");
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +57,8 @@ export default function EnginePage() {
         engineStore.jobs(), engineStore.worker(), engineStore.commands(), engineStore.events({ limit: 200 }),
       ]);
       setJobs(jobRows); setWorker(workerRow); setCommands(commandRows); setEvents(eventRows);
+      // Leads live in their own table; a database without it still shows the rest.
+      setLeads(await engineStore.leads().catch(() => []));
       const id = selectedRef.current;
       if (id) {
         const full = await engineStore.job(id);
@@ -130,6 +136,8 @@ export default function EnginePage() {
     };
   }, [jobs, today]);
   const filtered = jobs.filter((j) => matchesFilter(j, filter));
+  const newLeads = leads.filter((l) => l.status === "new").length;
+  const jobTitles = useMemo(() => Object.fromEntries(jobs.map((j) => [j.job_key, j.title])), [jobs]);
   const alerts = events.filter((e) => e.level === "alert" && new Date(e.created_at).getTime() > now - 6 * 3600_000);
 
   if (mode !== "supabase") {
@@ -238,15 +246,36 @@ export default function EnginePage() {
 
           <div className="min-w-0">
             <Segmented label="Panel" className="mb-3" value={panel} onChange={setPanel}
-              options={[{ value: "job", label: "Job details" }, { value: "activity", label: "All activity" }]} />
+              options={[
+                { value: "job", label: "Job details" }, { value: "activity", label: "All activity" },
+                { value: "leads", label: `Leads${newLeads ? ` · ${newLeads} new` : ""}` }, { value: "insights", label: "Insights" },
+              ]} />
             {panel === "activity" ? (
               <section className="card overflow-hidden">
                 <div className="max-h-[calc(100vh-280px)] overflow-auto">
                   <ActivityFeed events={events} onSelectJob={selectByKey} empty="The engine hasn't reported anything yet." />
                 </div>
               </section>
+            ) : panel === "leads" ? (
+              <section className="card overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft px-4 py-2.5 text-xs text-muted">
+                  <span>People and companies found during research, across all jobs.</span>
+                  <label className="flex items-center gap-1.5">
+                    <input type="checkbox" checked={showDismissed} onChange={(e) => setShowDismissed(e.target.checked)} />Show dismissed
+                  </label>
+                </div>
+                <div className="max-h-[calc(100vh-320px)] overflow-auto">
+                  <LeadList leads={leads.filter((l) => showDismissed || l.status !== "dismissed")} me={me.id} online={online}
+                    jobTitles={jobTitles} onSelectJob={selectByKey} onChanged={() => void refresh()}
+                    empty="No leads yet. They appear here as the worker researches jobs." />
+                </div>
+              </section>
+            ) : panel === "insights" ? (
+              <Insights jobs={jobs} leads={leads} />
             ) : job ? (
-              <JobWaterfall key={job.id} job={job} events={jobEvents} worker={online ? worker : null} me={me.id} onChanged={() => void refresh()} />
+              <JobWaterfall key={job.id} job={job} events={jobEvents} worker={online ? worker : null} me={me.id} onChanged={() => void refresh()}
+                leads={leads.filter((l) => l.job_key === job.job_key)} onSelectJob={select}
+                siblings={job.client_key ? jobs.filter((o) => o.client_key === job.client_key && o.id !== job.id) : []} />
             ) : selectedId ? (
               <p role="status" className="p-4 text-sm text-muted">Loading job…</p>
             ) : (

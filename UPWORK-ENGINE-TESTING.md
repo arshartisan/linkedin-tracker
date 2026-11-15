@@ -20,8 +20,11 @@ The email that was sent is stored with the job.
 
 ## 1. Set up Reach (about 5 min)
 
-1. Open **Supabase → SQL editor** and run `supabase/migrations/20261114_upwork_engine.sql`.
-   It is safe to run again.
+1. Open **Supabase → SQL editor** and run these two files, in order. Both are safe to run again.
+   - `supabase/migrations/20261114_upwork_engine.sql` (engine tables)
+   - `supabase/migrations/20261115_engine_leads.sql` (leads, same-client links and ratings)
+
+   A new, empty project needs only `supabase/schema.sql`, which includes both.
 2. Confirm the Vercel deploy of `main` succeeded.
 3. Open **Upwork → Engine** in Reach. It should say **"No worker has connected yet"**.
    - If it says *"Engine storage is not set up yet"*, step 1 didn't run.
