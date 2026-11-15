@@ -23,6 +23,7 @@ The email that was sent is stored with the job.
 1. Open **Supabase → SQL editor** and run these two files, in order. Both are safe to run again.
    - `supabase/migrations/20261114_upwork_engine.sql` (engine tables)
    - `supabase/migrations/20261115_engine_leads.sql` (leads, same-client links and ratings)
+   - `supabase/migrations/20261116_engine_settings.sql` (your profile, edited in Reach)
 
    A new, empty project needs only `supabase/schema.sql`, which includes both.
 2. Confirm the Vercel deploy of `main` succeeded.
@@ -72,8 +73,10 @@ Do this on the machine that will run all day.
    | `HEALTH_TOKEN` | A long random secret for Reach's **Check machine** button (step 9). Make one with `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
    | `HEALTH_PORT` | Leave at `8787` |
 
-7. **Write your profile:** edit `upwork\engine\templates\my_profile.md` with your real name, link,
-   services and case studies. Adjust `cold_email.txt` if needed. The drafts are only as good as this file.
+7. **Write your profile:** in Reach, open **Upwork → Engine → Profile** and replace the starter text with
+   your real name, link, services and case studies, then **Save profile**. The worker uploads
+   `templates/my_profile.md` there on its first start, and falls back to that file if Reach has no profile.
+   Adjust `cold_email.txt` if needed. The drafts are only as good as this profile.
 8. **Check the setup:**
    ```powershell
    ..\option5-stealth\.venv\Scripts\python worker.py check

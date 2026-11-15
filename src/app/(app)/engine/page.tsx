@@ -9,6 +9,7 @@ import { Insights } from "@/components/engine/Insights";
 import { JobWaterfall } from "@/components/engine/JobWaterfall";
 import { LeadList } from "@/components/engine/LeadList";
 import { MachineCheck } from "@/components/engine/MachineCheck";
+import { ProfileEditor } from "@/components/engine/ProfileEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState, Page, PageHeader, Segmented, Stat } from "@/components/ui/layout";
@@ -39,7 +40,7 @@ export default function EnginePage() {
   const [job, setJob] = useState<EngineJob | null>(null);
   const [jobEvents, setJobEvents] = useState<EngineEvent[]>([]);
   const [filter, setFilter] = useState<JobFilter>("ready");
-  const [panel, setPanel] = useState<"job" | "activity" | "leads" | "insights">("activity");
+  const [panel, setPanel] = useState<"job" | "activity" | "leads" | "insights" | "profile">("activity");
   const [leads, setLeads] = useState<EngineLead[]>([]);
   const [showDismissed, setShowDismissed] = useState(false);
   const [limit, setLimit] = useState(5);
@@ -249,8 +250,11 @@ export default function EnginePage() {
               options={[
                 { value: "job", label: "Job details" }, { value: "activity", label: "All activity" },
                 { value: "leads", label: `Leads${newLeads ? ` · ${newLeads} new` : ""}` }, { value: "insights", label: "Insights" },
+                { value: "profile", label: "Profile" },
               ]} />
-            {panel === "activity" ? (
+            {/* Kept mounted so unsaved profile edits survive switching panels. */}
+            <div hidden={panel !== "profile"}><ProfileEditor me={me.id} /></div>
+            {panel === "profile" ? null : panel === "activity" ? (
               <section className="card overflow-hidden">
                 <div className="max-h-[calc(100vh-280px)] overflow-auto">
                   <ActivityFeed events={events} onSelectJob={selectByKey} empty="The engine hasn't reported anything yet." />

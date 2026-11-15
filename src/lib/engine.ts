@@ -281,6 +281,15 @@ export function workerOnline(worker: EngineWorker | null, now = Date.now()): boo
   return now - new Date(worker.last_seen).getTime() < OFFLINE_AFTER_MS;
 }
 
+export type EngineSettingKey = "my_profile";
+export const SETTING_LABEL: Record<EngineSettingKey, string> = { my_profile: "Profile" };
+export interface EngineSetting {
+  key: EngineSettingKey;
+  value: string;
+  updated_at: string;
+  updated_by: UserId | null;
+}
+
 function fail(error: { code?: string; message: string }): never {
   if (error.code === "PGRST205" || error.code === "42P01") {
     throw new Error("Engine storage is not set up yet. Run supabase/migrations/20261114_upwork_engine.sql, then retry.");
@@ -397,6 +406,26 @@ export const engineStore = {
     const { error } = await supabase().from("engine_jobs").update({ feedback }).eq("id", job.id);
     if (error) fail(error);
     await this.note(job.job_key, "review", verdict ? `${USER_LABEL[by]} rated this result: ${FEEDBACK_LABEL[verdict]}${note ? ` — ${note}` : ""}` : `${USER_LABEL[by]} cleared the rating`);
+  },
+  /** Text the worker reads when writing messages (e.g. "my_profile"). Null when never saved. */
+  async setting(key: EngineSettingKey): Promise<EngineSetting | null> {
+    needSupabase();
+    const { data, error } = await supabase().from("engine_settings").select("*").eq("key", key).maybeSingle();
+    if (error) {
+      if (error.code === "PGRST205" || error.code === "42P01") {
+        throw new Error("Profile storage is not set up yet. Run supabase/migrations/20261116_engine_settings.sql, then retry.");
+      }
+      fail(error);
+    }
+    return data as EngineSetting | null;
+  },
+  async saveSetting(key: EngineSettingKey, value: string, by: UserId): Promise<EngineSetting> {
+    needSupabase();
+    const { data, error } = await supabase().from("engine_settings")
+      .upsert({ key, value, updated_by: by }, { onConflict: "key" }).select("*").single();
+    if (error) fail(error);
+    await this.note(null, "settings", `${USER_LABEL[by]} updated the ${SETTING_LABEL[key].toLowerCase()}`);
+    return data as EngineSetting;
   },
   /** Reach-side actions go into the same activity log as the worker's. */
   async note(jobKey: string | null, step: string, message: string): Promise<void> {
